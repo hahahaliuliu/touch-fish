@@ -1,4 +1,5 @@
-export function startWordSession() {
-  console.log("Touch Fish");
-  console.log("Word Session Started.");
+import { startWordSession } from "../session/wordSession.js";
+
+export function startWordCommand() {
+  startWordSession();
 }

@@ -1,2 +1,3 @@
-import { startWordSession } from "./commands/word.js";
-startWordSession();
+import { startWordCommand } from "./commands/word.js";
+
+startWordCommand();
