@@ -1,11 +1,8 @@
+import { words } from "../data/words.js";
+
 type DisplayMode = "both" | "english" | "chinese";
 type LastNavigation = "next" | "previous";
 
-const words = [
-  { english: "abandon", chinese: "放弃；遗弃" },
-  { english: "benefit", chinese: "好处；利益" },
-  { english: "complex", chinese: "复杂的" },
-];
 
 let currentIndex = 0;
 let displayMode: DisplayMode = "both";
