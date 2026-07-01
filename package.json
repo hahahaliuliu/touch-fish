@@ -1,18 +1,25 @@
 {
   "name": "touch-fish",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Touch Fish 是一款伪装成终端（Terminal）的桌面学习工具。",
-  "main": "index.js",
+  "type": "module",
+  "main": "src/index.ts",
   "directories": {
     "doc": "docs"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "tsx src/index.ts",
+    "start": "tsx src/index.ts"
   },
-  "keywords": [],
+  "keywords": [
+    "terminal",
+    "cli",
+    "learning",
+    "vocabulary",
+    "touchfish"
+  ],
   "author": "",
   "license": "ISC",
-  "type": "module",
   "devDependencies": {
     "tsx": "^4.22.4",
     "typescript": "^6.0.3"
