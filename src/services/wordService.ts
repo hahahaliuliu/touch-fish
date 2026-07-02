@@ -1,9 +1,11 @@
 import type { Word } from "../models/word.js";
 import { loadWordProgress, saveWordProgress } from "../storage/progress.js";
 import { loadVocabulary } from "./vocabularyLoader.js";
+import { DEFAULT_WORKSPACE_SIZE } from "../config/workspace.js";
 
 const words: Word[] = loadVocabulary();
-const workspaceSize = 3;
+
+const workspaceSize = DEFAULT_WORKSPACE_SIZE;
 
 let currentIndex = loadWordProgress();
 

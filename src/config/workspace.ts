@@ -1,0 +1,1 @@
+export const DEFAULT_WORKSPACE_SIZE = 3;
