@@ -1,5 +1,7 @@
-import { words } from "../data/words.js";
 import type { Word } from "../models/word.js";
+import { loadVocabulary } from "./vocabularyLoader.js";
+
+const words: Word[] = loadVocabulary();
 
 let currentIndex = 0;
 

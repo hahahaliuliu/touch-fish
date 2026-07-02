@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+import { loadVocabulary } from "./services/vocabularyLoader.js";
+
+console.log(loadVocabulary());
+
 
 import { Command } from "commander";
 import { startWordCommand } from "./commands/word.js";
