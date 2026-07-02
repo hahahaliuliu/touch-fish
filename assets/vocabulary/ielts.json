@@ -1,14 +1,11 @@
 [
-  {
-    "english": "abandon",
-    "chinese": "放弃；遗弃"
-  },
-  {
-    "english": "benefit",
-    "chinese": "利益；好处"
-  },
-  {
-    "english": "complex",
-    "chinese": "复杂的"
-  }
+  { "english": "abandon", "chinese": "放弃；遗弃" },
+  { "english": "benefit", "chinese": "利益；好处" },
+  { "english": "complex", "chinese": "复杂的" },
+  { "english": "derive", "chinese": "获得；源于" },
+  { "english": "exceed", "chinese": "超过" },
+  { "english": "feature", "chinese": "特征；特点" },
+  { "english": "generate", "chinese": "产生；生成" },
+  { "english": "highlight", "chinese": "强调；突出" },
+  { "english": "impact", "chinese": "影响" }
 ]

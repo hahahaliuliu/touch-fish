@@ -5,10 +5,10 @@ import {
 } from "../ui/wordRenderer.js";
 
 import {
-  getCurrentWord,
+  getCurrentWords,
   getWordProgress,
-  nextWord as moveToNextWord,
-  previousWord as moveToPreviousWord,
+  nextWordGroup as moveToNextWordGroup,
+  previousWordGroup as moveToPreviousWordGroup,
   saveCurrentWordProgress,
 } from "../services/wordService.js";
 
@@ -62,13 +62,13 @@ function handleKeyPress(key: string) {
 }
 
 function nextWord() {
-  moveToNextWord();
+  moveToNextWordGroup();
   lastNavigation = "next";
   renderSession();
 }
 
 function previousWord() {
-  moveToPreviousWord();
+  moveToPreviousWordGroup();
   lastNavigation = "previous";
   renderSession();
 }
@@ -94,11 +94,11 @@ function switchDisplayMode() {
 }
 
 function renderSession() {
-  const currentWord = getCurrentWord();
+  const currentWords = getCurrentWords();
   const progress = getWordProgress();
 
   renderWordSession({
-    word: currentWord,
+    words: currentWords,
     current: progress.current,
     total: progress.total,
     displayMode,

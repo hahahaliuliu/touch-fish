@@ -3,34 +3,29 @@ import { loadWordProgress, saveWordProgress } from "../storage/progress.js";
 import { loadVocabulary } from "./vocabularyLoader.js";
 
 const words: Word[] = loadVocabulary();
+const workspaceSize = 3;
 
 let currentIndex = loadWordProgress();
 
-export function getCurrentWord(): Word {
-  const word = words[currentIndex];
-
-  if (!word) {
-    currentIndex = 0;
-    return words[0];
-  }
-
-  return word;
+export function getCurrentWords(): Word[] {
+  return words.slice(currentIndex, currentIndex + workspaceSize);
 }
 
-export function nextWord(): Word {
-  currentIndex = (currentIndex + 1) % words.length;
-  return getCurrentWord();
+export function nextWordGroup(): Word[] {
+  currentIndex = (currentIndex + workspaceSize) % words.length;
+  return getCurrentWords();
 }
 
-export function previousWord(): Word {
-  currentIndex = (currentIndex - 1 + words.length) % words.length;
-  return getCurrentWord();
+export function previousWordGroup(): Word[] {
+  currentIndex = (currentIndex - workspaceSize + words.length) % words.length;
+  return getCurrentWords();
 }
 
 export function getWordProgress() {
   return {
     current: currentIndex + 1,
     total: words.length,
+    workspaceSize,
   };
 }
 

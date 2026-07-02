@@ -3,7 +3,7 @@ import type { Word } from "../models/word.js";
 export type DisplayMode = "both" | "english" | "chinese";
 
 interface RenderWordSessionOptions {
-  word: Word;
+  words: Word[];
   current: number;
   total: number;
   displayMode: DisplayMode;
@@ -11,7 +11,7 @@ interface RenderWordSessionOptions {
 }
 
 export function renderWordSession(options: RenderWordSessionOptions) {
-  const { word, current, total, displayMode, showHelp } = options;
+ const { words, current, total, displayMode, showHelp } = options;
 
   console.clear();
 
@@ -23,18 +23,21 @@ export function renderWordSession(options: RenderWordSessionOptions) {
   console.log(`sync:vocab:${String(current).padStart(3, "0")} / ${total}`);
   console.log("");
 
+words.forEach((word, index) => {
+  const id = String(current + index).padStart(3, "0");
+
   if (displayMode === "both") {
-    console.log(`const token = "${word.english}";`);
-    console.log(`const meaning = "${word.chinese}";`);
+    console.log(`const token_${id} = "${word.english}"; // ${word.chinese}`);
   }
 
   if (displayMode === "english") {
-    console.log(`const token = "${word.english}";`);
+    console.log(`const token_${id} = "${word.english}";`);
   }
 
   if (displayMode === "chinese") {
-    console.log(`const meaning = "${word.chinese}";`);
+    console.log(`const token_${id} = "${word.chinese}";`);
   }
+});
 
   console.log("");
   console.log("runtime: waiting for input...");
