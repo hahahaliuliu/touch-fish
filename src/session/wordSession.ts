@@ -1,4 +1,10 @@
 import {
+  renderQuitMessage,
+  renderWordSession,
+  type DisplayMode,
+} from "../ui/wordRenderer.js";
+
+import {
   getCurrentWord,
   getWordProgress,
   nextWord as moveToNextWord,
@@ -6,7 +12,6 @@ import {
   saveCurrentWordProgress,
 } from "../services/wordService.js";
 
-type DisplayMode = "both" | "english" | "chinese";
 type LastNavigation = "next" | "previous";
 
 let displayMode: DisplayMode = "both";
@@ -14,7 +19,7 @@ let lastNavigation: LastNavigation = "next";
 let showHelp = false;
 
 export function startWordSession() {
-  renderWordSession();
+  renderSession();
 
   process.stdin.setRawMode(true);
   process.stdin.resume();
@@ -52,20 +57,20 @@ function handleKeyPress(key: string) {
 
   if (input === "?") {
     showHelp = !showHelp;
-    renderWordSession();
+    renderSession();
   }
 }
 
 function nextWord() {
   moveToNextWord();
   lastNavigation = "next";
-  renderWordSession();
+  renderSession();
 }
 
 function previousWord() {
   moveToPreviousWord();
   lastNavigation = "previous";
-  renderWordSession();
+  renderSession();
 }
 
 function repeatLastNavigation() {
@@ -85,60 +90,26 @@ function switchDisplayMode() {
     displayMode = "both";
   }
 
-  renderWordSession();
+  renderSession();
 }
 
-function renderWordSession() {
-  console.clear();
-
+function renderSession() {
   const currentWord = getCurrentWord();
   const progress = getWordProgress();
 
-  console.log("build: touch-fish");
-  console.log("sync: vocabulary cache loaded");
-  console.log("task: word session active");
-  console.log("");
-
-  console.log(
-    `sync:vocab:${String(progress.current).padStart(3, "0")} / ${progress.total}`
-  );
-  console.log("");
-
-  if (displayMode === "both") {
-    console.log(`const token = "${currentWord.english}";`);
-    console.log(`const meaning = "${currentWord.chinese}";`);
-  }
-
-  if (displayMode === "english") {
-    console.log(`const token = "${currentWord.english}";`);
-  }
-
-  if (displayMode === "chinese") {
-    console.log(`const meaning = "${currentWord.chinese}";`);
-  }
-
-  console.log("");
-  console.log("runtime: waiting for input...");
-
-  if (showHelp) {
-    console.log("");
-    console.log("help:");
-    console.log("  A      previous word");
-    console.log("  D      next word");
-    console.log("  Space  repeat last navigation");
-    console.log("  Tab    switch display mode");
-    console.log("  ?      toggle help");
-    console.log("  Q      quit");
-  }
+  renderWordSession({
+    word: currentWord,
+    current: progress.current,
+    total: progress.total,
+    displayMode,
+    showHelp,
+  });
 }
 
 function quitWordSession() {
   saveCurrentWordProgress();
 
-  console.clear();
-
-  console.log("sync: progress saved");
-  console.log("task: word session closed");
+  renderQuitMessage();
 
   process.stdin.setRawMode(false);
   process.stdin.pause();
