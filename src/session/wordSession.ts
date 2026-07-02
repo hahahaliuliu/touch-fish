@@ -3,6 +3,7 @@ import {
   getWordProgress,
   nextWord as moveToNextWord,
   previousWord as moveToPreviousWord,
+  saveCurrentWordProgress,
 } from "../services/wordService.js";
 
 type DisplayMode = "both" | "english" | "chinese";
@@ -132,6 +133,8 @@ function renderWordSession() {
 }
 
 function quitWordSession() {
+  saveCurrentWordProgress();
+
   console.clear();
 
   console.log("sync: progress saved");

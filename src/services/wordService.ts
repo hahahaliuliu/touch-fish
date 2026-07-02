@@ -1,15 +1,17 @@
 import type { Word } from "../models/word.js";
+import { loadWordProgress, saveWordProgress } from "../storage/progress.js";
 import { loadVocabulary } from "./vocabularyLoader.js";
 
 const words: Word[] = loadVocabulary();
 
-let currentIndex = 0;
+let currentIndex = loadWordProgress();
 
 export function getCurrentWord(): Word {
   const word = words[currentIndex];
 
   if (!word) {
-    throw new Error("Current word not found.");
+    currentIndex = 0;
+    return words[0];
   }
 
   return word;
@@ -30,4 +32,8 @@ export function getWordProgress() {
     current: currentIndex + 1,
     total: words.length,
   };
+}
+
+export function saveCurrentWordProgress() {
+  saveWordProgress(currentIndex);
 }
