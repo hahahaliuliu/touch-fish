@@ -1,10 +1,13 @@
-import { words } from "../data/words.js";
+import {
+  getCurrentWord,
+  getWordProgress,
+  nextWord as moveToNextWord,
+  previousWord as moveToPreviousWord,
+} from "../services/wordService.js";
 
 type DisplayMode = "both" | "english" | "chinese";
 type LastNavigation = "next" | "previous";
 
-
-let currentIndex = 0;
 let displayMode: DisplayMode = "both";
 let lastNavigation: LastNavigation = "next";
 let showHelp = false;
@@ -53,13 +56,13 @@ function handleKeyPress(key: string) {
 }
 
 function nextWord() {
-  currentIndex = (currentIndex + 1) % words.length;
+  moveToNextWord();
   lastNavigation = "next";
   renderWordSession();
 }
 
 function previousWord() {
-  currentIndex = (currentIndex - 1 + words.length) % words.length;
+  moveToPreviousWord();
   lastNavigation = "previous";
   renderWordSession();
 }
@@ -87,14 +90,17 @@ function switchDisplayMode() {
 function renderWordSession() {
   console.clear();
 
-  const currentWord = words[currentIndex];
+  const currentWord = getCurrentWord();
+  const progress = getWordProgress();
 
   console.log("build: touch-fish");
   console.log("sync: vocabulary cache loaded");
   console.log("task: word session active");
   console.log("");
 
-  console.log(`sync:vocab:${String(currentIndex + 1).padStart(3, "0")} / ${words.length}`);
+  console.log(
+    `sync:vocab:${String(progress.current).padStart(3, "0")} / ${progress.total}`
+  );
   console.log("");
 
   if (displayMode === "both") {
