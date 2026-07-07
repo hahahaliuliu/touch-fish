@@ -22,3 +22,6 @@ Thumbs.db
 dist/
 build/
 *.tsbuildinfo
+
+# 本地学习进度
+assets/progress/word-progress.json

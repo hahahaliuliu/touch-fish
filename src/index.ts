@@ -15,4 +15,8 @@ program
     startWordCommand();
   });
 
-program.parse();
+if (process.argv.length <= 2) {
+  program.outputHelp();
+} else {
+  program.parse();
+}

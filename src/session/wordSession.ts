@@ -14,14 +14,16 @@ import {
 
 type LastNavigation = "next" | "previous";
 
-let displayMode: DisplayMode = "both";
+let displayMode: DisplayMode = "english";
 let lastNavigation: LastNavigation = "next";
 let showHelp = false;
 
 export function startWordSession() {
   renderSession();
 
-  process.stdin.setRawMode(true);
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(true);
+  }
   process.stdin.resume();
   process.stdin.setEncoding("utf8");
 
@@ -111,7 +113,9 @@ function quitWordSession() {
 
   renderQuitMessage();
 
-  process.stdin.setRawMode(false);
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(false);
+  }
   process.stdin.pause();
   process.exit(0);
 }
