@@ -1,5 +1,5 @@
 # Touch Fish Design
-
+Touch Fish doesn't hide your study. It disguises it as work.
 > Version: v0.1
 
 ---
@@ -307,3 +307,5 @@ Touch Fish 不是一个为了展示的项目。
 所有设计都围绕一个目标：
 
 > Learn without interrupting your workflow.
+
+
