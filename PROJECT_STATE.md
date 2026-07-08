@@ -1,137 +1,143 @@
-# Touch Fish - Project State
+# Touch Fish - Project State / 项目状态
 
 > Last updated: 2026-07-08
 
-## Product Position
+## Product Position / 产品定位
 
-Touch Fish is a Terminal Learning Tool.
+Touch Fish 是一个 Terminal Learning Tool。
 
-It is not simply a way to hide studying. The product goal is to make learning content look like normal development output, so users can study in small moments without leaving their terminal workflow.
+它是一个适合开发间隙使用的低调终端学习工具。
 
-Core line:
+典型使用场景是：等待构建、等待工具响应、等待任务执行、上下文切换之间，顺手背几个单词，同时保持在终端工作流里。
 
-> Touch Fish doesn't hide your study. It disguises it as work.
+核心理念：
 
-## Current Stage
+> Learn in the gaps. Stay in the terminal.
 
-Current milestone:
+中文理解：
+
+> 在开发间隙学习，不离开终端。
+
+## Current Stage / 当前阶段
+
+当前里程碑：
 
 ```txt
 v0.2 Product Experience
 ```
 
-Priority:
+当前优先级：
 
-1. Keep the project stable.
-2. Improve the Word Workspace disguise.
-3. Keep learning information out of the main screen when possible.
-4. Keep Renderer and Theme responsibilities separated.
-5. Save Settings, real multi-book support, and Read Mode for later versions.
+1. 先保证项目稳定运行。
+2. 优化 Word Workspace 的伪装效果。
+3. 主界面尽量保持低调，不像传统学习软件。
+4. 保持 Renderer 和 Theme 的职责分离。
+5. Settings、多词库、Read Mode 放到后续版本。
 
-## Current Architecture
+## Current Architecture / 当前架构
 
 ```txt
 src/
-  commands/   CLI command entry
-  session/    Session lifecycle
-  ui/         Terminal rendering and themes
-  services/   Business logic
-  storage/    Local persistence
-  models/     Data models
-  config/     Default configuration and project paths
+  commands/   CLI 命令入口
+  session/    Session 生命周期
+  ui/         终端渲染和主题
+  services/   业务逻辑
+  storage/    本地存储
+  models/     数据模型
+  config/     默认配置和项目路径
 
 assets/
-  vocabulary/ Vocabulary books
-  progress/   Local progress files
+  vocabulary/ 词库
+  progress/   本地进度
 
-docs/         Notes, format docs, and future plans
+docs/         说明文档和未来计划
 ```
 
-Architecture should stay small and direct. Do not redesign the project during v0.2.
+v0.2 阶段不要重写架构。保持小步修改，一个文件只负责一种职责。
 
-## Current Run Commands
+## Run Commands / 运行命令
 
-Development:
+开发时：
 
 ```powershell
 npm run dev -- word
 ```
 
-Linked local CLI:
+本地 CLI：
 
 ```powershell
 touchfish word
 ```
 
-`npm link` should be run once from the project directory:
+第一次使用本地 CLI，需要在项目目录执行：
 
 ```powershell
 cd "D:\Touch Fish"
 npm link
 ```
 
-After linking, `touchfish word` works from other directories because asset paths are resolved from the project root.
+执行后，`touchfish word` 可以在其他目录使用。词库和进度路径会从项目根目录解析，不会跟着当前终端目录跑偏。
 
-## Completed Features
+## Completed Features / 已完成功能
 
 ### CLI
 
 - [x] `npm run dev -- word`
 - [x] `touchfish word`
-- [x] No-argument help output
+- [x] 无参数时显示帮助信息
 
 ### Word Session
 
-- [x] Start session
-- [x] Quit session
-- [x] Raw keyboard input when terminal supports it
-- [x] Safe piped input for simple verification
+- [x] 启动 Session
+- [x] 退出 Session
+- [x] 终端支持时使用 raw keyboard input
+- [x] 支持简单管道输入，方便测试
 
-### Keyboard
+### Keyboard / 快捷键
 
-- [x] `A` previous workspace
-- [x] `D` next workspace
-- [x] `Space` repeat last navigation
-- [x] `Tab` switch display mode
-- [x] `?` toggle debug/help view
-- [x] `Q` quit
+- [x] `A` 上一组
+- [x] `D` 下一组
+- [x] `Space` 重复上一次导航
+- [x] `Tab` 切换显示模式
+- [x] `?` 切换 Debug/Help 视图
+- [x] `Q` 退出
 
-### Vocabulary
+### Vocabulary / 词库
 
-- [x] JSON vocabulary book format
-- [x] Local `assets/vocabulary/ielts.json`
-- [x] Committed example `assets/vocabulary/ielts.example.json`
-- [x] Validation for book and word fields
-- [x] Local large vocabulary ignored by Git
+- [x] JSON 词库格式
+- [x] 本地词库 `assets/vocabulary/ielts.json`
+- [x] 示例词库 `assets/vocabulary/ielts.example.json`
+- [x] 词库格式校验
+- [x] 本地大词库不提交到 Git
 
-### Progress
+### Progress / 进度
 
-- [x] Save current word index
-- [x] Restore current word index
-- [x] Resolve progress path from project root
+- [x] 保存当前单词位置
+- [x] 恢复当前单词位置
+- [x] 从项目根目录解析进度文件路径
 
 ### Workspace
 
-- [x] Display 3 words per workspace
-- [x] Move between word groups
-- [x] English / Chinese / Both display modes
-- [x] English-only default for better disguise
+- [x] 默认一页显示 3 个单词
+- [x] 按组切换
+- [x] 英文 / 中文 / 英文 + 中文显示模式
+- [x] 默认英文显示，增强伪装效果
 
 ### UI
 
-- [x] Build-log style default theme
-- [x] Main screen looks like cached build output
-- [x] Help view replaces the main screen instead of appending below it
-- [x] Help view is disguised as runtime diagnostics
+- [x] Build Log 风格默认主题
+- [x] 主界面像缓存构建输出
+- [x] Help 视图覆盖主界面，而不是追加在下面
+- [x] Help 视图呈现为 runtime diagnostics
 
-## Current Vocabulary Format
+## Current Vocabulary Format / 当前词库格式
 
-The current app only requires each word to have:
+当前真正必填的单词字段只有：
 
 - `english`
 - `chinese`
 
-Reserved optional fields:
+预留字段：
 
 - `phonetic`
 - `example`
@@ -139,25 +145,25 @@ Reserved optional fields:
 - `note`
 - `tags`
 
-These fields are kept for later Settings and display modes. They should stay empty for now if not needed.
+这些字段现在可以留空，后续 Settings 和更多显示模式再使用。
 
-See:
+详细说明见：
 
 ```txt
 docs/vocabulary-format.md
 ```
 
-## Design Decisions
+## Design Decisions / 设计决策
 
 ### Terminal First
 
-Touch Fish runs inside the terminal.
+Touch Fish 始终运行在终端里。
 
-It should not draw fake application windows, IDE borders, or VS Code-like layouts. The terminal already provides the window. Touch Fish should only generate believable terminal content.
+不要画假的应用窗口，不要模拟完整 IDE，不要做 VS Code 侧边栏。终端本身已经是窗口，Touch Fish 只负责生成像开发工具一样的终端内容。
 
-Good theme directions:
+适合的 Theme 方向：
 
-- CLI build log
+- CLI Build Log
 - Git output
 - Cargo output
 - Docker output
@@ -166,22 +172,22 @@ Good theme directions:
 - Python REPL
 - SQL console
 
-Avoid:
+避免：
 
 - Electron
-- IDE window simulation
-- VS Code sidebar simulation
-- Decorative UI cards
+- 模拟 IDE 窗口
+- 模拟 VS Code 侧边栏
+- 装饰性 UI 卡片
 
 ### Workspace
 
-Current workspace size:
+当前 workspace size：
 
 ```txt
 3 words
 ```
 
-Future Settings can support:
+未来 Settings 可以支持：
 
 - 1 word
 - 3 words
@@ -189,26 +195,25 @@ Future Settings can support:
 
 ### Help View
 
-The main screen should hide learning context.
+主界面应尽量保持低调。
 
-The `?` view can show progress, mode, and shortcut information, but it should be disguised as runtime diagnostics.
+`?` 视图可以显示进度、模式、快捷键等信息，但文案应呈现为 diagnostics，不要像普通背单词软件。
 
-## Next Milestone Candidates
+## Next Milestone Candidates / 下一步候选
 
-Recommended order:
+推荐顺序：
 
-1. Update documentation to match current implementation.
-2. Keep polishing the build-log disguise if needed.
-3. Prepare Settings model design for v0.3, without implementing Settings UI yet.
-4. Later: multiple vocabulary books.
-5. Later: Read Mode.
+1. 继续打磨 Build Log 伪装效果。
+2. 准备 v0.3 Settings 的数据模型设计，但暂时不做 Settings UI。
+3. 后续实现多词库。
+4. 后续实现 Read Mode。
 
-## Development Principles
+## Development Principles / 开发原则
 
-- Small steps.
-- One clear goal at a time.
-- Do not implement future-stage features early.
-- Do not redesign the architecture.
-- Keep one file focused on one responsibility.
-- Run the project after changes.
-- Commit after each stable milestone.
+- 小步修改。
+- 每次只完成一个明确目标。
+- 不提前实现后续阶段功能。
+- 不重写架构。
+- 一个文件只负责一种职责。
+- 修改后运行项目。
+- 稳定后及时 commit。

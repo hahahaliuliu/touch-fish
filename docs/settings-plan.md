@@ -1,107 +1,105 @@
-# Settings Plan
+# Settings Plan / 设置功能草稿
 
-> Status: draft for future v0.3 work.
+> Status: v0.3 之后再实现。当前只是记录想法，不代表 v0.2 要做。
 
-This document stores product ideas for Settings. These ideas should not be implemented during v0.2 unless the current milestone changes.
+这个文档用来保存 Settings 的产品想法，防止以后忘记。
 
-## Goal
+v0.2 的重点是产品体验和默认 Word Workspace，不要提前实现 Settings UI。
 
-Settings should let Touch Fish adapt to the user's learning style while keeping the main workflow simple and stealthy.
+## Goal / 目标
 
-v0.2 focuses on product experience and the default word workspace.
+Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持主流程简单、低调、稳定。
 
-v0.3 can start implementing Settings.
+## Planned Settings / 计划中的设置
 
-## Planned Settings
+### Daily Word Count / 每日单词数
 
-### Daily Word Count
+选择每天学习多少个新单词。
 
-Choose how many new words to study each day.
-
-Possible values:
+可能选项：
 
 - 10
 - 20
 - 30
 - custom
 
-Notes:
+注意：
 
-- This is different from workspace size.
-- Daily word count controls the learning plan.
-- Workspace size controls how many words appear on one screen.
+- Daily Word Count 控制每天学习计划
+- Workspace Size 控制一页显示几个单词
+- 这两个不是同一个概念
 
-### Study Order
+### Study Order / 学习顺序
 
-Choose how words are ordered.
+选择单词出现顺序。
 
-Possible values:
+可能选项：
 
-- `sequential`
-- `random`
+- `sequential` 顺序
+- `random` 随机
 
-Notes:
+注意：
 
-- `sequential` follows the vocabulary book order.
-- `random` should generate and save a stable shuffled order.
-- Random mode should avoid repeated words before the current round is complete.
+- `sequential` 按词库顺序学习
+- `random` 应该生成并保存一个稳定的随机顺序
+- 随机模式应避免一轮没结束就重复出现太多旧词
 
-### Vocabulary Book
+### Vocabulary Book / 单词书
 
-Choose which vocabulary book to use.
+选择当前使用哪一本单词书。
 
-Future behavior:
+未来行为：
 
-- Each vocabulary book can be a separate JSON file under `assets/vocabulary/`.
-- Settings can store the active vocabulary book id or file path.
-- Progress should be stored per vocabulary book.
+- 每本单词书可以是 `assets/vocabulary/` 下的一个 JSON 文件
+- Settings 可以保存当前启用的词库 id 或文件路径
+- 学习进度应该按词库分别保存
 
-Current v0.2 behavior:
+当前 v0.2 行为：
 
-- Only `assets/vocabulary/ielts.json` is loaded.
+- 只读取 `assets/vocabulary/ielts.json`
 
-### Custom Key Bindings
+### Custom Key Bindings / 自定义快捷键
 
-Allow users to customize keyboard controls.
+允许用户自定义键盘控制。
 
-Current default controls:
+当前默认快捷键：
 
-- `A`: previous workspace
-- `D`: next workspace
-- `Space`: repeat last navigation
-- `Tab`: switch display mode
-- `?`: toggle debug/help view
-- `Q`: quit
+- `A`: 上一组
+- `D`: 下一组
+- `Space`: 重复上一次导航
+- `Tab`: 切换显示模式
+- `?`: 切换 Debug/Help 视图
+- `Q`: 退出
 
-Future examples:
+未来可以支持：
 
-- Change navigation keys.
-- Change help key.
-- Change quit key.
+- 修改导航键
+- 修改 Help 键
+- 修改退出键
 
-### Word Detail Fields
+### Word Detail Fields / 单词详情字段
 
-Choose whether to display optional word fields.
+选择是否显示一些额外字段。
 
-Fields:
+字段：
 
-- phonetic
-- example
-- partOfSpeech
-- note
-- tags
+- phonetic 音标
+- example 例句
+- partOfSpeech 词性
+- note 笔记
+- tags 标签
 
-Notes:
+注意：
 
-- These fields exist in the vocabulary format as placeholders.
-- v0.2 should not display them by default.
-- Later settings can decide whether these fields appear in the main view, detail view, or debug view.
+- 这些字段已经在词库格式中预留
+- v0.2 默认不显示
+- 以后 Settings 可以决定这些字段显示在主界面、详情视图，还是 Debug/Help 视图中
 
-### Disguise Theme
+### Terminal Theme / 终端主题
 
-Choose the interface disguise style.
+选择终端输出风格。
 
-Possible themes:
+可能主题：
 
 - `build-log`
 - `backend-log`
@@ -112,22 +110,22 @@ Possible themes:
 - `python-repl`
 - `sql-console`
 
-Notes:
+注意：
 
-- `build-log` is the current default.
-- Other themes should not be implemented until the theme system is ready.
-- Theme switching belongs to Settings, not the current v0.2 workspace polish.
-- Themes should simulate terminal output, not full desktop app windows or IDE layouts.
+- `build-log` 是当前默认主题
+- 其他主题等 Theme 系统更稳定后再做
+- Theme 切换属于 Settings，不属于当前 v0.2 的 Workspace 打磨
+- Theme 应该模拟终端输出，而不是完整桌面应用窗口或 IDE 布局
 
-## Possible Settings File
+## Possible Settings File / 未来设置文件
 
-Future file:
+未来可能的文件：
 
 ```txt
 assets/settings.json
 ```
 
-Possible shape:
+可能结构：
 
 ```json
 {
@@ -155,26 +153,26 @@ Possible shape:
 }
 ```
 
-## Implementation Order
+## Implementation Order / 推荐实现顺序
 
-Recommended v0.3 order:
+v0.3 推荐顺序：
 
-1. Create settings model and default settings.
-2. Load settings from local JSON with fallback defaults.
-3. Support `workspaceSize`.
-4. Support `displayMode`.
-5. Support `studyOrder`.
-6. Support active vocabulary book.
-7. Support visible word fields.
-8. Support disguise theme.
-9. Support custom key bindings.
+1. 创建 settings model 和默认设置
+2. 从本地 JSON 读取 settings，没有文件时使用默认值
+3. 支持 `workspaceSize`
+4. 支持默认 `displayMode`
+5. 支持 `studyOrder`
+6. 支持选择当前词库
+7. 支持可见字段配置
+8. 支持伪装主题
+9. 支持自定义快捷键
 
-## Not Yet
+## Not Yet / 当前不做
 
-Do not implement these during v0.2:
+v0.2 不要实现：
 
 - Settings UI
 - Theme switching
-- Multiple vocabulary book switching
-- Daily learning scheduler
-- Custom key binding runtime
+- 多词库切换
+- 每日学习计划
+- 自定义快捷键运行时配置

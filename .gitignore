@@ -4,27 +4,30 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# 编辑器
+# Editor
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# 系统
+# System
 .DS_Store
 Thumbs.db
 
-# 环境变量
+# Environment
 .env
 .env.local
 
-# 依赖
+# Build output
 dist/
 build/
 *.tsbuildinfo
 
-# 本地学习进度
+# Local handover notes
+HANDOVER.md
+
+# Local learning progress
 assets/progress/word-progress.json
 
-# 本地词库数据
+# Local vocabulary data
 assets/vocabulary/ielts.json

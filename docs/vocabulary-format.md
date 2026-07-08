@@ -1,28 +1,34 @@
-# Vocabulary Format
+# Vocabulary Format / 词库格式
 
-Touch Fish v0.2 uses one local default vocabulary book:
+Touch Fish v0.2 当前只读取一本本地默认词库：
 
 ```txt
 assets/vocabulary/ielts.json
 ```
 
-This local file is ignored by Git because real vocabulary books can be large.
+这个文件会被 Git 忽略，因为真实词库可能很大，也可能是用户自己整理的内容。
 
-The committed example file is:
+仓库里提交的是示例词库：
 
 ```txt
 assets/vocabulary/ielts.example.json
 ```
 
-To set up a local vocabulary book, copy the example file to `ielts.json` and replace the words:
+第一次使用时，把示例词库复制成本地词库：
 
 ```txt
 assets/vocabulary/ielts.example.json -> assets/vocabulary/ielts.json
 ```
 
-## Book Shape
+PowerShell 命令：
 
-The file is a JSON object. It contains book metadata and a `words` list.
+```powershell
+Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts.json
+```
+
+## Book Shape / 词库结构
+
+词库文件是一个 JSON 对象，里面包含词库信息和 `words` 单词列表。
 
 ```json
 {
@@ -48,9 +54,9 @@ The file is a JSON object. It contains book metadata and a `words` list.
 }
 ```
 
-## Required Fields
+## Required Fields / 必填字段
 
-Book fields:
+词库必填字段：
 
 - `id`
 - `name`
@@ -59,12 +65,14 @@ Book fields:
 - `language.target`
 - `words`
 
-Word fields:
+单词必填字段：
 
 - `english`
 - `chinese`
 
-## Reserved Optional Word Fields
+当前程序真正显示的也是这两个字段。
+
+## Reserved Optional Word Fields / 预留字段
 
 - `phonetic`
 - `example`
@@ -72,17 +80,20 @@ Word fields:
 - `note`
 - `tags`
 
-These fields are placeholders for later stages. They can stay empty in v0.2.
+这些字段是给后续阶段预留的。v0.2 可以留空。
 
-`target` is not part of speech. It means the target language, such as `zh-CN`.
+说明：
 
-Part of speech belongs to each word and should use `partOfSpeech`.
+- `language.source` 是源语言，例如 `en`
+- `language.target` 是目标语言，例如 `zh-CN`
+- `target` 不是词性
+- 词性应该放在单词自己的 `partOfSpeech` 字段里
 
-## Current v0.2 Behavior
+## Current v0.2 Behavior / 当前行为
 
-- Touch Fish reads only `assets/vocabulary/ielts.json`.
-- `assets/vocabulary/ielts.example.json` is only a template.
-- The word workspace uses `english` and `chinese`.
-- Optional fields are saved for later Settings and display modes.
-- Empty strings and empty arrays are valid placeholders.
-- Multiple vocabulary books and import commands are not implemented yet.
+- Touch Fish 只读取 `assets/vocabulary/ielts.json`
+- `assets/vocabulary/ielts.example.json` 只是模板
+- Word Workspace 当前只使用 `english` 和 `chinese`
+- 其他字段保留给 Settings 和未来显示模式
+- 空字符串和空数组是合法占位
+- 多词库和导入命令暂时还没有实现

@@ -1,174 +1,189 @@
 # Touch Fish
 
-Touch Fish is a Terminal Learning Tool.
+Touch Fish 是一个 Terminal Learning Tool。
 
-It is not a normal vocabulary app. It helps users learn inside a terminal while making the output look like ordinary development work.
+它不是普通背单词软件，而是一个适合开发间隙使用的低调终端学习工具。
 
-Core idea:
+核心理念：
 
-> Touch Fish doesn't hide your study. It disguises it as work.
+> Learn in the gaps. Stay in the terminal.
 
-## Current Stage
+简单说：
 
-Touch Fish is currently in `v0.2 Product Experience`.
+> 在等待构建、工具响应或上下文切换的时候，顺手背几个单词。
 
-The current focus is not adding many new features. The focus is making the word workspace stable, usable, and believable as terminal output.
+## Current Stage / 当前阶段
 
-## Quick Start
+当前项目处于：
 
-Requirements:
+```txt
+v0.2 Product Experience
+```
+
+这个阶段的重点不是疯狂加功能，而是让 Word Workspace 稳定、好用，并且更自然地融入终端开发环境。
+
+## Quick Start / 快速开始
+
+你需要先安装：
 
 - Node.js
 - npm
 
-Clone the project:
+下载项目：
 
 ```powershell
 git clone <your-repo-url>
 cd "Touch Fish"
 ```
 
-Install dependencies:
+安装依赖：
 
 ```powershell
 npm install
 ```
 
-Create the local vocabulary file:
+创建本地词库文件：
 
 ```powershell
 Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts.json
 ```
 
-Start the Word Session:
+启动 Word Session：
 
 ```powershell
 npm run dev -- word
 ```
 
-Optional: link the local CLI command:
+如果想在任意目录使用 `touchfish word`，可以执行：
 
 ```powershell
 npm link
 touchfish word
 ```
 
-After `npm link`, `touchfish word` can be used from other directories.
+`npm link` 只需要在项目目录里执行一次。之后就可以在其他目录运行：
 
-## First-Time Setup Notes
+```powershell
+touchfish word
+```
 
-`assets/vocabulary/ielts.json` is required at runtime, but it is ignored by Git.
+## First-Time Setup Notes / 第一次配置说明
 
-This is intentional. Real vocabulary books can be large or personal, so the repository only commits:
+程序运行时需要这个本地词库文件：
+
+```txt
+assets/vocabulary/ielts.json
+```
+
+但这个文件不会提交到 GitHub，因为真实词库可能很大，也可能包含个人整理内容。
+
+仓库里只提交示例词库：
 
 ```txt
 assets/vocabulary/ielts.example.json
 ```
 
-If the app says `Vocabulary file not found`, copy the example file again:
+如果你看到 `Vocabulary file not found`，说明还没有创建本地词库。重新复制一份即可：
 
 ```powershell
 Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts.json
 ```
 
-## Run
+## Run / 运行方式
 
-During development:
+开发时使用：
 
 ```powershell
 npm run dev -- word
 ```
 
-After linking the local CLI:
+本地链接 CLI 后使用：
 
 ```powershell
-npm link
 touchfish word
 ```
 
-Run `npm link` from the project directory only once:
+链接 CLI：
 
 ```powershell
 cd "D:\Touch Fish"
 npm link
 ```
 
-After that, `touchfish word` can be used from other directories.
+## Current Features / 当前功能
 
-## Current Features
-
-- CLI entry
+- CLI 入口
 - `touchfish word`
 - Word Session
-- Keyboard navigation
-- Workspace with 3 words per page
-- Display modes: English, Chinese, English + Chinese
-- JSON vocabulary book
-- Local progress saving
-- Terminal build-log disguise theme
-- Debug/help view with hidden learning context
+- 键盘交互
+- Workspace：默认一页 3 个单词
+- Display Mode：英文、中文、英文 + 中文
+- JSON 词库
+- 本地学习进度保存
+- Build Log 风格界面
+- `?` Debug/Help 视图，尽量保持低调
 
-## Keyboard
+## Keyboard / 快捷键
 
-| Key | Action |
+| 按键 | 作用 |
 | --- | --- |
-| `A` | Previous workspace |
-| `D` | Next workspace |
-| `Space` | Repeat last navigation |
-| `Tab` | Switch display mode |
-| `?` | Toggle debug/help view |
-| `Q` | Quit |
+| `A` | 上一组 |
+| `D` | 下一组 |
+| `Space` | 重复上一次导航 |
+| `Tab` | 切换显示模式 |
+| `?` | 切换 Debug/Help 视图 |
+| `Q` | 退出 |
 
-## Vocabulary
+## Vocabulary / 词库
 
-The local vocabulary book is:
+本地词库文件：
 
 ```txt
 assets/vocabulary/ielts.json
 ```
 
-This file is ignored by Git because real vocabulary books can be large.
+这个文件会被 Git 忽略。
 
-The committed example file is:
+示例词库文件：
 
 ```txt
 assets/vocabulary/ielts.example.json
 ```
 
-See:
+词库格式说明见：
 
 ```txt
 docs/vocabulary-format.md
 ```
 
-## Project Structure
+## Project Structure / 项目结构
 
 ```txt
 src/
-  commands/   CLI command entry
-  session/    Session lifecycle
-  services/   Business logic
-  storage/    Local persistence
-  models/     Data models
-  config/     Default config and paths
-  ui/         Terminal rendering and themes
+  commands/   CLI 命令入口
+  session/    Session 生命周期
+  services/   业务逻辑
+  storage/    本地存储
+  models/     数据模型
+  config/     默认配置和路径
+  ui/         终端渲染和主题
 
 assets/
-  vocabulary/ Vocabulary books
-  progress/   Local progress
+  vocabulary/ 词库
+  progress/   本地进度
 
-docs/         Project notes and future plans
+docs/         项目说明和未来计划
 ```
 
-## Not Doing Now
+## Not Doing Now / 当前不做
 
 - Electron
-- Login
-- Cloud sync
-- AI features
-- Database
+- 登录
+- 云同步
+- AI 功能
+- 数据库
 - Settings UI
-- Multiple vocabulary switching
-- Reading mode
+- 多词库切换 UI
+- Read Mode
 
-These belong to later stages.
+这些功能属于后续阶段。
