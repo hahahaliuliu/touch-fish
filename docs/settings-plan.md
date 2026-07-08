@@ -1,10 +1,10 @@
 # Settings Plan / 设置功能草稿
 
-> Status: v0.3 之后再实现。当前只是记录想法，不代表 v0.2 要做。
+> Status: v0.3 已开始。当前已经完成 Settings model、默认设置和本地 settings 读取基础。
 
 这个文档用来保存 Settings 的产品想法，防止以后忘记。
 
-v0.2 的重点是产品体验和默认 Word Workspace，不要提前实现 Settings UI。
+当前不要提前实现 Settings UI。先把设置数据结构和读取逻辑稳定下来。
 
 ## Goal / 目标
 
@@ -119,13 +119,21 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 
 ## Possible Settings File / 未来设置文件
 
-未来可能的文件：
+当前本地设置文件：
 
 ```txt
 assets/settings.json
 ```
 
-可能结构：
+这个文件会被 Git 忽略，因为它属于每个用户自己的本地偏好。
+
+提交到 Git 的示例文件：
+
+```txt
+assets/settings.example.json
+```
+
+结构：
 
 ```json
 {
@@ -157,10 +165,10 @@ assets/settings.json
 
 v0.3 推荐顺序：
 
-1. 创建 settings model 和默认设置
-2. 从本地 JSON 读取 settings，没有文件时使用默认值
-3. 支持 `workspaceSize`
-4. 支持默认 `displayMode`
+1. 创建 settings model 和默认设置 `[done]`
+2. 从本地 JSON 读取 settings，没有文件时使用默认值 `[done]`
+3. 支持 `workspaceSize` `[done]`
+4. 支持默认 `displayMode` `[done]`
 5. 支持 `studyOrder`
 6. 支持选择当前词库
 7. 支持可见字段配置

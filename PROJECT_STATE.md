@@ -116,6 +116,16 @@ npm link
 - [x] 恢复当前单词位置
 - [x] 从项目根目录解析进度文件路径
 
+### Settings / 设置
+
+- [x] Settings model
+- [x] 默认设置 `DEFAULT_SETTINGS`
+- [x] 本地 `assets/settings.json` 读取
+- [x] 没有本地 settings 时自动使用默认设置
+- [x] 示例设置文件 `assets/settings.example.json`
+- [x] Word Session 使用 settings 中的 `workspaceSize`
+- [x] Word Session 使用 settings 中的默认 `displayMode`
+
 ### Workspace
 
 - [x] 默认一页显示 3 个单词
@@ -203,8 +213,8 @@ Touch Fish 始终运行在终端里。
 
 推荐顺序：
 
-1. 继续打磨 Build Log 伪装效果。
-2. 准备 v0.3 Settings 的数据模型设计，但暂时不做 Settings UI。
+1. 继续保持 Settings 小步开发。
+2. 下一步可以考虑保存用户切换后的 `displayMode`。
 3. 后续实现多词库。
 4. 后续实现 Read Mode。
 

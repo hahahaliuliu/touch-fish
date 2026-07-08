@@ -1,7 +1,8 @@
 import type { Word } from "../models/word.js";
+import type { DisplayMode } from "../models/settings.js";
 import { renderLogQuitMessage, renderLogTheme } from "./logTheme.js";
 
-export type DisplayMode = "both" | "english" | "chinese";
+export type { DisplayMode } from "../models/settings.js";
 
 interface RenderWordSessionOptions {
   words: Word[];

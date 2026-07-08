@@ -29,5 +29,8 @@ HANDOVER.md
 # Local learning progress
 assets/progress/word-progress.json
 
+# Local settings
+assets/settings.json
+
 # Local vocabulary data
 assets/vocabulary/ielts.json

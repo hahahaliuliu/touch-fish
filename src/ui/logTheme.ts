@@ -1,5 +1,5 @@
 import type { Word } from "../models/word.js";
-import type { DisplayMode } from "./wordRenderer.js";
+import type { DisplayMode } from "../models/settings.js";
 
 interface RenderLogThemeOptions {
   words: Word[];

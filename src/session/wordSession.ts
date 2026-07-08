@@ -11,10 +11,13 @@ import {
   previousWordGroup as moveToPreviousWordGroup,
   saveCurrentWordProgress,
 } from "../services/wordService.js";
+import { loadSettings } from "../services/settingsLoader.js";
 
 type LastNavigation = "next" | "previous";
 
-let displayMode: DisplayMode = "english";
+const settings = loadSettings();
+
+let displayMode: DisplayMode = settings.displayMode;
 let lastNavigation: LastNavigation = "next";
 let showHelp = false;
 
