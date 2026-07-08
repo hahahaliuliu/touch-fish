@@ -1,0 +1,282 @@
+{
+  "id": "ielts-example",
+  "name": "IELTS Example",
+  "description": "Example vocabulary book for Touch Fish word workspace.",
+  "language": {
+    "source": "en",
+    "target": "zh-CN"
+  },
+  "version": 1,
+  "words": [
+    {
+      "english": "abandon",
+      "chinese": "放弃；遗弃",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "ability",
+      "chinese": "能力；本领",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "abnormal",
+      "chinese": "反常的；异常的",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "abolish",
+      "chinese": "废除",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "abroad",
+      "chinese": "在国外；到国外",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "absence",
+      "chinese": "缺席；不存在",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "absolute",
+      "chinese": "绝对的；完全的",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "absorb",
+      "chinese": "吸收；理解",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "abstract",
+      "chinese": "抽象的；摘要",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "abundant",
+      "chinese": "丰富的；充足的",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "academic",
+      "chinese": "学术的；学院的",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "accelerate",
+      "chinese": "加速；促进",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "access",
+      "chinese": "进入；使用权",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "accompany",
+      "chinese": "陪伴；伴随",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "accurate",
+      "chinese": "准确的；精确的",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "achieve",
+      "chinese": "实现；达到",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "acquire",
+      "chinese": "获得；学到",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "adapt",
+      "chinese": "适应；改编",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "adequate",
+      "chinese": "足够的；适当的",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "adjust",
+      "chinese": "调整；适应",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "administration",
+      "chinese": "管理；行政",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "advantage",
+      "chinese": "优势；有利条件",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "affect",
+      "chinese": "影响",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "alternative",
+      "chinese": "可替代的；选择",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "analyze",
+      "chinese": "分析",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "approach",
+      "chinese": "方法；接近",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "appropriate",
+      "chinese": "适当的；合适的",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "assume",
+      "chinese": "假设；承担",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "available",
+      "chinese": "可获得的；有空的",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    },
+    {
+      "english": "benefit",
+      "chinese": "利益；好处",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "note": "",
+      "tags": []
+    }
+  ]
+}
