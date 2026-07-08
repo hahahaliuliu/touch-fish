@@ -54,6 +54,12 @@ Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts.json
 npm run dev -- word
 ```
 
+查看当前设置：
+
+```powershell
+npm run dev -- setting
+```
+
 如果想在任意目录使用 `touchfish word`，可以执行：
 
 ```powershell
@@ -65,6 +71,12 @@ touchfish word
 
 ```powershell
 touchfish word
+```
+
+查看当前设置：
+
+```powershell
+touchfish setting
 ```
 
 ## First-Time Setup Notes / 第一次配置说明

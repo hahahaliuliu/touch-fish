@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import { startSettingCommand } from "./commands/setting.js";
 import { startWordCommand } from "./commands/word.js";
 
 const program = new Command();
@@ -13,6 +14,13 @@ program
   .description("Start word learning session")
   .action(() => {
     startWordCommand();
+  });
+
+program
+  .command("setting")
+  .description("Show current local settings")
+  .action(() => {
+    startSettingCommand();
   });
 
 if (process.argv.length <= 2) {

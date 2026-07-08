@@ -169,17 +169,19 @@ v0.3 推荐顺序：
 2. 从本地 JSON 读取 settings，没有文件时使用默认值 `[done]`
 3. 支持 `workspaceSize` `[done]`
 4. 支持默认 `displayMode` `[done]`
-5. 支持 `studyOrder`
-6. 支持选择当前词库
-7. 支持可见字段配置
-8. 支持伪装主题
-9. 支持自定义快捷键
+5. 增加 `touchfish setting` 只读设置视图 `[done]`
+6. 支持在 `touchfish setting` 中修改 `workspaceSize`
+7. 支持 `studyOrder`
+8. 支持选择当前词库
+9. 支持可见字段配置
+10. 支持终端主题
+11. 支持自定义快捷键
 
 ## Not Yet / 当前不做
 
 v0.2 不要实现：
 
-- Settings UI
+- 可修改的 Settings UI
 - Theme switching
 - 多词库切换
 - 每日学习计划

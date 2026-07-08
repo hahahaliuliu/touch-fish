@@ -125,6 +125,7 @@ npm link
 - [x] 示例设置文件 `assets/settings.example.json`
 - [x] Word Session 使用 settings 中的 `workspaceSize`
 - [x] Word Session 使用 settings 中的默认 `displayMode`
+- [x] `touchfish setting` 只读设置视图
 
 ### Workspace
 
@@ -214,7 +215,7 @@ Touch Fish 始终运行在终端里。
 推荐顺序：
 
 1. 继续保持 Settings 小步开发。
-2. 下一步可以考虑保存用户切换后的 `displayMode`。
+2. 下一步可以让 `touchfish setting` 修改一个最小选项，例如 `workspaceSize`。
 3. 后续实现多词库。
 4. 后续实现 Read Mode。
 
