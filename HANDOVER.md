@@ -2,139 +2,174 @@
 
 ## Project Goal
 
-Touch Fish 是一个伪装成开发工具的学习软件。
+Touch Fish is a terminal learning tool disguised as development output.
 
-不是隐藏学习。
+It is not just "hidden studying".
 
-而是让学习看起来像工作。
+It should make learning look like normal work in a developer terminal.
 
----
+Core idea:
+
+> Touch Fish doesn't hide your study. It disguises it as work.
 
 ## Current Version
 
+```txt
 v0.2-dev
+```
 
----
+Current milestone:
 
-## Core Concepts
+```txt
+Product Experience
+```
 
-Workspace
+## Current Run Commands
 
-不是一页一个单词。
+Development:
 
-而是一组单词。
+```powershell
+npm run dev -- word
+```
 
-默认：
+Linked CLI:
 
-3 个。
+```powershell
+touchfish word
+```
 
-以后支持：
+To enable the linked CLI:
 
-1 / 3 / 5。
+```powershell
+cd "D:\Touch Fish"
+npm link
+```
 
----
+`npm link` only needs to be run again if the project is moved, Node/npm is reinstalled, or the global link is removed.
 
-Theme
+## Current Architecture
 
-UI 不直接写死。
-
-以后支持：
-
-CLI Log
-
-C++
-
-TypeScript
-
-Python
-
-VS Code
-
-Cursor
-
-JetBrains
-
----
-
-Renderer
-
-Renderer 不负责决定长什么样。
-
-Theme 决定。
-
-Renderer 负责调用。
-
----
-
-Help
-
-默认隐藏。
-
-只有：
-
-?
-
-显示：
-
-Progress
-
-Vocabulary
-
-Mode
-
-Shortcut
-
----
-
-Development Principles
-
-- 小步提交
-- 每完成一个功能 Commit
-- 不过早抽象
-- 一个文件一个职责
-- 已完成设计不要轻易推翻
-- 优先讨论产品，再写代码
-
----
-
-Current Architecture
-
-commands/
-
-session/
-
-services/
-
-storage/
-
-models/
-
-config/
-
-ui/
+```txt
+src/
+  commands/
+  session/
+  services/
+  storage/
+  models/
+  config/
+  ui/
 
 assets/
+  vocabulary/
+  progress/
 
----
+docs/
+```
 
-Completed
+Do not redesign this structure during v0.2.
 
-......
+## Completed
 
----
+- CLI foundation
+- `npm run dev -- word`
+- `touchfish word`
+- Word Session
+- Keyboard controls
+- Workspace groups
+- Default 3 words per workspace
+- Display modes
+- JSON vocabulary loading
+- Local progress saving
+- Build-log disguise theme
+- Disguised debug/help view
+- Project-root asset path resolution
+- Local large vocabulary ignored by Git
 
-Next Milestone
+## Keyboard
 
-Workspace UI
+| Key | Action |
+| --- | --- |
+| `A` | Previous workspace |
+| `D` | Next workspace |
+| `Space` | Repeat last navigation |
+| `Tab` | Switch display mode |
+| `?` | Toggle debug/help view |
+| `Q` | Quit |
 
-↓
+## Vocabulary
 
-Settings
+Current local book:
 
-↓
+```txt
+assets/vocabulary/ielts.json
+```
 
-Theme System
+Committed example:
 
-↓
+```txt
+assets/vocabulary/ielts.example.json
+```
 
-Read Mode
+Only `english` and `chinese` are required for current behavior.
+
+The following fields are placeholders for later:
+
+- `phonetic`
+- `example`
+- `partOfSpeech`
+- `note`
+- `tags`
+
+## UI Direction
+
+Touch Fish should stay terminal-first.
+
+Do not draw fake IDE windows.
+
+Do not imitate VS Code as a full interface.
+
+The terminal provides the window. Touch Fish provides believable terminal output.
+
+Current default theme:
+
+```txt
+build-log
+```
+
+Future terminal-style themes can include:
+
+- Git
+- Cargo
+- Docker
+- Backend service logs
+- Claude Code style terminal output
+- Python REPL
+- SQL console
+
+## Current v0.2 Priorities
+
+1. Keep the project stable.
+2. Make the Word Workspace look more like real development output.
+3. Keep main-screen learning signals low.
+4. Keep Help disguised as diagnostics.
+5. Avoid implementing Settings until v0.3.
+
+## Not Now
+
+- Electron
+- Login
+- Cloud sync
+- AI features
+- Database
+- Settings UI
+- Multi-book switching UI
+- Read Mode
+
+## Development Rules
+
+- Small changes.
+- One clear goal per step.
+- Do not implement future-stage features early.
+- Do not rewrite architecture.
+- Run `npm run dev -- word` after changes.
+- Commit after stable milestones.

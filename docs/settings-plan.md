@@ -105,14 +105,19 @@ Possible themes:
 
 - `build-log`
 - `backend-log`
-- `code-editor`
-- `cursor`
+- `git`
+- `cargo`
+- `docker`
+- `claude-code`
+- `python-repl`
+- `sql-console`
 
 Notes:
 
 - `build-log` is the current default.
 - Other themes should not be implemented until the theme system is ready.
 - Theme switching belongs to Settings, not the current v0.2 workspace polish.
+- Themes should simulate terminal output, not full desktop app windows or IDE layouts.
 
 ## Possible Settings File
 

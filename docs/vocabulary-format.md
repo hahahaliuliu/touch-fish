@@ -20,6 +20,8 @@ To set up a local vocabulary book, copy the example file to `ielts.json` and rep
 assets/vocabulary/ielts.example.json -> assets/vocabulary/ielts.json
 ```
 
+## Book Shape
+
 The file is a JSON object. It contains book metadata and a `words` list.
 
 ```json
@@ -46,12 +48,23 @@ The file is a JSON object. It contains book metadata and a `words` list.
 }
 ```
 
-Required word fields:
+## Required Fields
+
+Book fields:
+
+- `id`
+- `name`
+- `version`
+- `language.source`
+- `language.target`
+- `words`
+
+Word fields:
 
 - `english`
 - `chinese`
 
-Optional word fields:
+## Reserved Optional Word Fields
 
 - `phonetic`
 - `example`
@@ -59,18 +72,17 @@ Optional word fields:
 - `note`
 - `tags`
 
-Language fields:
+These fields are placeholders for later stages. They can stay empty in v0.2.
 
-- `source`: source language, such as `en`
-- `target`: target language, such as `zh-CN`
+`target` is not part of speech. It means the target language, such as `zh-CN`.
 
-`target` is not part of speech. Part of speech belongs to each word and should use `partOfSpeech`.
+Part of speech belongs to each word and should use `partOfSpeech`.
 
-Current v0.2 behavior:
+## Current v0.2 Behavior
 
 - Touch Fish reads only `assets/vocabulary/ielts.json`.
 - `assets/vocabulary/ielts.example.json` is only a template.
 - The word workspace uses `english` and `chinese`.
-- Other fields are saved for later product stages.
+- Optional fields are saved for later Settings and display modes.
 - Empty strings and empty arrays are valid placeholders.
 - Multiple vocabulary books and import commands are not implemented yet.

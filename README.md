@@ -1,46 +1,174 @@
 # Touch Fish
 
-Touch Fish 是一款伪装成终端（Terminal）的桌面学习工具。
+Touch Fish is a Terminal Learning Tool.
 
-它通过终端风格的界面，将学习内容伪装成命令输出，让用户能够阅读小说或学习单词。
+It is not a normal vocabulary app. It helps users learn inside a terminal while making the output look like ordinary development work.
 
-## 项目目标
+Core idea:
 
-Touch Fish 的目标不是做一个复杂的阅读器，而是做一个可以长期使用、可以持续扩展的伪装学习工具。
+> Touch Fish doesn't hide your study. It disguises it as work.
 
-第一版重点支持：
+## Current Stage
 
-- 单词显示
-- 小说阅读
-- Terminal 风格界面
-- 本地保存阅读进度
+Touch Fish is currently in `v0.2 Product Experience`.
 
-## 第一版功能
+The current focus is not adding many new features. The focus is making the word workspace stable, usable, and believable as terminal output.
 
-- [ ] 终端界面
-- [ ] 单词阅读
-- [ ] 小说阅读
-- [ ] 阅读进度保存
-- [ ] 上一条 / 下一条
-- [ ] 支持导入 txt 小说
-- [ ] 支持导入单词库
+## Quick Start
 
-## 暂时不做
+Requirements:
 
-- 登录
-- 云同步
-- AI 功能
-- 多人协作
-- 在线内容库
+- Node.js
+- npm
 
-## 技术方向
+Clone the project:
 
-初步计划使用：
+```powershell
+git clone <your-repo-url>
+cd "Touch Fish"
+```
+
+Install dependencies:
+
+```powershell
+npm install
+```
+
+Create the local vocabulary file:
+
+```powershell
+Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts.json
+```
+
+Start the Word Session:
+
+```powershell
+npm run dev -- word
+```
+
+Optional: link the local CLI command:
+
+```powershell
+npm link
+touchfish word
+```
+
+After `npm link`, `touchfish word` can be used from other directories.
+
+## First-Time Setup Notes
+
+`assets/vocabulary/ielts.json` is required at runtime, but it is ignored by Git.
+
+This is intentional. Real vocabulary books can be large or personal, so the repository only commits:
+
+```txt
+assets/vocabulary/ielts.example.json
+```
+
+If the app says `Vocabulary file not found`, copy the example file again:
+
+```powershell
+Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts.json
+```
+
+## Run
+
+During development:
+
+```powershell
+npm run dev -- word
+```
+
+After linking the local CLI:
+
+```powershell
+npm link
+touchfish word
+```
+
+Run `npm link` from the project directory only once:
+
+```powershell
+cd "D:\Touch Fish"
+npm link
+```
+
+After that, `touchfish word` can be used from other directories.
+
+## Current Features
+
+- CLI entry
+- `touchfish word`
+- Word Session
+- Keyboard navigation
+- Workspace with 3 words per page
+- Display modes: English, Chinese, English + Chinese
+- JSON vocabulary book
+- Local progress saving
+- Terminal build-log disguise theme
+- Debug/help view with hidden learning context
+
+## Keyboard
+
+| Key | Action |
+| --- | --- |
+| `A` | Previous workspace |
+| `D` | Next workspace |
+| `Space` | Repeat last navigation |
+| `Tab` | Switch display mode |
+| `?` | Toggle debug/help view |
+| `Q` | Quit |
+
+## Vocabulary
+
+The local vocabulary book is:
+
+```txt
+assets/vocabulary/ielts.json
+```
+
+This file is ignored by Git because real vocabulary books can be large.
+
+The committed example file is:
+
+```txt
+assets/vocabulary/ielts.example.json
+```
+
+See:
+
+```txt
+docs/vocabulary-format.md
+```
+
+## Project Structure
+
+```txt
+src/
+  commands/   CLI command entry
+  session/    Session lifecycle
+  services/   Business logic
+  storage/    Local persistence
+  models/     Data models
+  config/     Default config and paths
+  ui/         Terminal rendering and themes
+
+assets/
+  vocabulary/ Vocabulary books
+  progress/   Local progress
+
+docs/         Project notes and future plans
+```
+
+## Not Doing Now
 
 - Electron
-- React
-- TypeScript
+- Login
+- Cloud sync
+- AI features
+- Database
+- Settings UI
+- Multiple vocabulary switching
+- Reading mode
 
-## 项目状态
-
-当前项目处于早期设计阶段。
+These belong to later stages.

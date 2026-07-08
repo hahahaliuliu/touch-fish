@@ -1,311 +1,238 @@
 # Touch Fish Design
+
+> Version: v0.2-dev
+
 Touch Fish doesn't hide your study. It disguises it as work.
-> Version: v0.1
 
----
+## 1. Design Philosophy
 
-# 1. Design Philosophy
+Touch Fish should become part of a developer's terminal workflow.
 
-Touch Fish 的目标不是成为一个传统的背单词软件。
+The goal is not to build a traditional vocabulary app. The goal is to make short learning sessions feel natural inside development time.
 
-它应该成为开发工作流中的一部分，在尽可能不打断工作的情况下帮助用户学习。
-
-## Core Principles
+## 2. Core Principles
 
 ### Stealth First
 
-所有设计优先考虑隐蔽性。
+The first product requirement is disguise.
 
-不要让别人一眼看出来这是学习软件。
+At a glance, the screen should look like normal terminal output from a development tool.
 
----
+### Terminal First
+
+Touch Fish always runs inside the terminal.
+
+The app should not draw fake IDE windows, VS Code borders, sidebars, or desktop UI.
+
+The terminal already provides the window. Touch Fish should generate believable content inside that window.
 
 ### Keyboard Only
 
-所有操作均可通过键盘完成。
+All current interactions should work from the keyboard.
 
-不依赖鼠标。
+Mouse interaction is not part of v0.2.
 
----
+### Small Sessions
 
-### Don't Interrupt Workflow
+Touch Fish should work for small fragments of time.
 
-Touch Fish 不应该打断开发。
-
-进入学习后，退出应恢复原来的终端状态，用户可以继续编码。
-
----
+The user should be able to open a word session, move through a few word groups, and quit without breaking their coding flow.
 
 ### State Persistence
 
-Touch Fish 应该记住用户的状态。
+Touch Fish should remember local progress.
 
-例如：
+Current state:
 
-* 当前单词
-* Display Mode
-* Window Mode（未来）
-* Theme（未来）
+- Current word index
 
-再次打开时自动恢复。
+Future state:
 
----
+- Display mode
+- Workspace size
+- Theme
+- Active vocabulary book
 
-### One Command, One Session
+## 3. Command Model
 
-一个命令进入一个 Session。
+Touch Fish has one project entry:
 
-例如：
-
+```powershell
+touchfish
 ```
+
+Current command:
+
+```powershell
 touchfish word
 ```
 
-进入 Word Session。
+Future commands:
 
-以后：
-
-```
+```powershell
 touchfish read
+touchfish setting
+touchfish review
 ```
 
-进入 Read Session。
+Each command should enter one clear session.
 
----
+## 4. Word Workspace
 
-# 2. Display Mode
+The Word Session uses a workspace model.
 
-Word Session 只有一个 Session。
+It does not show only one word by default. It shows one small group of words.
 
-学习方式由 Display Mode 决定。
+Current default:
 
-按 **Tab** 循环切换。
-
-## Mode 1
-
-English + Chinese
-
-```
-abandon
-
-放弃；遗弃
+```txt
+3 words
 ```
 
----
+Future Settings can support:
 
-## Mode 2
+- 1 word
+- 3 words
+- 5 words
 
-English Only
+## 5. Display Mode
 
-```
-abandon
-```
+Current display modes:
 
----
+- English + Chinese
+- English Only
+- Chinese Only
 
-## Mode 3
+The default should favor disguise. English-only output is less obvious in a development terminal than Chinese definitions.
 
-Chinese Only
+The user can press `Tab` to rotate display modes.
 
-```
-放弃；遗弃
-```
+Future display concepts:
 
----
+- Example
+- Mask
+- Review
+- Phonetic
+- Part of speech
 
-未来可以继续增加：
+These belong to later stages.
 
-* Example Mode
-* Mask Mode
-* Review Mode
+## 6. UI Style
 
-Display Mode 使用 Tab 循环切换。
+The default v0.2 style is a CLI build-log disguise.
 
----
+Example direction:
 
-# 3. Word Session
+```txt
+[INFO] compiling workspace...
+[INFO] resolving dependency graph...
+[INFO] loading cached transform results...
 
-默认流程：
+cache entries by path ./src/cache/
+  cache/007.ts   "abandon"    [built] 647 bytes
+  cache/008.ts   "benefit"    [built] 648 bytes
+  cache/009.ts   "complex"    [built] 649 bytes
 
-```
-Terminal
-
-↓
-
-touchfish word
-
-↓
-
-Word Session
-
-↓
-
-Q
-
-↓
-
-恢复 Terminal
+[INFO] emitted 3 cache entries
+[INFO] watching for file changes...
+runtime: idle
+>
 ```
 
-退出后尽可能恢复进入前的终端状态。
+The output does not need to fool someone reading carefully next to the screen. It should be believable from a normal distance and should not immediately look like a learning app.
 
----
+## 7. Help View
 
-# 4. Keyboard Interaction
+The `?` view should replace the main screen.
 
-## Default Shortcuts
+It should not append below the main screen, because that makes the terminal feel cluttered and exposes too much at once.
 
-| Key   | Function               |
-| ----- | ---------------------- |
-| Space | Repeat Last Navigation |
-| A     | Previous Word          |
-| D     | Next Word              |
-| Tab   | Switch Display Mode    |
-| ?     | Show Help              |
-| Q     | Quit Session           |
+It can show:
 
----
+- Progress
+- Entries per workspace
+- Current bindings
+- Current runtime state
 
-## Navigation
+But the wording should stay disguised as diagnostics.
 
-按下：
+## 8. Theme Direction
 
-```
-A
-```
+Themes should be terminal output styles, not desktop app skins.
 
-进入 Previous 状态。
+Good future themes:
 
-之后：
+- Build Log
+- Git
+- Cargo
+- Docker
+- Backend Service Log
+- Claude Code style terminal output
+- Python REPL
+- SQL Console
 
-```
-Space
-```
+Avoid:
 
-持续执行 Previous。
+- VS Code full-window simulation
+- JetBrains full-window simulation
+- Fake sidebars
+- Fake title bars
+- Electron-style UI
 
----
+## 9. Vocabulary Design
 
-按下：
+Current v0.2 vocabulary file:
 
-```
-D
-```
-
-进入 Next 状态。
-
-之后：
-
-```
-Space
+```txt
+assets/vocabulary/ielts.json
 ```
 
-持续执行 Next。
+The real local vocabulary file is ignored by Git.
 
-Space 永远重复最近一次导航动作。
+Current required fields:
 
----
+- `english`
+- `chinese`
 
-## Help
+Reserved optional fields:
 
-默认隐藏。
+- `phonetic`
+- `example`
+- `partOfSpeech`
+- `note`
+- `tags`
 
-按：
+The optional fields exist so the format can grow later without changing every word record.
 
-```
-?
-```
+## 10. Future Stages
 
-覆盖显示帮助界面。
+### v0.3 Customization
 
-按任意键关闭帮助。
+- Settings file
+- Workspace size
+- Theme selection
+- Default display mode
+- Study order
+- Active vocabulary book
+- Key bindings
 
----
+### v0.4 Content
 
-# 5. UI Design
+- Larger vocabulary management
+- Multiple vocabulary books
+- Import support
+- Read Mode
 
-Word Session 不应该有明显的边框。
+### v0.5 Daily Use
 
-单词区域应该自然融入终端。
+- Favorites
+- Wrong words
+- Review
+- Statistics
+- Daily learning records
 
-上下都应保留足够内容用于伪装。
+## 11. Development Rule
 
-目标不是漂亮。
+Any stage should only complete that stage's goals.
 
-而是自然。
-
-后续将继续探索：
-
-* Terminal 风格
-* VS Code 风格
-* Claude Code 风格
-
----
-
-# 6. Future Design
-
-未来计划支持：
-
-## Word
-
-* Example
-* Favorite
-* Wrong Words
-* Review
-* Statistics
-
----
-
-## Read
-
-小说阅读模式。
-
----
-
-## Setting
-
-支持配置：
-
-* Display Mode
-* Window Mode
-* Theme
-* Navigation Key
-* Font Size
-
----
-
-## Window Mode
-
-未来支持两种模式：
-
-### Immersive Mode
-
-类似 Vim。
-
-临时占用整个终端。
-
-退出恢复终端。
-
----
-
-### Embedded Mode
-
-直接在已有终端内容下学习。
-
-更加隐蔽。
-
-用户可在 Setting 中切换。
-
----
-
-# 7. Design Goal
-
-Touch Fish 不是一个为了展示的项目。
-
-它应该成为一个真正可以每天使用的工具。
-
-所有设计都围绕一个目标：
-
-> Learn without interrupting your workflow.
-
-
+If a feature belongs to a later version, keep the idea in documentation and do not implement it early.
