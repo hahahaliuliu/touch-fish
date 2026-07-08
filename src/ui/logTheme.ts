@@ -15,7 +15,11 @@ export function renderLogTheme(options: RenderLogThemeOptions) {
   console.clear();
 
   if (showHelp) {
-    renderLogHelp();
+    renderLogHelp({
+      current,
+      total,
+      windowSize: words.length,
+    });
     return;
   }
 
@@ -52,10 +56,22 @@ export function renderLogTheme(options: RenderLogThemeOptions) {
   console.log(">");
 }
 
-function renderLogHelp() {
+interface RenderLogHelpOptions {
+  current: number;
+  total: number;
+  windowSize: number;
+}
+
+function renderLogHelp(options: RenderLogHelpOptions) {
+  const { current, total, windowSize } = options;
+
   console.log("[DEBUG] runtime diagnostics");
   console.log("[DEBUG] watcher state: paused");
   console.log("[DEBUG] input source: stdin/raw");
+  console.log("");
+  console.log("cache cursor");
+  console.log(`  offset          ${current} / ${total}`);
+  console.log(`  entries         ${windowSize}`);
   console.log("");
   console.log("active handles");
   console.log("  fs.watch        ./src/cache");
