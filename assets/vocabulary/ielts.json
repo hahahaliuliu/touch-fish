@@ -1,11 +1,84 @@
-[
-  { "english": "abandon", "chinese": "放弃；遗弃" },
-  { "english": "benefit", "chinese": "利益；好处" },
-  { "english": "complex", "chinese": "复杂的" },
-  { "english": "derive", "chinese": "获得；源于" },
-  { "english": "exceed", "chinese": "超过" },
-  { "english": "feature", "chinese": "特征；特点" },
-  { "english": "generate", "chinese": "产生；生成" },
-  { "english": "highlight", "chinese": "强调；突出" },
-  { "english": "impact", "chinese": "影响" }
-]
+{
+  "id": "ielts-basic",
+  "name": "IELTS Basic",
+  "description": "Default vocabulary book for Touch Fish word workspace.",
+  "language": {
+    "source": "en",
+    "target": "zh-CN"
+  },
+  "version": 1,
+  "words": [
+    {
+      "english": "abandon",
+      "chinese": "放弃；遗弃",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "tags": []
+    },
+    {
+      "english": "benefit",
+      "chinese": "利益；好处",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "tags": []
+    },
+    {
+      "english": "complex",
+      "chinese": "复杂的",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "tags": []
+    },
+    {
+      "english": "derive",
+      "chinese": "获得；源于",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "tags": []
+    },
+    {
+      "english": "exceed",
+      "chinese": "超过",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "tags": []
+    },
+    {
+      "english": "feature",
+      "chinese": "特征；特点",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "tags": []
+    },
+    {
+      "english": "generate",
+      "chinese": "产生；生成",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "tags": []
+    },
+    {
+      "english": "highlight",
+      "chinese": "强调；突出",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "tags": []
+    },
+    {
+      "english": "impact",
+      "chinese": "影响",
+      "phonetic": "",
+      "example": "",
+      "partOfSpeech": "",
+      "tags": []
+    }
+  ]
+}
