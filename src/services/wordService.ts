@@ -6,7 +6,7 @@ import { loadVocabulary } from "./vocabularyLoader.js";
 const words: Word[] = loadVocabulary();
 const settings = loadSettings();
 
-const workspaceSize = settings.workspaceSize;
+let workspaceSize = settings.workspaceSize;
 
 let currentIndex = loadWordProgress();
 
@@ -34,4 +34,8 @@ export function getWordProgress() {
 
 export function saveCurrentWordProgress() {
   saveWordProgress(currentIndex);
+}
+
+export function reloadWordSettings() {
+  workspaceSize = loadSettings().workspaceSize;
 }

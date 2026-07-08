@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import path from "node:path";
 import { DEFAULT_SETTINGS } from "../config/defaultSettings.js";
 import { resolveAssetPath } from "../config/paths.js";
 import type {
@@ -14,7 +15,7 @@ const settingsPath = resolveAssetPath("settings.json");
 
 export function loadSettings(): Settings {
   if (!fs.existsSync(settingsPath)) {
-    return DEFAULT_SETTINGS;
+    return cloneSettings(DEFAULT_SETTINGS);
   }
 
   const fileContent = fs.readFileSync(settingsPath, "utf-8");
@@ -31,6 +32,39 @@ export function loadSettings(): Settings {
   }
 
   return settings as Settings;
+}
+
+export function saveSettings(settings: Settings) {
+  const errors = validateSettings(settings);
+
+  if (errors.length > 0) {
+    throw new Error(
+      [
+        `Invalid settings format: ${settingsPath}`,
+        ...errors.map((error) => `- ${error}`),
+      ].join("\n")
+    );
+  }
+
+  const dir = path.dirname(settingsPath);
+
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  fs.writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, "utf-8");
+}
+
+function cloneSettings(settings: Settings): Settings {
+  return {
+    ...settings,
+    visibleFields: {
+      ...settings.visibleFields,
+    },
+    keyBindings: {
+      ...settings.keyBindings,
+    },
+  };
 }
 
 function validateSettings(value: unknown): string[] {

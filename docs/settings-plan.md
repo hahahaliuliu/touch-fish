@@ -170,7 +170,7 @@ v0.3 推荐顺序：
 3. 支持 `workspaceSize` `[done]`
 4. 支持默认 `displayMode` `[done]`
 5. 增加 `touchfish setting` 只读设置视图 `[done]`
-6. 支持在 `touchfish setting` 中修改 `workspaceSize`
+6. 支持在 `touchfish setting` 中修改 `workspaceSize` `[done]`
 7. 支持 `studyOrder`
 8. 支持选择当前词库
 9. 支持可见字段配置

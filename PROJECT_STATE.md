@@ -126,6 +126,7 @@ npm link
 - [x] Word Session 使用 settings 中的 `workspaceSize`
 - [x] Word Session 使用 settings 中的默认 `displayMode`
 - [x] `touchfish setting` 只读设置视图
+- [x] `touchfish setting` 支持编辑并保存 `workspaceSize`
 
 ### Workspace
 

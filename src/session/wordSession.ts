@@ -9,6 +9,7 @@ import {
   getWordProgress,
   nextWordGroup as moveToNextWordGroup,
   previousWordGroup as moveToPreviousWordGroup,
+  reloadWordSettings,
   saveCurrentWordProgress,
 } from "../services/wordService.js";
 import { loadSettings } from "../services/settingsLoader.js";
@@ -132,7 +133,10 @@ function openSettingSession() {
   saveCurrentWordProgress();
   process.stdin.off("data", handleKeyPress);
   startSettingSession({
-    onReturn: startWordSession,
+    onReturn: () => {
+      reloadWordSettings();
+      startWordSession();
+    },
   });
 }
 

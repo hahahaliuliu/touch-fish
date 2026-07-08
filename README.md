@@ -60,6 +60,19 @@ npm run dev -- word
 npm run dev -- setting
 ```
 
+Settings 当前支持：
+
+- W/S 或 ↑/↓ 移动选择项
+- Enter 进入编辑 / 确认
+- A/D 或 ←/→ 修改当前值
+- Esc 取消编辑
+- Ctrl+O 返回 Word
+- Q 退出
+
+当前可修改：
+
+- Workspace Size: 1 / 3 / 5
+
 如果想在任意目录使用 `touchfish word`，可以执行：
 
 ```powershell
