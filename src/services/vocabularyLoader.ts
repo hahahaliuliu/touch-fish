@@ -4,6 +4,19 @@ import type { VocabularyBook, Word } from "../models/word.js";
 
 export function loadVocabulary(): Word[] {
   const vocabularyPath = path.resolve("assets/vocabulary/ielts.json");
+  const exampleVocabularyPath = path.resolve("assets/vocabulary/ielts.example.json");
+
+  if (!fs.existsSync(vocabularyPath)) {
+    throw new Error(
+      [
+        `Vocabulary file not found: ${vocabularyPath}`,
+        "",
+        "Create a local vocabulary file by copying:",
+        `${exampleVocabularyPath} -> ${vocabularyPath}`,
+      ].join("\n")
+    );
+  }
+
   const fileContent = fs.readFileSync(vocabularyPath, "utf-8");
   const vocabularyBook = JSON.parse(fileContent) as unknown;
   const errors = validateVocabularyBook(vocabularyBook);
