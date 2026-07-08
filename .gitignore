@@ -25,3 +25,6 @@ build/
 
 # 本地学习进度
 assets/progress/word-progress.json
+
+# 本地词库数据
+assets/vocabulary/ielts.json
