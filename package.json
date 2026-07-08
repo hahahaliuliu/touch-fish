@@ -1,7 +1,7 @@
 {
   "name": "touch-fish",
   "version": "0.1.0",
-  "description": "Touch Fish 是一款伪装成终端（Terminal）的桌面学习工具。",
+  "description": "A low-key terminal learning tool for development breaks.",
   "type": "module",
   "main": "src/index.ts",
   "bin": {
@@ -22,7 +22,7 @@
     "touchfish"
   ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/node": "^26.1.0",
     "tsx": "^4.22.4",
