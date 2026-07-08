@@ -4,6 +4,9 @@
   "description": "Touch Fish 是一款伪装成终端（Terminal）的桌面学习工具。",
   "type": "module",
   "main": "src/index.ts",
+  "bin": {
+    "touchfish": "bin/touchfish.js"
+  },
   "directories": {
     "doc": "docs"
   },
