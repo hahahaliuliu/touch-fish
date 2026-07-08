@@ -1,10 +1,13 @@
 import fs from "node:fs";
-import path from "node:path";
+import { resolveAssetPath } from "../config/paths.js";
 import type { VocabularyBook, Word } from "../models/word.js";
 
 export function loadVocabulary(): Word[] {
-  const vocabularyPath = path.resolve("assets/vocabulary/ielts.json");
-  const exampleVocabularyPath = path.resolve("assets/vocabulary/ielts.example.json");
+  const vocabularyPath = resolveAssetPath("vocabulary", "ielts.json");
+  const exampleVocabularyPath = resolveAssetPath(
+    "vocabulary",
+    "ielts.example.json"
+  );
 
   if (!fs.existsSync(vocabularyPath)) {
     throw new Error(

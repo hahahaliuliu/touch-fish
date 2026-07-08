@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
+import { resolveAssetPath } from "../config/paths.js";
 
-const progressPath = path.resolve("assets/progress/word-progress.json");
+const progressPath = resolveAssetPath("progress", "word-progress.json");
 
 export function loadWordProgress(): number {
   if (!fs.existsSync(progressPath)) {
