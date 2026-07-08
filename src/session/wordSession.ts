@@ -31,8 +31,12 @@ export function startWordSession() {
 }
 
 function handleKeyPress(key: string) {
-  const input = key.toString();
+  for (const input of key.toString()) {
+    handleInput(input);
+  }
+}
 
+function handleInput(input: string) {
   if (input === "\u0003") {
     quitWordSession();
   }
