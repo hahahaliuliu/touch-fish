@@ -35,6 +35,7 @@ export function renderSettingSession(settings: Settings) {
   console.log(`  quit                  ${settings.keyBindings.quit}`);
   console.log("");
   console.log("[INFO] read-only settings view");
+  console.log("press ctrl+o to return");
   console.log("press q to exit");
 }
 

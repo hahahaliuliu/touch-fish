@@ -12,9 +12,11 @@ import {
   saveCurrentWordProgress,
 } from "../services/wordService.js";
 import { loadSettings } from "../services/settingsLoader.js";
+import { startSettingSession } from "./settingSession.js";
 
 type LastNavigation = "next" | "previous";
 
+const OPEN_SETTINGS_KEY = "\u000f";
 const settings = loadSettings();
 
 let displayMode: DisplayMode = settings.displayMode;
@@ -35,13 +37,22 @@ export function startWordSession() {
 
 function handleKeyPress(key: string) {
   for (const input of key.toString()) {
-    handleInput(input);
+    const shouldContinue = handleInput(input);
+
+    if (!shouldContinue) {
+      return;
+    }
   }
 }
 
-function handleInput(input: string) {
+function handleInput(input: string): boolean {
   if (input === "\u0003") {
     quitWordSession();
+  }
+
+  if (input === OPEN_SETTINGS_KEY) {
+    openSettingSession();
+    return false;
   }
 
   if (input.toLowerCase() === "q") {
@@ -68,6 +79,8 @@ function handleInput(input: string) {
     showHelp = !showHelp;
     renderSession();
   }
+
+  return true;
 }
 
 function nextWord() {
@@ -112,6 +125,14 @@ function renderSession() {
     total: progress.total,
     displayMode,
     showHelp,
+  });
+}
+
+function openSettingSession() {
+  saveCurrentWordProgress();
+  process.stdin.off("data", handleKeyPress);
+  startSettingSession({
+    onReturn: startWordSession,
   });
 }
 

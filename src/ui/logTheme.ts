@@ -83,6 +83,7 @@ function renderLogHelp(options: RenderLogHelpOptions) {
   console.log("  d      seek:+1");
   console.log("  space  repeat");
   console.log("  tab    rotate:output");
+  console.log("  ctrl+o config:open");
   console.log("  ?      debug:toggle");
   console.log("  q      process:exit");
   console.log("");
