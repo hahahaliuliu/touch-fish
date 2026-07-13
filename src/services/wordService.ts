@@ -4,6 +4,7 @@ import {
   loadWordProgress,
   saveWordProgress,
 } from "../storage/progress.js";
+import { createRandomOrder } from "./randomOrder.js";
 import { loadSettings } from "./settingsLoader.js";
 import { loadVocabulary } from "./vocabularyLoader.js";
 
@@ -113,6 +114,7 @@ export function saveDisplayMode(displayMode: DisplayMode) {
 
 export function reloadWordSettings() {
   updateSavedIndex();
+  progress = loadWordProgress();
 
   const updatedSettings = loadSettings();
 
@@ -134,7 +136,7 @@ function getWordOrder(): number[] {
     progress = {
       ...progress,
       randomIndex: 0,
-      randomOrder: createRandomOrder(),
+      randomOrder: createRandomOrder(words.length),
     };
   }
 
@@ -197,17 +199,4 @@ function isValidRandomOrder(order: number[]): boolean {
     seen.size === words.length &&
     order.every((index) => Number.isInteger(index) && index >= 0 && index < words.length)
   );
-}
-
-function createRandomOrder(): number[] {
-  const order = [...sequentialOrder];
-
-  for (let index = order.length - 1; index > 0; index -= 1) {
-    const randomIndex = Math.floor(Math.random() * (index + 1));
-    const current = order[index];
-    order[index] = order[randomIndex]!;
-    order[randomIndex] = current!;
-  }
-
-  return order;
 }

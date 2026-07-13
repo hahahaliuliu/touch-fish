@@ -1,5 +1,6 @@
 import type { Settings } from "../models/settings.js";
 import { loadSettings, saveSettings } from "../services/settingsLoader.js";
+import { reshuffleRandomOrder } from "../services/randomOrder.js";
 import { renderSettingSession } from "../ui/settingsRenderer.js";
 
 const RETURN_TO_WORD_KEY = "\u000f";
@@ -7,6 +8,8 @@ const WORKSPACE_SIZES = [1, 3, 5];
 const STUDY_GROUP_SIZES = [10, 20, 30];
 const STUDY_ORDERS: Array<Settings["studyOrder"]> = ["sequential", "random"];
 type NumericOption = number | "custom";
+type StudyOrderOption = Settings["studyOrder"] | "reshuffle";
+const STUDY_ORDER_OPTIONS: readonly StudyOrderOption[] = [...STUDY_ORDERS, "reshuffle"];
 
 interface StartSettingSessionOptions {
   onReturn?: () => void;
@@ -69,7 +72,9 @@ let draftSettings = settings;
 let numericInput = "";
 let numericInputTouched = false;
 let selectedNumericOption: NumericOption | undefined;
+let selectedStudyOrderOption: StudyOrderOption | undefined;
 let editError = "";
+let isReshuffleArmed = false;
 
 export function startSettingSession(options: StartSettingSessionOptions = {}) {
   onReturnToPreviousSession = options.onReturn;
@@ -150,6 +155,13 @@ function handleInput(input: string): boolean {
     return true;
   }
 
+  if (isEditing && isReshuffleSelected() && input === " ") {
+    isReshuffleArmed = true;
+    editError = "";
+    render();
+    return true;
+  }
+
   if (isEditing && isNumericItem(getSelectedItem()) && /^\d$/.test(input)) {
     appendNumericInput(input);
     return true;
@@ -214,6 +226,27 @@ function confirmOrStartEdit() {
       numericInputTouched = false;
     }
 
+    if (item.key === "studyOrder") {
+      selectedStudyOrderOption = draftSettings.studyOrder;
+    }
+
+    render();
+    return;
+  }
+
+  if (isReshuffleSelected()) {
+    if (!isReshuffleArmed) {
+      editError = "Press Space to arm reshuffle before pressing Enter";
+      render();
+      return;
+    }
+
+    draftSettings = { ...draftSettings, studyOrder: "random" };
+    settings = cloneSettings(draftSettings);
+    saveSettings(settings);
+    reshuffleRandomOrder();
+    isEditing = false;
+    resetEditState();
     render();
     return;
   }
@@ -281,9 +314,17 @@ function changeCurrentValue(direction: -1 | 1) {
   }
 
   if (item.key === "studyOrder") {
+    const nextOption = getNextValue(
+      selectedStudyOrderOption ?? draftSettings.studyOrder,
+      STUDY_ORDER_OPTIONS,
+      direction
+    );
+
+    selectedStudyOrderOption = nextOption;
+    isReshuffleArmed = false;
     draftSettings = {
       ...draftSettings,
-      studyOrder: getNextValue(draftSettings.studyOrder, STUDY_ORDERS, direction),
+      studyOrder: nextOption === "reshuffle" ? "random" : nextOption,
     };
   }
 
@@ -411,7 +452,12 @@ function render() {
     numericInput: isEditing && isNumericItem(getSelectedItem()) ? numericInput : undefined,
     selectedNumericOption:
       isEditing && isNumericItem(getSelectedItem()) ? selectedNumericOption : undefined,
+    selectedStudyOrderOption:
+      isEditing && getSelectedItem().key === "studyOrder"
+        ? selectedStudyOrderOption
+        : undefined,
     editError,
+    isReshuffleArmed,
   });
 }
 
@@ -419,7 +465,13 @@ function resetEditState() {
   numericInput = "";
   numericInputTouched = false;
   selectedNumericOption = undefined;
+  selectedStudyOrderOption = undefined;
   editError = "";
+  isReshuffleArmed = false;
+}
+
+function isReshuffleSelected(): boolean {
+  return getSelectedItem().key === "studyOrder" && selectedStudyOrderOption === "reshuffle";
 }
 
 function returnToPreviousSession() {

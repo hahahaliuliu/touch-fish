@@ -15,7 +15,9 @@ interface RenderSettingSessionOptions {
   isEditing: boolean;
   numericInput?: string | undefined;
   selectedNumericOption?: number | "custom" | undefined;
+  selectedStudyOrderOption?: Settings["studyOrder"] | "reshuffle" | undefined;
   editError: string;
+  isReshuffleArmed: boolean;
 }
 
 export function renderSettingSession(options: RenderSettingSessionOptions) {
@@ -27,7 +29,9 @@ export function renderSettingSession(options: RenderSettingSessionOptions) {
     isEditing,
     numericInput,
     selectedNumericOption,
+    selectedStudyOrderOption,
     editError,
+    isReshuffleArmed,
   } = options;
   const activeSettings = isEditing ? draftSettings : settings;
 
@@ -50,7 +54,10 @@ export function renderSettingSession(options: RenderSettingSessionOptions) {
       item,
       inactive,
       selected && isEditing ? activeSettings : undefined,
-      selected && isEditing && item.acceptsNumber ? selectedNumericOption : undefined
+      selected && isEditing && item.acceptsNumber ? selectedNumericOption : undefined,
+      selected && isEditing && item.key === "studyOrder"
+        ? selectedStudyOrderOption
+        : undefined
     );
     const editMark = selected && isEditing ? "*" : selected ? ">" : " ";
 
@@ -89,6 +96,16 @@ export function renderSettingSession(options: RenderSettingSessionOptions) {
     console.log("[EDIT] change value, then press Enter to save");
   }
 
+  if (isEditing && selectedStudyOrderOption === "reshuffle" && !isReshuffleArmed) {
+    console.log("[RESHUFFLE] Press Space to arm the reset, then press Enter to apply it");
+  }
+
+  if (isReshuffleArmed) {
+    console.log("");
+    console.log("[WARN] Reshuffle armed: this replaces the saved random order and resets random progress to 1");
+    console.log("[CONFIRM] Press Enter to reshuffle, or Esc to cancel");
+  }
+
   if (editError) {
     console.log(`[WARN] ${editError}`);
   }
@@ -116,7 +133,8 @@ function formatOptionText(
   item: SettingItem,
   inactive: boolean,
   editingSettings?: Settings,
-  selectedNumericOption?: number | "custom"
+  selectedNumericOption?: number | "custom",
+  selectedStudyOrderOption?: Settings["studyOrder"] | "reshuffle"
 ): string {
   if (inactive) {
     return "[inactive]";
@@ -129,8 +147,8 @@ function formatOptionText(
   }
 
   if (item.key === "studyOrder" && item.options) {
-    const value = editingSettings?.studyOrder;
-    const options = item.options.map((option) =>
+    const value = selectedStudyOrderOption ?? editingSettings?.studyOrder;
+    const options = [...item.options, "reshuffle"].map((option) =>
       formatOption(String(option), option === value)
     );
 
