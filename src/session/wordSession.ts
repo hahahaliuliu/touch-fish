@@ -8,7 +8,9 @@ import {
   getCurrentWords,
   getWordProgress,
   nextWordGroup as moveToNextWordGroup,
+  nextStudyGroup as moveToNextStudyGroup,
   previousWordGroup as moveToPreviousWordGroup,
+  previousStudyGroup as moveToPreviousStudyGroup,
   reloadWordSettings,
   saveCurrentWordProgress,
 } from "../services/wordService.js";
@@ -37,13 +39,38 @@ export function startWordSession() {
 }
 
 function handleKeyPress(key: string) {
-  for (const input of key.toString()) {
+  for (const input of parseInputs(key.toString())) {
     const shouldContinue = handleInput(input);
 
     if (!shouldContinue) {
       return;
     }
   }
+}
+
+function parseInputs(input: string): string[] {
+  const inputs: string[] = [];
+  let index = 0;
+
+  while (index < input.length) {
+    const current = input[index];
+    const next = input[index + 1];
+    const third = input[index + 2];
+
+    if (current === "\u001b" && next === "[" && third) {
+      inputs.push(`${current}${next}${third}`);
+      index += 3;
+      continue;
+    }
+
+    if (current) {
+      inputs.push(current);
+    }
+
+    index += 1;
+  }
+
+  return inputs;
 }
 
 function handleInput(input: string): boolean {
@@ -60,12 +87,20 @@ function handleInput(input: string): boolean {
     quitWordSession();
   }
 
-  if (input.toLowerCase() === "a") {
+  if (input.toLowerCase() === "a" || input === "\u001b[D") {
     previousWord();
   }
 
-  if (input.toLowerCase() === "d") {
+  if (input.toLowerCase() === "d" || input === "\u001b[C") {
     nextWord();
+  }
+
+  if (input === "[" || input === "\u001b[A") {
+    previousStudyGroup();
+  }
+
+  if (input === "]" || input === "\u001b[B") {
+    nextStudyGroup();
   }
 
   if (input === " ") {
@@ -93,6 +128,16 @@ function nextWord() {
 function previousWord() {
   moveToPreviousWordGroup();
   lastNavigation = "previous";
+  renderSession();
+}
+
+function nextStudyGroup() {
+  moveToNextStudyGroup();
+  renderSession();
+}
+
+function previousStudyGroup() {
+  moveToPreviousStudyGroup();
   renderSession();
 }
 
@@ -124,6 +169,13 @@ function renderSession() {
     words: currentWords,
     current: progress.current,
     total: progress.total,
+    workspaceSize: progress.workspaceSize,
+    studyGroupStart: progress.studyGroupStart,
+    studyGroupEnd: progress.studyGroupEnd,
+    studyGroupCurrent: progress.studyGroupCurrent,
+    studyGroupTotal: progress.studyGroupTotal,
+    studyGroupEnabled: progress.studyGroupEnabled,
+    navigationLoop: progress.navigationLoop,
     displayMode,
     showHelp,
   });

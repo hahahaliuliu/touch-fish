@@ -84,6 +84,20 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 - 不循环更适合新手，因为不会误以为前几个单词丢了
 - 循环适合复习模式或熟悉键位之后使用
 
+### Workspace Navigation / 学习组导航
+
+当前已实现的 Workspace 规则：
+
+- `studyGroupEnabled` 决定是否把词书拆成学习组，默认开启
+- `dailyWordCount` 表示一个学习组包含多少单词，默认是 20
+- `workspaceSize` 表示每页显示多少单词，当前支持 `1 / 3 / 5`
+- 开启分组时，`A` / `D` 只在当前学习组内翻页，`[` / `]` 切换上一组或下一组
+- 关闭分组时，整本词书作为一个连续范围，`[` / `]` 不执行切换
+- `navigationLoop` 在当前导航范围内生效：分组开启时是组内循环，关闭时是整本词书循环
+
+例如学习组大小为 20、每页显示 3 个单词时，第一组范围为 001-020；
+`A` / `D` 在这个范围内移动，`[` / `]` 才会切换到 021-040 等其他组。
+
 ### Vocabulary Book / 单词书
 
 选择当前使用哪一本单词书。
@@ -175,12 +189,13 @@ assets/settings.example.json
 
 未来完整结构草稿：
 
-> 注意：下面不是当前全部可用的配置。当前已经可用的是 `workspaceSize`，其他字段会按实现顺序逐步接入。
+> 注意：下面不是当前全部可用的配置。当前已经可用的是 `studyGroupEnabled`、`dailyWordCount`、`workspaceSize` 和 `navigationLoop`，其他字段会按实现顺序逐步接入。
 
 ```json
 {
   "dailyWordCount": 20,
   "workspaceSize": 3,
+  "studyGroupEnabled": true,
   "navigationLoop": false,
   "studyOrder": "sequential",
   "activeVocabularyBook": "ielts-basic",
@@ -214,12 +229,14 @@ v0.3 推荐顺序：
 4. 支持默认 `displayMode` `[done]`
 5. 增加 `touchfish setting` 只读设置视图 `[done]`
 6. 支持在 `touchfish setting` 中修改 `workspaceSize` `[done]`
-7. 支持 `navigationLoop`
-8. 支持 `studyOrder`
-9. 支持选择当前词库
-10. 支持可见字段配置
-11. 支持终端主题
-12. 支持自定义快捷键
+7. 支持 `studyGroupEnabled` `[done]`
+8. 支持 `dailyWordCount` 作为学习组大小 `[done]`
+9. 支持 `navigationLoop` `[done]`
+10. 支持 `studyOrder`
+11. 支持选择当前词库
+12. 支持可见字段配置
+13. 支持终端主题
+14. 支持自定义快捷键
 
 ## Not Yet / 当前暂不做
 

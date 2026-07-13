@@ -3,6 +3,8 @@ import type { Settings } from "../models/settings.js";
 export const DEFAULT_SETTINGS: Settings = {
   dailyWordCount: 20,
   workspaceSize: 3,
+  studyGroupEnabled: true,
+  navigationLoop: false,
   studyOrder: "sequential",
   activeVocabularyBook: "ielts-basic",
   displayMode: "english",

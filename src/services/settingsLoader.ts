@@ -19,7 +19,8 @@ export function loadSettings(): Settings {
   }
 
   const fileContent = fs.readFileSync(settingsPath, "utf-8");
-  const settings = JSON.parse(fileContent) as unknown;
+  const parsedSettings = JSON.parse(fileContent) as unknown;
+  const settings = mergeWithDefaultSettings(parsedSettings);
   const errors = validateSettings(settings);
 
   if (errors.length > 0) {
@@ -67,6 +68,23 @@ function cloneSettings(settings: Settings): Settings {
   };
 }
 
+function mergeWithDefaultSettings(value: unknown): unknown {
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  return {
+    ...DEFAULT_SETTINGS,
+    ...value,
+    visibleFields: isRecord(value.visibleFields)
+      ? { ...DEFAULT_SETTINGS.visibleFields, ...value.visibleFields }
+      : value.visibleFields,
+    keyBindings: isRecord(value.keyBindings)
+      ? { ...DEFAULT_SETTINGS.keyBindings, ...value.keyBindings }
+      : value.keyBindings,
+  };
+}
+
 function validateSettings(value: unknown): string[] {
   const errors: string[] = [];
 
@@ -80,6 +98,14 @@ function validateSettings(value: unknown): string[] {
 
   if (!isWorkspaceSize(value.workspaceSize)) {
     errors.push("workspaceSize must be 1, 3, or 5");
+  }
+
+  if (typeof value.studyGroupEnabled !== "boolean") {
+    errors.push("studyGroupEnabled must be a boolean");
+  }
+
+  if (typeof value.navigationLoop !== "boolean") {
+    errors.push("navigationLoop must be a boolean");
   }
 
   if (!isStudyOrder(value.studyOrder)) {

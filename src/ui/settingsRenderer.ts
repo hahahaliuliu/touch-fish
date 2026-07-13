@@ -24,38 +24,38 @@ export function renderSettingSession(options: RenderSettingSessionOptions) {
   console.log("");
   console.log("[INFO] configuration ready");
   console.log("");
-  console.log("General");
 
   items.forEach((item, index) => {
     const selected = index === selectedIndex;
+    const inactive = item.key === "dailyWordCount" && !activeSettings.studyGroupEnabled;
     const value = formatSettingValue(activeSettings, item.key);
-    const optionText = item.options ? `[${item.options.join(" / ")}]` : "[locked]";
+    const optionText = formatOptionText(item, inactive);
     const editMark = selected && isEditing ? "*" : selected ? ">" : " ";
 
     console.log(
-      `${editMark} ${item.label.padEnd(18, " ")} ${value.padEnd(12, " ")} ${optionText}`
+      `${editMark} ${item.label.padEnd(20, " ")} ${value.padEnd(10, " ")} ${optionText}`
     );
   });
 
   console.log("");
-  console.log("Word Details");
+  console.log("Later");
   console.log(
-    `  Phonetic           ${formatBoolean(settings.visibleFields.phonetic)} [locked]`
+    `  Phonetic             ${formatBoolean(settings.visibleFields.phonetic)} [locked]`
   );
   console.log(
-    `  Example            ${formatBoolean(settings.visibleFields.example)} [locked]`
+    `  Example              ${formatBoolean(settings.visibleFields.example)} [locked]`
   );
   console.log(
-    `  Part Of Speech     ${formatBoolean(settings.visibleFields.partOfSpeech)} [locked]`
+    `  Part Of Speech       ${formatBoolean(settings.visibleFields.partOfSpeech)} [locked]`
   );
   console.log("");
   console.log("Controls");
-  console.log("  W/S or Up/Down     move");
-  console.log("  Enter              edit / confirm");
-  console.log("  A/D or Left/Right  change value");
-  console.log("  Esc                cancel");
-  console.log("  Ctrl+O             return to word");
-  console.log("  Q                  quit");
+  console.log("  W/S or Up/Down       move");
+  console.log("  Enter                edit / confirm");
+  console.log("  A/D or Left/Right    change value");
+  console.log("  Esc                  cancel");
+  console.log("  Ctrl+O               return to word");
+  console.log("  Q                    quit");
 
   if (isEditing) {
     console.log("");
@@ -70,7 +70,23 @@ function formatSettingValue(settings: Settings, key: keyof Settings): string {
     return String(value);
   }
 
+  if (typeof value === "boolean") {
+    return value ? "on" : "off";
+  }
+
   return "configured";
+}
+
+function formatOptionText(item: SettingItem, inactive: boolean): string {
+  if (inactive) {
+    return "[inactive]";
+  }
+
+  if (item.key === "studyGroupEnabled" || item.key === "navigationLoop") {
+    return "[off / on]";
+  }
+
+  return item.options ? `[${item.options.join(" / ")}]` : "[locked]";
 }
 
 function formatBoolean(value: boolean) {

@@ -1,6 +1,8 @@
 {
   "dailyWordCount": 20,
   "workspaceSize": 3,
+  "studyGroupEnabled": true,
+  "navigationLoop": false,
   "studyOrder": "sequential",
   "activeVocabularyBook": "ielts-basic",
   "displayMode": "english",

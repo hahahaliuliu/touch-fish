@@ -5,12 +5,32 @@ interface RenderLogThemeOptions {
   words: Word[];
   current: number;
   total: number;
+  workspaceSize: number;
+  studyGroupStart: number;
+  studyGroupEnd: number;
+  studyGroupCurrent: number;
+  studyGroupTotal: number;
+  studyGroupEnabled: boolean;
+  navigationLoop: boolean;
   displayMode: DisplayMode;
   showHelp: boolean;
 }
 
 export function renderLogTheme(options: RenderLogThemeOptions) {
-  const { words, current, total, displayMode, showHelp } = options;
+  const {
+    words,
+    current,
+    total,
+    workspaceSize,
+    studyGroupStart,
+    studyGroupEnd,
+    studyGroupCurrent,
+    studyGroupTotal,
+    studyGroupEnabled,
+    navigationLoop,
+    displayMode,
+    showHelp,
+  } = options;
 
   console.clear();
 
@@ -19,6 +39,13 @@ export function renderLogTheme(options: RenderLogThemeOptions) {
       current,
       total,
       windowSize: words.length,
+      workspaceSize,
+      studyGroupStart,
+      studyGroupEnd,
+      studyGroupCurrent,
+      studyGroupTotal,
+      studyGroupEnabled,
+      navigationLoop,
     });
     return;
   }
@@ -60,39 +87,52 @@ interface RenderLogHelpOptions {
   current: number;
   total: number;
   windowSize: number;
+  workspaceSize: number;
+  studyGroupStart: number;
+  studyGroupEnd: number;
+  studyGroupCurrent: number;
+  studyGroupTotal: number;
+  studyGroupEnabled: boolean;
+  navigationLoop: boolean;
 }
 
 function renderLogHelp(options: RenderLogHelpOptions) {
-  const { current, total, windowSize } = options;
+  const {
+    current,
+    total,
+    windowSize,
+    workspaceSize,
+    studyGroupStart,
+    studyGroupEnd,
+    studyGroupCurrent,
+    studyGroupTotal,
+    studyGroupEnabled,
+    navigationLoop,
+  } = options;
 
-  console.log("[DEBUG] runtime diagnostics");
-  console.log("[DEBUG] watcher state: paused");
-  console.log("[DEBUG] input source: stdin/raw");
+  console.log("Touch Fish Help");
   console.log("");
-  console.log("cache cursor");
-  console.log(`  offset          ${current} / ${total}`);
-  console.log(`  entries         ${windowSize}`);
+  console.log("Navigation");
+  console.log("  A / Left Arrow       previous page");
+  console.log("  D / Right Arrow      next page");
+  console.log("  [ / Up Arrow         previous group");
+  console.log("  ] / Down Arrow       next group");
+  console.log("  Space                repeat last page navigation");
   console.log("");
-  console.log("active handles");
-  console.log("  fs.watch        ./src/cache");
-  console.log("  debounce        32ms");
-  console.log("  renderer        log-theme");
+  console.log("Display");
+  console.log("  Tab                  switch display mode");
+  console.log("  Ctrl+O               open settings");
+  console.log("  ?                    close help");
+  console.log("  Q                    quit");
   console.log("");
-  console.log("stdin bindings");
-  console.log("  a      seek:-1");
-  console.log("  d      seek:+1");
-  console.log("  space  repeat");
-  console.log("  tab    rotate:output");
-  console.log("  ctrl+o config:open");
-  console.log("  ?      debug:toggle");
-  console.log("  q      process:exit");
-  console.log("");
-  console.log("cache policy");
-  console.log("  mode            incremental");
-  console.log("  invalidation    manual");
-  console.log("  pending tasks    0");
-  console.log("");
-  console.log("[DEBUG] press ? to resume watcher");
+  console.log("Current Workspace");
+  console.log(`  position             ${current} / ${total}`);
+  console.log(`  page size            ${workspaceSize}`);
+  console.log(`  visible entries      ${windowSize}`);
+  console.log(`  grouping             ${studyGroupEnabled ? "enabled" : "disabled"}`);
+  console.log(`  group                ${studyGroupCurrent} / ${studyGroupTotal}`);
+  console.log(`  group range          ${studyGroupStart}-${studyGroupEnd}`);
+  console.log(`  navigation loop      ${navigationLoop ? "enabled" : "disabled"}`);
 }
 
 function getDisplayValue(word: Word, displayMode: DisplayMode): string {

@@ -8,6 +8,13 @@ interface RenderWordSessionOptions {
   words: Word[];
   current: number;
   total: number;
+  workspaceSize: number;
+  studyGroupStart: number;
+  studyGroupEnd: number;
+  studyGroupCurrent: number;
+  studyGroupTotal: number;
+  studyGroupEnabled: boolean;
+  navigationLoop: boolean;
   displayMode: DisplayMode;
   showHelp: boolean;
 }

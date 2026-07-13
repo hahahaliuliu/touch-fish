@@ -4,6 +4,7 @@ import { renderSettingSession } from "../ui/settingsRenderer.js";
 
 const RETURN_TO_WORD_KEY = "\u000f";
 const WORKSPACE_SIZES: Array<Settings["workspaceSize"]> = [1, 3, 5];
+const STUDY_GROUP_SIZES = [10, 20, 30];
 
 interface StartSettingSessionOptions {
   onReturn?: () => void;
@@ -17,9 +18,24 @@ interface SettingItem {
 
 const SETTING_ITEMS: SettingItem[] = [
   {
+    key: "studyGroupEnabled",
+    label: "Group Vocabulary",
+    options: [false, true],
+  },
+  {
     key: "workspaceSize",
-    label: "Workspace Size",
+    label: "Page Size",
     options: WORKSPACE_SIZES,
+  },
+  {
+    key: "dailyWordCount",
+    label: "Group Size",
+    options: STUDY_GROUP_SIZES,
+  },
+  {
+    key: "navigationLoop",
+    label: "Navigation Loop",
+    options: [false, true],
   },
   {
     key: "displayMode",
@@ -159,7 +175,7 @@ function moveSelection(direction: -1 | 1) {
 function confirmOrStartEdit() {
   const item = getSelectedItem();
 
-  if (!item.options) {
+  if (!item.options || isInactive(item)) {
     return;
   }
 
@@ -189,21 +205,59 @@ function cancelEdit() {
 function changeCurrentValue(direction: -1 | 1) {
   const item = getSelectedItem();
 
-  if (!isEditing || !item.options || item.key !== "workspaceSize") {
+  if (!isEditing || !item.options || isInactive(item)) {
     return;
   }
 
-  const currentValue = draftSettings.workspaceSize;
-  const currentIndex = WORKSPACE_SIZES.indexOf(currentValue);
-  const nextIndex =
-    (currentIndex + direction + WORKSPACE_SIZES.length) % WORKSPACE_SIZES.length;
-  const nextWorkspaceSize = WORKSPACE_SIZES[nextIndex] ?? WORKSPACE_SIZES[0]!;
+  if (item.key === "studyGroupEnabled") {
+    draftSettings = {
+      ...draftSettings,
+      studyGroupEnabled: !draftSettings.studyGroupEnabled,
+    };
+  }
 
-  draftSettings = {
-    ...draftSettings,
-    workspaceSize: nextWorkspaceSize,
-  };
+  if (item.key === "workspaceSize") {
+    draftSettings = {
+      ...draftSettings,
+      workspaceSize: getNextValue(
+        draftSettings.workspaceSize,
+        WORKSPACE_SIZES,
+        direction
+      ),
+    };
+  }
+
+  if (item.key === "dailyWordCount") {
+    draftSettings = {
+      ...draftSettings,
+      dailyWordCount: getNextValue(
+        draftSettings.dailyWordCount,
+        STUDY_GROUP_SIZES,
+        direction
+      ),
+    };
+  }
+
+  if (item.key === "navigationLoop") {
+    draftSettings = {
+      ...draftSettings,
+      navigationLoop: !draftSettings.navigationLoop,
+    };
+  }
+
   render();
+}
+
+function isInactive(item: SettingItem): boolean {
+  return item.key === "dailyWordCount" && !draftSettings.studyGroupEnabled;
+}
+
+function getNextValue<T>(currentValue: T, options: readonly T[], direction: -1 | 1): T {
+  const currentIndex = options.indexOf(currentValue);
+  const nextIndex =
+    (currentIndex + direction + options.length) % options.length;
+
+  return options[nextIndex] ?? options[0]!;
 }
 
 function getSelectedItem(): SettingItem {
