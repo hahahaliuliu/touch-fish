@@ -38,10 +38,7 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 - 1
 - 3
 - 5
-
-未来可以支持：
-
-- custom
+- custom positive whole number
 
 注意：
 
@@ -90,7 +87,7 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 
 - `studyGroupEnabled` 决定是否把词书拆成学习组，默认开启
 - `dailyWordCount` 表示一个学习组包含多少单词，默认是 20
-- `workspaceSize` 表示每页显示多少单词，当前支持 `1 / 3 / 5`
+- `workspaceSize` 表示每页显示多少单词，支持 `1 / 3 / 5` 预设值和任意正整数
 - 开启分组时，`A` / `D` 只在当前学习组内翻页，`[` / `]` 切换上一组或下一组
 - 关闭分组时，整本词书作为一个连续范围，`[` / `]` 不执行切换
 - `navigationLoop` 在当前导航范围内生效：分组开启时是组内循环，关闭时是整本词书循环
@@ -229,14 +226,15 @@ v0.3 推荐顺序：
 4. 支持默认 `displayMode` `[done]`
 5. 增加 `touchfish setting` 只读设置视图 `[done]`
 6. 支持在 `touchfish setting` 中修改 `workspaceSize` `[done]`
-7. 支持 `studyGroupEnabled` `[done]`
-8. 支持 `dailyWordCount` 作为学习组大小 `[done]`
-9. 支持 `navigationLoop` `[done]`
-10. 支持 `studyOrder`
-11. 支持选择当前词库
-12. 支持可见字段配置
-13. 支持终端主题
-14. 支持自定义快捷键
+7. 支持自定义 `workspaceSize` 和 `dailyWordCount` `[done]`
+8. 支持 `studyGroupEnabled` `[done]`
+9. 支持 `dailyWordCount` 作为学习组大小 `[done]`
+10. 支持 `navigationLoop` `[done]`
+11. 支持 `studyOrder`
+12. 支持选择当前词库
+13. 支持可见字段配置
+14. 支持终端主题
+15. 支持自定义快捷键
 
 ## Not Yet / 当前暂不做
 

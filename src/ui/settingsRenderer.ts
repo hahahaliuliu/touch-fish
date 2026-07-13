@@ -4,6 +4,7 @@ interface SettingItem {
   key: keyof Settings;
   label: string;
   options?: readonly unknown[];
+  acceptsNumber?: boolean;
 }
 
 interface RenderSettingSessionOptions {
@@ -12,10 +13,22 @@ interface RenderSettingSessionOptions {
   items: SettingItem[];
   selectedIndex: number;
   isEditing: boolean;
+  numericInput?: string | undefined;
+  selectedNumericOption?: number | "custom" | undefined;
+  editError: string;
 }
 
 export function renderSettingSession(options: RenderSettingSessionOptions) {
-  const { settings, draftSettings, items, selectedIndex, isEditing } = options;
+  const {
+    settings,
+    draftSettings,
+    items,
+    selectedIndex,
+    isEditing,
+    numericInput,
+    selectedNumericOption,
+    editError,
+  } = options;
   const activeSettings = isEditing ? draftSettings : settings;
 
   console.clear();
@@ -28,8 +41,17 @@ export function renderSettingSession(options: RenderSettingSessionOptions) {
   items.forEach((item, index) => {
     const selected = index === selectedIndex;
     const inactive = item.key === "dailyWordCount" && !activeSettings.studyGroupEnabled;
-    const value = formatSettingValue(activeSettings, item.key);
-    const optionText = formatOptionText(item, inactive);
+    const value = formatSettingValue(
+      activeSettings,
+      item.key,
+      selected && isEditing && item.acceptsNumber ? numericInput : undefined
+    );
+    const optionText = formatOptionText(
+      item,
+      inactive,
+      selected && isEditing ? activeSettings : undefined,
+      selected && isEditing && item.acceptsNumber ? selectedNumericOption : undefined
+    );
     const editMark = selected && isEditing ? "*" : selected ? ">" : " ";
 
     console.log(
@@ -52,18 +74,31 @@ export function renderSettingSession(options: RenderSettingSessionOptions) {
   console.log("Controls");
   console.log("  W/S or Up/Down       move");
   console.log("  Enter                edit / confirm");
-  console.log("  A/D or Left/Right    change value");
+  console.log("  A/D or Left/Right    change preset or toggle");
   console.log("  Esc                  cancel");
   console.log("  Ctrl+O               return to word");
   console.log("  Q                    quit");
 
-  if (isEditing) {
+  if (isEditing && numericInput !== undefined) {
+    console.log("");
+    console.log("[CUSTOM] type any positive whole number, then press Enter to save");
+    console.log("[CUSTOM] example: type 7 for a page size of 7");
+    console.log("[EDIT] A/D cycles presets and custom; Backspace deletes a digit");
+  } else if (isEditing) {
     console.log("");
     console.log("[EDIT] change value, then press Enter to save");
   }
+
+  if (editError) {
+    console.log(`[WARN] ${editError}`);
+  }
 }
 
-function formatSettingValue(settings: Settings, key: keyof Settings): string {
+function formatSettingValue(settings: Settings, key: keyof Settings, editingValue?: string): string {
+  if (editingValue !== undefined) {
+    return editingValue || "_";
+  }
+
   const value = settings[key];
 
   if (typeof value === "string" || typeof value === "number") {
@@ -77,16 +112,35 @@ function formatSettingValue(settings: Settings, key: keyof Settings): string {
   return "configured";
 }
 
-function formatOptionText(item: SettingItem, inactive: boolean): string {
+function formatOptionText(
+  item: SettingItem,
+  inactive: boolean,
+  editingSettings?: Settings,
+  selectedNumericOption?: number | "custom"
+): string {
   if (inactive) {
     return "[inactive]";
   }
 
   if (item.key === "studyGroupEnabled" || item.key === "navigationLoop") {
-    return "[off / on]";
+    const value = editingSettings?.[item.key];
+
+    return `[${formatOption("off", value === false)} / ${formatOption("on", value === true)}]`;
+  }
+
+  if (item.acceptsNumber && item.options) {
+    const options = [...item.options, "custom"].map((option) =>
+      formatOption(String(option), option === selectedNumericOption)
+    );
+
+    return `[${options.join(" / ")}]`;
   }
 
   return item.options ? `[${item.options.join(" / ")}]` : "[locked]";
+}
+
+function formatOption(option: string, selected: boolean): string {
+  return selected ? `\u001b[7m${option}\u001b[0m` : option;
 }
 
 function formatBoolean(value: boolean) {

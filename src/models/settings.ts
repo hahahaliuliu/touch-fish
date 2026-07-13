@@ -31,7 +31,7 @@ export interface KeyBindings {
 
 export interface Settings {
   dailyWordCount: number;
-  workspaceSize: 1 | 3 | 5;
+  workspaceSize: number;
   studyGroupEnabled: boolean;
   navigationLoop: boolean;
   studyOrder: StudyOrder;

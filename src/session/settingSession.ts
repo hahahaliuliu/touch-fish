@@ -3,8 +3,9 @@ import { loadSettings, saveSettings } from "../services/settingsLoader.js";
 import { renderSettingSession } from "../ui/settingsRenderer.js";
 
 const RETURN_TO_WORD_KEY = "\u000f";
-const WORKSPACE_SIZES: Array<Settings["workspaceSize"]> = [1, 3, 5];
+const WORKSPACE_SIZES = [1, 3, 5];
 const STUDY_GROUP_SIZES = [10, 20, 30];
+type NumericOption = number | "custom";
 
 interface StartSettingSessionOptions {
   onReturn?: () => void;
@@ -14,6 +15,7 @@ interface SettingItem {
   key: keyof Settings;
   label: string;
   options?: readonly unknown[];
+  acceptsNumber?: boolean;
 }
 
 const SETTING_ITEMS: SettingItem[] = [
@@ -26,11 +28,13 @@ const SETTING_ITEMS: SettingItem[] = [
     key: "workspaceSize",
     label: "Page Size",
     options: WORKSPACE_SIZES,
+    acceptsNumber: true,
   },
   {
     key: "dailyWordCount",
     label: "Group Size",
     options: STUDY_GROUP_SIZES,
+    acceptsNumber: true,
   },
   {
     key: "navigationLoop",
@@ -60,6 +64,10 @@ let settings = loadSettings();
 let selectedIndex = 0;
 let isEditing = false;
 let draftSettings = settings;
+let numericInput = "";
+let numericInputTouched = false;
+let selectedNumericOption: NumericOption | undefined;
+let editError = "";
 
 export function startSettingSession(options: StartSettingSessionOptions = {}) {
   onReturnToPreviousSession = options.onReturn;
@@ -67,6 +75,7 @@ export function startSettingSession(options: StartSettingSessionOptions = {}) {
   selectedIndex = 0;
   isEditing = false;
   draftSettings = settings;
+  resetEditState();
   render();
 
   if (process.stdin.isTTY) {
@@ -139,6 +148,16 @@ function handleInput(input: string): boolean {
     return true;
   }
 
+  if (isEditing && isNumericItem(getSelectedItem()) && /^\d$/.test(input)) {
+    appendNumericInput(input);
+    return true;
+  }
+
+  if (isEditing && isNumericItem(getSelectedItem()) && isBackspace(input)) {
+    deleteNumericInput();
+    return true;
+  }
+
   if (input === "w" || input === "W" || input === "\u001b[A") {
     moveSelection(-1);
     return true;
@@ -182,6 +201,22 @@ function confirmOrStartEdit() {
   if (!isEditing) {
     draftSettings = cloneSettings(settings);
     isEditing = true;
+    editError = "";
+
+    if (isNumericItem(item)) {
+      const currentValue = getNumericSettingValue(draftSettings, item.key);
+      const presets = getNumericPresets(item.key);
+
+      selectedNumericOption = presets.includes(currentValue) ? currentValue : "custom";
+      numericInput = String(currentValue);
+      numericInputTouched = false;
+    }
+
+    render();
+    return;
+  }
+
+  if (isNumericItem(item) && !applyNumericInput()) {
     render();
     return;
   }
@@ -189,6 +224,7 @@ function confirmOrStartEdit() {
   settings = cloneSettings(draftSettings);
   saveSettings(settings);
   isEditing = false;
+  resetEditState();
   render();
 }
 
@@ -199,6 +235,7 @@ function cancelEdit() {
 
   draftSettings = settings;
   isEditing = false;
+  resetEditState();
   render();
 }
 
@@ -217,25 +254,21 @@ function changeCurrentValue(direction: -1 | 1) {
   }
 
   if (item.key === "workspaceSize") {
-    draftSettings = {
-      ...draftSettings,
-      workspaceSize: getNextValue(
-        draftSettings.workspaceSize,
-        WORKSPACE_SIZES,
-        direction
-      ),
-    };
+    const nextOption = getNextNumericOption(
+      selectedNumericOption ?? draftSettings.workspaceSize,
+      WORKSPACE_SIZES,
+      direction
+    );
+    updateNumericOption(item.key, nextOption);
   }
 
   if (item.key === "dailyWordCount") {
-    draftSettings = {
-      ...draftSettings,
-      dailyWordCount: getNextValue(
-        draftSettings.dailyWordCount,
-        STUDY_GROUP_SIZES,
-        direction
-      ),
-    };
+    const nextOption = getNextNumericOption(
+      selectedNumericOption ?? draftSettings.dailyWordCount,
+      STUDY_GROUP_SIZES,
+      direction
+    );
+    updateNumericOption(item.key, nextOption);
   }
 
   if (item.key === "navigationLoop") {
@@ -245,17 +278,104 @@ function changeCurrentValue(direction: -1 | 1) {
     };
   }
 
+  editError = "";
   render();
+}
+
+function appendNumericInput(input: string) {
+  selectedNumericOption = "custom";
+  numericInput = numericInputTouched ? `${numericInput}${input}` : input;
+  numericInputTouched = true;
+  applyNumericInput();
+  render();
+}
+
+function deleteNumericInput() {
+  selectedNumericOption = "custom";
+  numericInput = numericInputTouched ? numericInput.slice(0, -1) : "";
+  numericInputTouched = true;
+  applyNumericInput();
+  render();
+}
+
+function applyNumericInput(): boolean {
+  const item = getSelectedItem();
+  const value = Number(numericInput);
+
+  if (!Number.isInteger(value) || value <= 0) {
+    editError = "Enter a whole number greater than zero";
+    return false;
+  }
+
+  if (item.key === "workspaceSize") {
+    draftSettings = { ...draftSettings, workspaceSize: value };
+  }
+
+  if (item.key === "dailyWordCount") {
+    draftSettings = { ...draftSettings, dailyWordCount: value };
+  }
+
+  editError = "";
+  return true;
+}
+
+function updateNumericOption(key: keyof Settings, option: NumericOption) {
+  selectedNumericOption = option;
+
+  if (option === "custom") {
+    numericInput = "";
+    numericInputTouched = true;
+    return;
+  }
+
+  numericInput = String(option);
+  numericInputTouched = false;
+
+  if (key === "workspaceSize") {
+    draftSettings = { ...draftSettings, workspaceSize: option };
+  }
+
+  if (key === "dailyWordCount") {
+    draftSettings = { ...draftSettings, dailyWordCount: option };
+  }
+}
+
+function isBackspace(input: string): boolean {
+  return input === "\b" || input === "\u007f";
+}
+
+function isNumericItem(item: SettingItem): boolean {
+  return item.acceptsNumber === true;
 }
 
 function isInactive(item: SettingItem): boolean {
   return item.key === "dailyWordCount" && !draftSettings.studyGroupEnabled;
 }
 
-function getNextValue<T>(currentValue: T, options: readonly T[], direction: -1 | 1): T {
-  const currentIndex = options.indexOf(currentValue);
+function getNumericSettingValue(settings: Settings, key: keyof Settings): number {
+  if (key === "workspaceSize" || key === "dailyWordCount") {
+    return settings[key];
+  }
+
+  return 0;
+}
+
+function getNumericPresets(key: keyof Settings): readonly number[] {
+  return key === "workspaceSize" ? WORKSPACE_SIZES : STUDY_GROUP_SIZES;
+}
+
+function getNextNumericOption(
+  currentOption: NumericOption,
+  presets: readonly number[],
+  direction: -1 | 1
+): NumericOption {
+  const options: NumericOption[] = [...presets, "custom"];
+  const currentIndex = options.indexOf(currentOption);
+  const fallbackIndex = direction === 1 ? 0 : options.length - 1;
   const nextIndex =
-    (currentIndex + direction + options.length) % options.length;
+    currentIndex === -1
+      ? fallbackIndex
+      : (currentIndex + direction + options.length) % options.length;
 
   return options[nextIndex] ?? options[0]!;
 }
@@ -271,7 +391,18 @@ function render() {
     items: SETTING_ITEMS,
     selectedIndex,
     isEditing,
+    numericInput: isEditing && isNumericItem(getSelectedItem()) ? numericInput : undefined,
+    selectedNumericOption:
+      isEditing && isNumericItem(getSelectedItem()) ? selectedNumericOption : undefined,
+    editError,
   });
+}
+
+function resetEditState() {
+  numericInput = "";
+  numericInputTouched = false;
+  selectedNumericOption = undefined;
+  editError = "";
 }
 
 function returnToPreviousSession() {

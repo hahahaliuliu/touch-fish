@@ -96,8 +96,8 @@ function validateSettings(value: unknown): string[] {
     errors.push("dailyWordCount must be a positive number");
   }
 
-  if (!isWorkspaceSize(value.workspaceSize)) {
-    errors.push("workspaceSize must be 1, 3, or 5");
+  if (!isPositiveInteger(value.workspaceSize)) {
+    errors.push("workspaceSize must be a positive whole number");
   }
 
   if (typeof value.studyGroupEnabled !== "boolean") {
@@ -173,8 +173,8 @@ function validateKeyBindings(value: unknown, errors: string[]) {
   });
 }
 
-function isWorkspaceSize(value: unknown): value is Settings["workspaceSize"] {
-  return value === 1 || value === 3 || value === 5;
+function isPositiveInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value > 0;
 }
 
 function isPositiveNumber(value: unknown): value is number {
