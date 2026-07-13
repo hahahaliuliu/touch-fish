@@ -176,6 +176,7 @@ function renderSession() {
     studyGroupTotal: progress.studyGroupTotal,
     studyGroupEnabled: progress.studyGroupEnabled,
     navigationLoop: progress.navigationLoop,
+    studyOrder: progress.studyOrder,
     displayMode,
     showHelp,
   });

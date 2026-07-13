@@ -1,23 +1,30 @@
+import type { StudyOrder } from "../models/settings.js";
 import type { Word } from "../models/word.js";
-import { loadWordProgress, saveWordProgress } from "../storage/progress.js";
+import {
+  loadWordProgress,
+  saveWordProgress,
+} from "../storage/progress.js";
 import { loadSettings } from "./settingsLoader.js";
 import { loadVocabulary } from "./vocabularyLoader.js";
 
 const words: Word[] = loadVocabulary();
+const sequentialOrder = words.map((_, index) => index);
 const settings = loadSettings();
 
 let workspaceSize = settings.workspaceSize;
 let studyGroupSize = settings.dailyWordCount;
 let studyGroupEnabled = settings.studyGroupEnabled;
 let navigationLoop = settings.navigationLoop;
-
-let currentIndex = alignToPageStart(loadWordProgress());
+let studyOrder = settings.studyOrder;
+let progress = loadWordProgress();
+let wordOrder = getWordOrder();
+let currentIndex = alignToPageStart(getSavedIndex());
 
 export function getCurrentWords(): Word[] {
-  return words.slice(
-    currentIndex,
-    Math.min(currentIndex + workspaceSize, getCurrentGroupEnd())
-  );
+  return wordOrder
+    .slice(currentIndex, Math.min(currentIndex + workspaceSize, getCurrentGroupEnd()))
+    .map((wordIndex) => words[wordIndex])
+    .filter((word): word is Word => word !== undefined);
 }
 
 export function nextWordGroup(): Word[] {
@@ -85,26 +92,63 @@ export function getWordProgress() {
     studyGroupTotal: studyGroupEnabled ? Math.ceil(words.length / studyGroupSize) : 1,
     studyGroupEnabled,
     navigationLoop,
+    studyOrder,
   };
 }
 
 export function saveCurrentWordProgress() {
-  saveWordProgress(currentIndex);
+  updateSavedIndex();
+  saveWordProgress(progress);
 }
 
 export function reloadWordSettings() {
+  updateSavedIndex();
+
   const updatedSettings = loadSettings();
 
   workspaceSize = updatedSettings.workspaceSize;
   studyGroupSize = updatedSettings.dailyWordCount;
   studyGroupEnabled = updatedSettings.studyGroupEnabled;
   navigationLoop = updatedSettings.navigationLoop;
-  currentIndex = alignToPageStart(currentIndex);
+  studyOrder = updatedSettings.studyOrder;
+  wordOrder = getWordOrder();
+  currentIndex = alignToPageStart(getSavedIndex());
+}
+
+function getWordOrder(): number[] {
+  if (studyOrder === "sequential") {
+    return sequentialOrder;
+  }
+
+  if (!isValidRandomOrder(progress.randomOrder)) {
+    progress = {
+      ...progress,
+      randomIndex: 0,
+      randomOrder: createRandomOrder(),
+    };
+  }
+
+  return progress.randomOrder;
+}
+
+function getSavedIndex(): number {
+  return studyOrder === "random" ? progress.randomIndex : progress.sequentialIndex;
+}
+
+function updateSavedIndex() {
+  progress = {
+    ...progress,
+    ...(studyOrder === "random"
+      ? { randomIndex: currentIndex }
+      : { sequentialIndex: currentIndex }),
+  };
 }
 
 function alignToPageStart(index: number) {
   const safeIndex = Math.min(Math.max(index, 0), Math.max(words.length - 1, 0));
-  const groupStart = Math.floor(safeIndex / studyGroupSize) * studyGroupSize;
+  const groupStart = studyGroupEnabled
+    ? Math.floor(safeIndex / studyGroupSize) * studyGroupSize
+    : 0;
 
   return groupStart + Math.floor((safeIndex - groupStart) / workspaceSize) * workspaceSize;
 }
@@ -130,4 +174,30 @@ function getLastPageStartInCurrentGroup() {
   const groupLength = getCurrentGroupEnd() - groupStart;
 
   return groupStart + Math.floor((groupLength - 1) / workspaceSize) * workspaceSize;
+}
+
+function isValidRandomOrder(order: number[]): boolean {
+  if (order.length !== words.length) {
+    return false;
+  }
+
+  const seen = new Set(order);
+
+  return (
+    seen.size === words.length &&
+    order.every((index) => Number.isInteger(index) && index >= 0 && index < words.length)
+  );
+}
+
+function createRandomOrder(): number[] {
+  const order = [...sequentialOrder];
+
+  for (let index = order.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    const current = order[index];
+    order[index] = order[randomIndex]!;
+    order[randomIndex] = current!;
+  }
+
+  return order;
 }

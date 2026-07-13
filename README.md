@@ -75,6 +75,7 @@ Settings 当前支持：
 - Page Size: 1 / 3 / 5 / custom
 - Group Size: 10 / 20 / 30 / custom
 - Navigation Loop: on / off
+- Study Order: sequential / random
 
 `Page Size` 和 `Group Size` 进入编辑后，可以用左右键切换预设值和 `custom`。
 选中 `custom` 时显示 `_`，直接输入任意正整数后按 Enter 保存。
@@ -150,6 +151,7 @@ npm link
 - Workspace：默认一页 3 个单词，支持自定义每页数量
 - 可选学习分组：默认每组 20 个单词，支持自定义组大小
 - 分组内循环与整本词书连续浏览
+- 顺序与随机学习模式，分别保存各自的学习位置
 - Display Mode：英文、中文、英文 + 中文
 - JSON 词库
 - 本地学习进度保存

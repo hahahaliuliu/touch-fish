@@ -5,6 +5,7 @@ import { renderSettingSession } from "../ui/settingsRenderer.js";
 const RETURN_TO_WORD_KEY = "\u000f";
 const WORKSPACE_SIZES = [1, 3, 5];
 const STUDY_GROUP_SIZES = [10, 20, 30];
+const STUDY_ORDERS: Array<Settings["studyOrder"]> = ["sequential", "random"];
 type NumericOption = number | "custom";
 
 interface StartSettingSessionOptions {
@@ -48,6 +49,7 @@ const SETTING_ITEMS: SettingItem[] = [
   {
     key: "studyOrder",
     label: "Study Order",
+    options: STUDY_ORDERS,
   },
   {
     key: "activeVocabularyBook",
@@ -278,6 +280,13 @@ function changeCurrentValue(direction: -1 | 1) {
     };
   }
 
+  if (item.key === "studyOrder") {
+    draftSettings = {
+      ...draftSettings,
+      studyOrder: getNextValue(draftSettings.studyOrder, STUDY_ORDERS, direction),
+    };
+  }
+
   editError = "";
   render();
 }
@@ -362,6 +371,14 @@ function getNumericSettingValue(settings: Settings, key: keyof Settings): number
 
 function getNumericPresets(key: keyof Settings): readonly number[] {
   return key === "workspaceSize" ? WORKSPACE_SIZES : STUDY_GROUP_SIZES;
+}
+
+function getNextValue<T>(currentValue: T, options: readonly T[], direction: -1 | 1): T {
+  const currentIndex = options.indexOf(currentValue);
+  const nextIndex =
+    (currentIndex + direction + options.length) % options.length;
+
+  return options[nextIndex] ?? options[0]!;
 }
 
 function getNextNumericOption(

@@ -4,18 +4,29 @@ import { resolveAssetPath } from "../config/paths.js";
 
 const progressPath = resolveAssetPath("progress", "word-progress.json");
 
-export function loadWordProgress(): number {
+export interface WordProgress {
+  sequentialIndex: number;
+  randomIndex: number;
+  randomOrder: number[];
+}
+
+export function loadWordProgress(): WordProgress {
   if (!fs.existsSync(progressPath)) {
-    return 0;
+    return createEmptyProgress();
   }
 
   const content = fs.readFileSync(progressPath, "utf-8");
-  const data = JSON.parse(content) as { currentIndex?: number };
+  const data = JSON.parse(content) as Record<string, unknown>;
 
-  return data.currentIndex ?? 0;
+  return {
+    // currentIndex is the format used before separate order progress existed.
+    sequentialIndex: readIndex(data.sequentialIndex ?? data.currentIndex),
+    randomIndex: readIndex(data.randomIndex),
+    randomOrder: readRandomOrder(data.randomOrder),
+  };
 }
 
-export function saveWordProgress(currentIndex: number) {
+export function saveWordProgress(progress: WordProgress) {
   const dir = path.dirname(progressPath);
 
   if (!fs.existsSync(dir)) {
@@ -26,7 +37,7 @@ export function saveWordProgress(currentIndex: number) {
     progressPath,
     JSON.stringify(
       {
-        currentIndex,
+        ...progress,
         updatedAt: new Date().toISOString(),
       },
       null,
@@ -34,4 +45,24 @@ export function saveWordProgress(currentIndex: number) {
     ),
     "utf-8"
   );
+}
+
+function createEmptyProgress(): WordProgress {
+  return {
+    sequentialIndex: 0,
+    randomIndex: 0,
+    randomOrder: [],
+  };
+}
+
+function readIndex(value: unknown): number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : 0;
+}
+
+function readRandomOrder(value: unknown): number[] {
+  if (!Array.isArray(value) || !value.every((item) => Number.isInteger(item))) {
+    return [];
+  }
+
+  return value as number[];
 }

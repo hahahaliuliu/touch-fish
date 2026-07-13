@@ -58,8 +58,9 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 注意：
 
 - `sequential` 按词库顺序学习
-- `random` 应该生成并保存一个稳定的随机顺序
-- 随机模式应避免一轮没结束就重复出现太多旧词
+- `random` 对整本词书生成并保存一份稳定随机顺序，再按学习组和页面拆分
+- `sequential` 与 `random` 分别保存自己的当前位置；切换模式不会覆盖另一种模式的进度
+- 随机顺序在同一本词书不变时会保留，之后可以增加“重新随机并从头开始”的操作
 
 ### Navigation Loop / 头尾循环
 
@@ -131,6 +132,26 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 - 修改 Help 键
 - 修改退出键
 
+### Word Test / 单词测试
+
+单词测试属于后续学习功能，不在当前 Workspace 阶段提前实现。
+
+未来可以支持：
+
+- 单词测试：围绕单个单词进行释义、拼写或选择题测试
+- 小组测试：使用当前学习组作为题目范围
+- 测试方向：English -> Chinese、Chinese -> English、拼写
+- 题目数量：使用当前组全部单词，或设置一个自定义数量
+- 测试结果：正确、错误、跳过；后续可接入错题和 Review
+
+未来 Settings 可以保存：
+
+- 默认测试类型：单词测试 / 小组测试
+- 默认测试方向
+- 是否显示例句、音标或词性作为提示
+
+注意：测试结果、错题和统计属于后续 Daily Use 阶段，当前只保留设计位置。
+
 ### Word Detail Fields / 单词详情字段
 
 选择是否显示一些额外字段。
@@ -189,7 +210,7 @@ assets/settings.example.json
 
 未来完整结构草稿：
 
-> 注意：下面不是当前全部可用的配置。当前已经可用的是 `studyGroupEnabled`、`dailyWordCount`、`workspaceSize` 和 `navigationLoop`，其他字段会按实现顺序逐步接入。
+> 注意：下面不是当前全部可用的配置。当前已经可用的是 `studyGroupEnabled`、`dailyWordCount`、`workspaceSize`、`navigationLoop` 和 `studyOrder`，其他字段会按实现顺序逐步接入。
 
 ```json
 {
@@ -233,7 +254,7 @@ v0.3 推荐顺序：
 8. 支持 `studyGroupEnabled` `[done]`
 9. 支持 `dailyWordCount` 作为学习组大小 `[done]`
 10. 支持 `navigationLoop` `[done]`
-11. 支持 `studyOrder`
+11. 支持 `studyOrder` `[done]`
 12. 支持选择当前词库
 13. 支持可见字段配置
 14. 支持终端主题

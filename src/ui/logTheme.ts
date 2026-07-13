@@ -1,5 +1,5 @@
 import type { Word } from "../models/word.js";
-import type { DisplayMode } from "../models/settings.js";
+import type { DisplayMode, StudyOrder } from "../models/settings.js";
 
 interface RenderLogThemeOptions {
   words: Word[];
@@ -12,6 +12,7 @@ interface RenderLogThemeOptions {
   studyGroupTotal: number;
   studyGroupEnabled: boolean;
   navigationLoop: boolean;
+  studyOrder: StudyOrder;
   displayMode: DisplayMode;
   showHelp: boolean;
 }
@@ -28,6 +29,7 @@ export function renderLogTheme(options: RenderLogThemeOptions) {
     studyGroupTotal,
     studyGroupEnabled,
     navigationLoop,
+    studyOrder,
     displayMode,
     showHelp,
   } = options;
@@ -46,6 +48,7 @@ export function renderLogTheme(options: RenderLogThemeOptions) {
       studyGroupTotal,
       studyGroupEnabled,
       navigationLoop,
+      studyOrder,
     });
     return;
   }
@@ -94,6 +97,7 @@ interface RenderLogHelpOptions {
   studyGroupTotal: number;
   studyGroupEnabled: boolean;
   navigationLoop: boolean;
+  studyOrder: StudyOrder;
 }
 
 function renderLogHelp(options: RenderLogHelpOptions) {
@@ -108,6 +112,7 @@ function renderLogHelp(options: RenderLogHelpOptions) {
     studyGroupTotal,
     studyGroupEnabled,
     navigationLoop,
+    studyOrder,
   } = options;
 
   console.log("Touch Fish Help");
@@ -133,6 +138,7 @@ function renderLogHelp(options: RenderLogHelpOptions) {
   console.log(`  group                ${studyGroupCurrent} / ${studyGroupTotal}`);
   console.log(`  group range          ${studyGroupStart}-${studyGroupEnd}`);
   console.log(`  navigation loop      ${navigationLoop ? "enabled" : "disabled"}`);
+  console.log(`  study order          ${studyOrder}`);
 }
 
 function getDisplayValue(word: Word, displayMode: DisplayMode): string {

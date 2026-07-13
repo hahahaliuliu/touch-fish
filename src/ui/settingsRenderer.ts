@@ -128,6 +128,15 @@ function formatOptionText(
     return `[${formatOption("off", value === false)} / ${formatOption("on", value === true)}]`;
   }
 
+  if (item.key === "studyOrder" && item.options) {
+    const value = editingSettings?.studyOrder;
+    const options = item.options.map((option) =>
+      formatOption(String(option), option === value)
+    );
+
+    return `[${options.join(" / ")}]`;
+  }
+
   if (item.acceptsNumber && item.options) {
     const options = [...item.options, "custom"].map((option) =>
       formatOption(String(option), option === selectedNumericOption)

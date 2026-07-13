@@ -132,6 +132,7 @@ npm link
 - [x] `touchfish setting` 支持编辑学习组大小 `dailyWordCount`
 - [x] `touchfish setting` 支持自定义学习组大小
 - [x] `touchfish setting` 支持 `navigationLoop`
+- [x] `touchfish setting` 支持 `studyOrder`：顺序 / 随机
 
 ### Workspace
 
@@ -141,6 +142,8 @@ npm link
 - [x] `A` / `D` 或 `←` / `→` 在当前范围内翻页
 - [x] 可关闭分组，连续浏览整本词书
 - [x] 分组内或整本词书循环导航
+- [x] 顺序与随机模式分别保存进度
+- [x] 随机模式保存稳定的整本词书随机顺序
 - [x] 英文 / 中文 / 英文 + 中文显示模式
 - [x] 默认英文显示，增强伪装效果
 
@@ -205,27 +208,24 @@ Touch Fish 始终运行在终端里。
 当前 workspace size：
 
 ```txt
-3 words
+3 words by default; configurable in Settings
 ```
 
-未来 Settings 可以支持：
-
-- 1 word
-- 3 words
-- 5 words
+当前 Settings 已支持每页 `1 / 3 / 5 / custom` 个单词，
+并支持学习分组、组大小、首尾循环和学习顺序。
 
 ### Help View
 
 主界面应尽量保持低调。
 
-`?` 视图可以显示进度、模式、快捷键等信息，但文案应呈现为 diagnostics，不要像普通背单词软件。
+`?` 视图可以显示进度、模式和快捷键等信息。当前阶段优先保证清楚易用。
 
 ## Next Milestone Candidates / 下一步候选
 
 推荐顺序：
 
 1. 继续保持 Settings 小步开发。
-2. 下一步可以让 `touchfish setting` 修改一个最小选项，例如 `workspaceSize`。
+2. 下一步可以完善 Display Mode 的 Settings 配置。
 3. 后续实现多词库。
 4. 后续实现 Read Mode。
 
