@@ -1,4 +1,4 @@
-import type { Settings } from "../models/settings.js";
+import type { Settings, ThemeName } from "../models/settings.js";
 import { loadSettings, saveSettings } from "../services/settingsLoader.js";
 import { reshuffleRandomOrder } from "../services/randomOrder.js";
 import { renderSettingSession } from "../ui/settingsRenderer.js";
@@ -7,6 +7,7 @@ const RETURN_TO_WORD_KEY = "\u000f";
 const WORKSPACE_SIZES = [1, 3, 5];
 const STUDY_GROUP_SIZES = [10, 20, 30];
 const STUDY_ORDERS: Array<Settings["studyOrder"]> = ["sequential", "random"];
+const AVAILABLE_THEMES: readonly ThemeName[] = ["build-log", "backend-log"];
 type NumericOption = number | "custom";
 type StudyOrderOption = Settings["studyOrder"] | "reshuffle";
 const STUDY_ORDER_OPTIONS: readonly StudyOrderOption[] = [...STUDY_ORDERS, "reshuffle"];
@@ -61,6 +62,7 @@ const SETTING_ITEMS: SettingItem[] = [
   {
     key: "theme",
     label: "Theme",
+    options: AVAILABLE_THEMES,
   },
 ];
 
@@ -325,6 +327,13 @@ function changeCurrentValue(direction: -1 | 1) {
     draftSettings = {
       ...draftSettings,
       studyOrder: nextOption === "reshuffle" ? "random" : nextOption,
+    };
+  }
+
+  if (item.key === "theme") {
+    draftSettings = {
+      ...draftSettings,
+      theme: getNextValue(draftSettings.theme, AVAILABLE_THEMES, direction),
     };
   }
 

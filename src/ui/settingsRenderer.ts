@@ -163,6 +163,15 @@ function formatOptionText(
     return `[${options.join(" / ")}]`;
   }
 
+  if (item.options && editingSettings) {
+    const value = editingSettings[item.key];
+    const options = item.options.map((option) =>
+      formatOption(String(option), option === value)
+    );
+
+    return `[${options.join(" / ")}]`;
+  }
+
   return item.options ? `[${item.options.join(" / ")}]` : "[locked]";
 }
 

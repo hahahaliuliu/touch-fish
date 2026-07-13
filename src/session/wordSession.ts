@@ -177,6 +177,7 @@ function renderSession() {
     studyGroupEnabled: progress.studyGroupEnabled,
     navigationLoop: progress.navigationLoop,
     studyOrder: progress.studyOrder,
+    theme: progress.theme,
     displayMode,
     showHelp,
   });
@@ -196,7 +197,7 @@ function openSettingSession() {
 function quitWordSession() {
   saveCurrentWordProgress();
 
-  renderQuitMessage();
+  renderQuitMessage(getWordProgress().theme);
 
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(false);

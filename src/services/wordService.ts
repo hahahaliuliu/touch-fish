@@ -17,6 +17,7 @@ let studyGroupSize = settings.dailyWordCount;
 let studyGroupEnabled = settings.studyGroupEnabled;
 let navigationLoop = settings.navigationLoop;
 let studyOrder = settings.studyOrder;
+let theme = settings.theme;
 let progress = loadWordProgress();
 let wordOrder = getWordOrder();
 let currentIndex = alignToPageStart(getSavedIndex());
@@ -94,6 +95,7 @@ export function getWordProgress() {
     studyGroupEnabled,
     navigationLoop,
     studyOrder,
+    theme,
   };
 }
 
@@ -123,6 +125,7 @@ export function reloadWordSettings() {
   studyGroupEnabled = updatedSettings.studyGroupEnabled;
   navigationLoop = updatedSettings.navigationLoop;
   studyOrder = updatedSettings.studyOrder;
+  theme = updatedSettings.theme;
   wordOrder = getWordOrder();
   currentIndex = alignToPageStart(getSavedIndex());
 }
