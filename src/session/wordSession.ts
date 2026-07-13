@@ -6,6 +6,7 @@ import {
 
 import {
   getCurrentWords,
+  getSavedDisplayMode,
   getWordProgress,
   nextWordGroup as moveToNextWordGroup,
   nextStudyGroup as moveToNextStudyGroup,
@@ -13,16 +14,14 @@ import {
   previousStudyGroup as moveToPreviousStudyGroup,
   reloadWordSettings,
   saveCurrentWordProgress,
+  saveDisplayMode,
 } from "../services/wordService.js";
-import { loadSettings } from "../services/settingsLoader.js";
 import { startSettingSession } from "./settingSession.js";
 
 type LastNavigation = "next" | "previous";
 
 const OPEN_SETTINGS_KEY = "\u000f";
-const settings = loadSettings();
-
-let displayMode: DisplayMode = settings.displayMode;
+let displayMode: DisplayMode = getSavedDisplayMode();
 let lastNavigation: LastNavigation = "next";
 let showHelp = false;
 
@@ -158,6 +157,7 @@ function switchDisplayMode() {
     displayMode = "both";
   }
 
+  saveDisplayMode(displayMode);
   renderSession();
 }
 

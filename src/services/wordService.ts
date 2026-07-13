@@ -1,4 +1,4 @@
-import type { StudyOrder } from "../models/settings.js";
+import type { DisplayMode, StudyOrder } from "../models/settings.js";
 import type { Word } from "../models/word.js";
 import {
   loadWordProgress,
@@ -98,6 +98,16 @@ export function getWordProgress() {
 
 export function saveCurrentWordProgress() {
   updateSavedIndex();
+  saveWordProgress(progress);
+}
+
+export function getSavedDisplayMode(): DisplayMode {
+  return progress.displayMode ?? settings.displayMode;
+}
+
+export function saveDisplayMode(displayMode: DisplayMode) {
+  updateSavedIndex();
+  progress = { ...progress, displayMode };
   saveWordProgress(progress);
 }
 
