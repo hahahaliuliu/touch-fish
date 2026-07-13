@@ -1,5 +1,5 @@
 import type { Word } from "../models/word.js";
-import type { DisplayMode, StudyOrder, ThemeName } from "../models/settings.js";
+import type { DisplayMode, KeyBindings, StudyOrder, ThemeName } from "../models/settings.js";
 import {
   renderBackendLogQuitMessage,
   renderBackendLogTheme,
@@ -21,6 +21,7 @@ export interface RenderWordSessionOptions {
   navigationLoop: boolean;
   studyOrder: StudyOrder;
   theme: ThemeName;
+  keyBindings: KeyBindings;
   displayMode: DisplayMode;
   showHelp: boolean;
 }

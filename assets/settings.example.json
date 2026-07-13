@@ -15,11 +15,13 @@
     "tags": false
   },
   "keyBindings": {
-    "previous": "a",
-    "next": "d",
-    "repeat": "space",
-    "switchDisplayMode": "tab",
-    "toggleHelp": "?",
-    "quit": "q"
+    "previous": ["a", "arrow-left"],
+    "next": ["d", "arrow-right"],
+    "previousGroup": ["[", "arrow-up"],
+    "nextGroup": ["]", "arrow-down"],
+    "repeat": ["space", ""],
+    "switchDisplayMode": ["tab", ""],
+    "toggleHelp": ["?", ""],
+    "quit": ["q", ""]
   }
 }

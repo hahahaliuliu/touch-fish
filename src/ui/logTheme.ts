@@ -1,5 +1,5 @@
 import type { Word } from "../models/word.js";
-import type { DisplayMode, StudyOrder } from "../models/settings.js";
+import type { DisplayMode, KeyBindings, StudyOrder } from "../models/settings.js";
 
 interface RenderLogThemeOptions {
   words: Word[];
@@ -13,6 +13,7 @@ interface RenderLogThemeOptions {
   studyGroupEnabled: boolean;
   navigationLoop: boolean;
   studyOrder: StudyOrder;
+  keyBindings: KeyBindings;
   displayMode: DisplayMode;
   showHelp: boolean;
 }
@@ -30,6 +31,7 @@ export function renderLogTheme(options: RenderLogThemeOptions) {
     studyGroupEnabled,
     navigationLoop,
     studyOrder,
+    keyBindings,
     displayMode,
     showHelp,
   } = options;
@@ -49,6 +51,7 @@ export function renderLogTheme(options: RenderLogThemeOptions) {
       studyGroupEnabled,
       navigationLoop,
       studyOrder,
+      keyBindings,
     });
     return;
   }
@@ -98,6 +101,7 @@ interface RenderLogHelpOptions {
   studyGroupEnabled: boolean;
   navigationLoop: boolean;
   studyOrder: StudyOrder;
+  keyBindings: KeyBindings;
 }
 
 function renderLogHelp(options: RenderLogHelpOptions) {
@@ -113,22 +117,23 @@ function renderLogHelp(options: RenderLogHelpOptions) {
     studyGroupEnabled,
     navigationLoop,
     studyOrder,
+    keyBindings,
   } = options;
 
   console.log("Touch Fish Help");
   console.log("");
   console.log("Navigation");
-  console.log("  A / Left Arrow       previous page");
-  console.log("  D / Right Arrow      next page");
-  console.log("  [ / Up Arrow         previous group");
-  console.log("  ] / Down Arrow       next group");
-  console.log("  Space                repeat last page navigation");
+  console.log(`  ${formatBindings(keyBindings.previous).padEnd(21, " ")} previous page`);
+  console.log(`  ${formatBindings(keyBindings.next).padEnd(21, " ")} next page`);
+  console.log(`  ${formatBindings(keyBindings.previousGroup).padEnd(21, " ")} previous group`);
+  console.log(`  ${formatBindings(keyBindings.nextGroup).padEnd(21, " ")} next group`);
+  console.log(`  ${formatBindings(keyBindings.repeat).padEnd(21, " ")} repeat last page navigation`);
   console.log("");
   console.log("Display");
-  console.log("  Tab                  switch display mode");
-  console.log("  Ctrl+O               open settings");
-  console.log("  ?                    close help");
-  console.log("  Q                    quit");
+  console.log(`  ${formatBindings(keyBindings.switchDisplayMode).padEnd(21, " ")} switch display mode`);
+  console.log(`  ${"Ctrl+O".padEnd(21, " ")} open settings`);
+  console.log(`  ${formatBindings(keyBindings.toggleHelp).padEnd(21, " ")} close help`);
+  console.log(`  ${"Q".padEnd(21, " ")} quit`);
   console.log("");
   console.log("Current Workspace");
   console.log(`  position             ${current} / ${total}`);
@@ -139,6 +144,23 @@ function renderLogHelp(options: RenderLogHelpOptions) {
   console.log(`  group range          ${studyGroupStart}-${studyGroupEnd}`);
   console.log(`  navigation loop      ${navigationLoop ? "enabled" : "disabled"}`);
   console.log(`  study order          ${studyOrder}`);
+}
+
+function formatBindings(bindings: [string, string]): string {
+  return bindings.filter(Boolean).map(formatBinding).join(" / ") || "unbound";
+}
+
+function formatBinding(binding: string): string {
+  const names: Record<string, string> = {
+    space: "Space",
+    tab: "Tab",
+    "arrow-up": "Up Arrow",
+    "arrow-down": "Down Arrow",
+    "arrow-left": "Left Arrow",
+    "arrow-right": "Right Arrow",
+  };
+
+  return names[binding] ?? binding.toUpperCase();
 }
 
 function getDisplayValue(word: Word, displayMode: DisplayMode): string {

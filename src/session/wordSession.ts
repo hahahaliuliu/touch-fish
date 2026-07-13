@@ -16,12 +16,14 @@ import {
   saveCurrentWordProgress,
   saveDisplayMode,
 } from "../services/wordService.js";
+import { loadSettings } from "../services/settingsLoader.js";
 import { startSettingSession } from "./settingSession.js";
 
 type LastNavigation = "next" | "previous";
 
 const OPEN_SETTINGS_KEY = "\u000f";
 let displayMode: DisplayMode = getSavedDisplayMode();
+let keyBindings = loadSettings().keyBindings;
 let lastNavigation: LastNavigation = "next";
 let showHelp = false;
 
@@ -86,33 +88,42 @@ function handleInput(input: string): boolean {
     quitWordSession();
   }
 
-  if (input.toLowerCase() === "a" || input === "\u001b[D") {
+  const binding = normalizeBindingInput(input);
+
+  if (matchesBinding(binding, "previous")) {
     previousWord();
+    return true;
   }
 
-  if (input.toLowerCase() === "d" || input === "\u001b[C") {
+  if (matchesBinding(binding, "next")) {
     nextWord();
+    return true;
   }
 
-  if (input === "[" || input === "\u001b[A") {
+  if (matchesBinding(binding, "previousGroup")) {
     previousStudyGroup();
+    return true;
   }
 
-  if (input === "]" || input === "\u001b[B") {
+  if (matchesBinding(binding, "nextGroup")) {
     nextStudyGroup();
+    return true;
   }
 
-  if (input === " ") {
+  if (matchesBinding(binding, "repeat")) {
     repeatLastNavigation();
+    return true;
   }
 
-  if (input === "\t") {
+  if (matchesBinding(binding, "switchDisplayMode")) {
     switchDisplayMode();
+    return true;
   }
 
-  if (input === "?") {
+  if (matchesBinding(binding, "toggleHelp")) {
     showHelp = !showHelp;
     renderSession();
+    return true;
   }
 
   return true;
@@ -178,6 +189,7 @@ function renderSession() {
     navigationLoop: progress.navigationLoop,
     studyOrder: progress.studyOrder,
     theme: progress.theme,
+    keyBindings,
     displayMode,
     showHelp,
   });
@@ -189,9 +201,32 @@ function openSettingSession() {
   startSettingSession({
     onReturn: () => {
       reloadWordSettings();
+      keyBindings = loadSettings().keyBindings;
       startWordSession();
     },
   });
+}
+
+function normalizeBindingInput(input: string): string | undefined {
+  const specialBindings: Record<string, string> = {
+    "\u001b[A": "arrow-up",
+    "\u001b[B": "arrow-down",
+    "\u001b[C": "arrow-right",
+    "\u001b[D": "arrow-left",
+    "\t": "tab",
+    " ": "space",
+    "？": "?",
+  };
+
+  if (specialBindings[input]) {
+    return specialBindings[input];
+  }
+
+  return /^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined;
+}
+
+function matchesBinding(binding: string | undefined, action: keyof typeof keyBindings): boolean {
+  return binding !== undefined && keyBindings[action].includes(binding);
 }
 
 function quitWordSession() {

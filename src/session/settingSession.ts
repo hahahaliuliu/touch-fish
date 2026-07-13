@@ -1,6 +1,6 @@
-import type { Settings, ThemeName } from "../models/settings.js";
-import { loadSettings, saveSettings } from "../services/settingsLoader.js";
+import type { KeyBindings, Settings, ThemeName } from "../models/settings.js";
 import { reshuffleRandomOrder } from "../services/randomOrder.js";
+import { loadSettings, saveSettings } from "../services/settingsLoader.js";
 import { renderSettingSession } from "../ui/settingsRenderer.js";
 
 const RETURN_TO_WORD_KEY = "\u000f";
@@ -10,65 +10,51 @@ const STUDY_ORDERS: Array<Settings["studyOrder"]> = ["sequential", "random"];
 const AVAILABLE_THEMES: readonly ThemeName[] = ["build-log", "backend-log"];
 type NumericOption = number | "custom";
 type StudyOrderOption = Settings["studyOrder"] | "reshuffle";
+type BindingSlot = 0 | 1;
 const STUDY_ORDER_OPTIONS: readonly StudyOrderOption[] = [...STUDY_ORDERS, "reshuffle"];
 
 interface StartSettingSessionOptions {
   onReturn?: () => void;
 }
 
-interface SettingItem {
+interface ConfigItem {
+  kind: "setting";
   key: keyof Settings;
   label: string;
   options?: readonly unknown[];
   acceptsNumber?: boolean;
 }
 
+interface BindingItem {
+  kind: "binding";
+  key: keyof KeyBindings;
+  label: string;
+}
+
+type SettingItem = ConfigItem | BindingItem;
+
 const SETTING_ITEMS: SettingItem[] = [
-  {
-    key: "studyGroupEnabled",
-    label: "Group Vocabulary",
-    options: [false, true],
-  },
-  {
-    key: "workspaceSize",
-    label: "Page Size",
-    options: WORKSPACE_SIZES,
-    acceptsNumber: true,
-  },
-  {
-    key: "dailyWordCount",
-    label: "Group Size",
-    options: STUDY_GROUP_SIZES,
-    acceptsNumber: true,
-  },
-  {
-    key: "navigationLoop",
-    label: "Navigation Loop",
-    options: [false, true],
-  },
-  {
-    key: "displayMode",
-    label: "Display Mode",
-  },
-  {
-    key: "studyOrder",
-    label: "Study Order",
-    options: STUDY_ORDERS,
-  },
-  {
-    key: "activeVocabularyBook",
-    label: "Vocabulary Book",
-  },
-  {
-    key: "theme",
-    label: "Theme",
-    options: AVAILABLE_THEMES,
-  },
+  { kind: "setting", key: "studyGroupEnabled", label: "Group Vocabulary", options: [false, true] },
+  { kind: "setting", key: "workspaceSize", label: "Page Size", options: WORKSPACE_SIZES, acceptsNumber: true },
+  { kind: "setting", key: "dailyWordCount", label: "Group Size", options: STUDY_GROUP_SIZES, acceptsNumber: true },
+  { kind: "setting", key: "navigationLoop", label: "Navigation Loop", options: [false, true] },
+  { kind: "setting", key: "displayMode", label: "Display Mode" },
+  { kind: "setting", key: "studyOrder", label: "Study Order", options: STUDY_ORDERS },
+  { kind: "setting", key: "activeVocabularyBook", label: "Vocabulary Book" },
+  { kind: "setting", key: "theme", label: "Theme", options: AVAILABLE_THEMES },
+  { kind: "binding", key: "previous", label: "Previous Page" },
+  { kind: "binding", key: "next", label: "Next Page" },
+  { kind: "binding", key: "previousGroup", label: "Previous Group" },
+  { kind: "binding", key: "nextGroup", label: "Next Group" },
+  { kind: "binding", key: "repeat", label: "Repeat Navigation" },
+  { kind: "binding", key: "switchDisplayMode", label: "Switch Display" },
+  { kind: "binding", key: "toggleHelp", label: "Toggle Help" },
 ];
 
 let onReturnToPreviousSession: (() => void) | undefined;
 let settings = loadSettings();
 let selectedIndex = 0;
+let selectedBindingSlot: BindingSlot = 0;
 let isEditing = false;
 let draftSettings = settings;
 let numericInput = "";
@@ -82,6 +68,7 @@ export function startSettingSession(options: StartSettingSessionOptions = {}) {
   onReturnToPreviousSession = options.onReturn;
   settings = loadSettings();
   selectedIndex = 0;
+  selectedBindingSlot = 0;
   isEditing = false;
   draftSettings = settings;
   resetEditState();
@@ -92,15 +79,12 @@ export function startSettingSession(options: StartSettingSessionOptions = {}) {
   }
   process.stdin.resume();
   process.stdin.setEncoding("utf8");
-
   process.stdin.on("data", handleKeyPress);
 }
 
 function handleKeyPress(key: string) {
   for (const input of parseInputs(key.toString())) {
-    const shouldContinue = handleInput(input);
-
-    if (!shouldContinue) {
+    if (!handleInput(input)) {
       return;
     }
   }
@@ -130,7 +114,6 @@ function parseInputs(input: string): string[] {
     if (current) {
       inputs.push(current);
     }
-
     index += 1;
   }
 
@@ -154,6 +137,11 @@ function handleInput(input: string): boolean {
 
   if (input === "\r" || input === "\n") {
     confirmOrStartEdit();
+    return true;
+  }
+
+  if (isBindingCapture()) {
+    captureBinding(input);
     return true;
   }
 
@@ -202,13 +190,20 @@ function moveSelection(direction: -1 | 1) {
     return;
   }
 
-  selectedIndex =
-    (selectedIndex + direction + SETTING_ITEMS.length) % SETTING_ITEMS.length;
+  selectedIndex = (selectedIndex + direction + SETTING_ITEMS.length) % SETTING_ITEMS.length;
+  selectedBindingSlot = 0;
   render();
 }
 
 function confirmOrStartEdit() {
   const item = getSelectedItem();
+
+  if (isBindingItem(item)) {
+    isEditing = true;
+    editError = "";
+    render();
+    return;
+  }
 
   if (!item.options || isInactive(item)) {
     return;
@@ -222,7 +217,6 @@ function confirmOrStartEdit() {
     if (isNumericItem(item)) {
       const currentValue = getNumericSettingValue(draftSettings, item.key);
       const presets = getNumericPresets(item.key);
-
       selectedNumericOption = presets.includes(currentValue) ? currentValue : "custom";
       numericInput = String(currentValue);
       numericInputTouched = false;
@@ -279,66 +273,106 @@ function cancelEdit() {
 function changeCurrentValue(direction: -1 | 1) {
   const item = getSelectedItem();
 
+  if (isBindingItem(item)) {
+    if (!isEditing) {
+      selectedBindingSlot = selectedBindingSlot === 0 ? 1 : 0;
+      render();
+    }
+    return;
+  }
+
   if (!isEditing || !item.options || isInactive(item)) {
     return;
   }
 
   if (item.key === "studyGroupEnabled") {
-    draftSettings = {
-      ...draftSettings,
-      studyGroupEnabled: !draftSettings.studyGroupEnabled,
-    };
+    draftSettings = { ...draftSettings, studyGroupEnabled: !draftSettings.studyGroupEnabled };
   }
 
   if (item.key === "workspaceSize") {
-    const nextOption = getNextNumericOption(
-      selectedNumericOption ?? draftSettings.workspaceSize,
-      WORKSPACE_SIZES,
-      direction
-    );
-    updateNumericOption(item.key, nextOption);
+    updateNumericOption(item.key, getNextNumericOption(selectedNumericOption ?? draftSettings.workspaceSize, WORKSPACE_SIZES, direction));
   }
 
   if (item.key === "dailyWordCount") {
-    const nextOption = getNextNumericOption(
-      selectedNumericOption ?? draftSettings.dailyWordCount,
-      STUDY_GROUP_SIZES,
-      direction
-    );
-    updateNumericOption(item.key, nextOption);
+    updateNumericOption(item.key, getNextNumericOption(selectedNumericOption ?? draftSettings.dailyWordCount, STUDY_GROUP_SIZES, direction));
   }
 
   if (item.key === "navigationLoop") {
-    draftSettings = {
-      ...draftSettings,
-      navigationLoop: !draftSettings.navigationLoop,
-    };
+    draftSettings = { ...draftSettings, navigationLoop: !draftSettings.navigationLoop };
   }
 
   if (item.key === "studyOrder") {
-    const nextOption = getNextValue(
-      selectedStudyOrderOption ?? draftSettings.studyOrder,
-      STUDY_ORDER_OPTIONS,
-      direction
-    );
-
+    const nextOption = getNextValue(selectedStudyOrderOption ?? draftSettings.studyOrder, STUDY_ORDER_OPTIONS, direction);
     selectedStudyOrderOption = nextOption;
     isReshuffleArmed = false;
-    draftSettings = {
-      ...draftSettings,
-      studyOrder: nextOption === "reshuffle" ? "random" : nextOption,
-    };
+    draftSettings = { ...draftSettings, studyOrder: nextOption === "reshuffle" ? "random" : nextOption };
   }
 
   if (item.key === "theme") {
-    draftSettings = {
-      ...draftSettings,
-      theme: getNextValue(draftSettings.theme, AVAILABLE_THEMES, direction),
-    };
+    draftSettings = { ...draftSettings, theme: getNextValue(draftSettings.theme, AVAILABLE_THEMES, direction) };
   }
 
   editError = "";
   render();
+}
+
+function captureBinding(input: string) {
+  if (isBackspace(input)) {
+    saveBinding("");
+    return;
+  }
+
+  const binding = normalizeBinding(input);
+
+  if (!binding) {
+    editError = "Use one English key, symbol, Space, Tab, or an arrow key";
+    render();
+    return;
+  }
+
+  saveBinding(binding);
+}
+
+function saveBinding(binding: string) {
+  const item = getSelectedItem();
+
+  if (!isBindingItem(item)) {
+    return;
+  }
+
+  const keyBindings = cloneKeyBindings(settings.keyBindings);
+
+  if (binding) {
+    (Object.keys(keyBindings) as Array<keyof KeyBindings>).forEach((key) => {
+      keyBindings[key] = keyBindings[key].map((value) => (value === binding ? "" : value)) as KeyBindings[typeof key];
+    });
+  }
+
+  keyBindings[item.key][selectedBindingSlot] = binding;
+  settings = { ...settings, keyBindings };
+  draftSettings = settings;
+  saveSettings(settings);
+  isEditing = false;
+  resetEditState();
+  render();
+}
+
+function normalizeBinding(input: string): string | undefined {
+  const specialBindings: Record<string, string> = {
+    "\u001b[A": "arrow-up",
+    "\u001b[B": "arrow-down",
+    "\u001b[C": "arrow-right",
+    "\u001b[D": "arrow-left",
+    "\t": "tab",
+    " ": "space",
+    "？": "?",
+  };
+
+  if (specialBindings[input]) {
+    return specialBindings[input];
+  }
+
+  return /^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined;
 }
 
 function appendNumericInput(input: string) {
@@ -366,11 +400,11 @@ function applyNumericInput(): boolean {
     return false;
   }
 
-  if (item.key === "workspaceSize") {
+  if (isConfigItem(item) && item.key === "workspaceSize") {
     draftSettings = { ...draftSettings, workspaceSize: value };
   }
 
-  if (item.key === "dailyWordCount") {
+  if (isConfigItem(item) && item.key === "dailyWordCount") {
     draftSettings = { ...draftSettings, dailyWordCount: value };
   }
 
@@ -403,20 +437,28 @@ function isBackspace(input: string): boolean {
   return input === "\b" || input === "\u007f";
 }
 
-function isNumericItem(item: SettingItem): boolean {
-  return item.acceptsNumber === true;
+function isBindingItem(item: SettingItem): item is BindingItem {
+  return item.kind === "binding";
 }
 
-function isInactive(item: SettingItem): boolean {
+function isConfigItem(item: SettingItem): item is ConfigItem {
+  return item.kind === "setting";
+}
+
+function isNumericItem(item: SettingItem): item is ConfigItem {
+  return isConfigItem(item) && item.acceptsNumber === true;
+}
+
+function isInactive(item: ConfigItem): boolean {
   return item.key === "dailyWordCount" && !draftSettings.studyGroupEnabled;
 }
 
-function getNumericSettingValue(settings: Settings, key: keyof Settings): number {
-  if (key === "workspaceSize" || key === "dailyWordCount") {
-    return settings[key];
-  }
+function isBindingCapture(): boolean {
+  return isEditing && isBindingItem(getSelectedItem());
+}
 
-  return 0;
+function getNumericSettingValue(settingsValue: Settings, key: keyof Settings): number {
+  return key === "workspaceSize" || key === "dailyWordCount" ? settingsValue[key] : 0;
 }
 
 function getNumericPresets(key: keyof Settings): readonly number[] {
@@ -425,25 +467,15 @@ function getNumericPresets(key: keyof Settings): readonly number[] {
 
 function getNextValue<T>(currentValue: T, options: readonly T[], direction: -1 | 1): T {
   const currentIndex = options.indexOf(currentValue);
-  const nextIndex =
-    (currentIndex + direction + options.length) % options.length;
-
+  const nextIndex = (currentIndex + direction + options.length) % options.length;
   return options[nextIndex] ?? options[0]!;
 }
 
-function getNextNumericOption(
-  currentOption: NumericOption,
-  presets: readonly number[],
-  direction: -1 | 1
-): NumericOption {
+function getNextNumericOption(currentOption: NumericOption, presets: readonly number[], direction: -1 | 1): NumericOption {
   const options: NumericOption[] = [...presets, "custom"];
   const currentIndex = options.indexOf(currentOption);
   const fallbackIndex = direction === 1 ? 0 : options.length - 1;
-  const nextIndex =
-    currentIndex === -1
-      ? fallbackIndex
-      : (currentIndex + direction + options.length) % options.length;
-
+  const nextIndex = currentIndex === -1 ? fallbackIndex : (currentIndex + direction + options.length) % options.length;
   return options[nextIndex] ?? options[0]!;
 }
 
@@ -452,19 +484,21 @@ function getSelectedItem(): SettingItem {
 }
 
 function render() {
+  const item = getSelectedItem();
+  const showNumericCursor = isEditing && isNumericItem(item) && selectedNumericOption === "custom";
+
   renderSettingSession({
     settings,
     draftSettings,
     items: SETTING_ITEMS,
     selectedIndex,
+    selectedBindingSlot,
     isEditing,
-    numericInput: isEditing && isNumericItem(getSelectedItem()) ? numericInput : undefined,
-    selectedNumericOption:
-      isEditing && isNumericItem(getSelectedItem()) ? selectedNumericOption : undefined,
-    selectedStudyOrderOption:
-      isEditing && getSelectedItem().key === "studyOrder"
-        ? selectedStudyOrderOption
-        : undefined,
+    numericInput: isEditing && isNumericItem(item) ? numericInput : undefined,
+    selectedNumericOption: isEditing && isNumericItem(item) ? selectedNumericOption : undefined,
+    selectedStudyOrderOption: isEditing && isConfigItem(item) && item.key === "studyOrder" ? selectedStudyOrderOption : undefined,
+    isBindingCapture: isBindingCapture(),
+    isNumericCursor: showNumericCursor,
     editError,
     isReshuffleArmed,
   });
@@ -480,15 +514,16 @@ function resetEditState() {
 }
 
 function isReshuffleSelected(): boolean {
-  return getSelectedItem().key === "studyOrder" && selectedStudyOrderOption === "reshuffle";
+  const item = getSelectedItem();
+  return isConfigItem(item) && item.key === "studyOrder" && selectedStudyOrderOption === "reshuffle";
 }
 
 function returnToPreviousSession() {
   const onReturn = onReturnToPreviousSession;
-
   onReturnToPreviousSession = undefined;
+  isEditing = false;
+  resetEditState();
   process.stdin.off("data", handleKeyPress);
-
   onReturn?.();
 }
 
@@ -506,11 +541,17 @@ function quitSettingSession() {
 function cloneSettings(value: Settings): Settings {
   return {
     ...value,
-    visibleFields: {
-      ...value.visibleFields,
-    },
-    keyBindings: {
-      ...value.keyBindings,
-    },
+    visibleFields: { ...value.visibleFields },
+    keyBindings: cloneKeyBindings(value.keyBindings),
   };
+}
+
+function cloneKeyBindings(value: KeyBindings): KeyBindings {
+  const bindings = {} as KeyBindings;
+
+  (Object.keys(value) as Array<keyof KeyBindings>).forEach((key) => {
+    bindings[key] = [...value[key]] as KeyBindings[typeof key];
+  });
+
+  return bindings;
 }

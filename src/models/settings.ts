@@ -21,13 +21,17 @@ export interface VisibleWordFields {
 }
 
 export interface KeyBindings {
-  previous: string;
-  next: string;
-  repeat: string;
-  switchDisplayMode: string;
-  toggleHelp: string;
-  quit: string;
+  previous: BindingSlots;
+  next: BindingSlots;
+  previousGroup: BindingSlots;
+  nextGroup: BindingSlots;
+  repeat: BindingSlots;
+  switchDisplayMode: BindingSlots;
+  toggleHelp: BindingSlots;
+  quit: BindingSlots;
 }
+
+export type BindingSlots = [string, string];
 
 export interface Settings {
   dailyWordCount: number;

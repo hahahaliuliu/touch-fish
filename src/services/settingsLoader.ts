@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS } from "../config/defaultSettings.js";
 import { resolveAssetPath } from "../config/paths.js";
 import type {
   DisplayMode,
+  BindingSlots,
   KeyBindings,
   Settings,
   StudyOrder,
@@ -80,7 +81,7 @@ function mergeWithDefaultSettings(value: unknown): unknown {
       ? { ...DEFAULT_SETTINGS.visibleFields, ...value.visibleFields }
       : value.visibleFields,
     keyBindings: isRecord(value.keyBindings)
-      ? { ...DEFAULT_SETTINGS.keyBindings, ...value.keyBindings }
+      ? mergeKeyBindings(value.keyBindings)
       : value.keyBindings,
   };
 }
@@ -160,6 +161,8 @@ function validateKeyBindings(value: unknown, errors: string[]) {
   const keys: Array<keyof KeyBindings> = [
     "previous",
     "next",
+    "previousGroup",
+    "nextGroup",
     "repeat",
     "switchDisplayMode",
     "toggleHelp",
@@ -167,10 +170,40 @@ function validateKeyBindings(value: unknown, errors: string[]) {
   ];
 
   keys.forEach((key) => {
-    if (typeof value[key] !== "string" || value[key].trim() === "") {
-      errors.push(`keyBindings.${key} must be a non-empty string`);
+    if (!isBindingSlots(value[key])) {
+      errors.push(`keyBindings.${key} must contain two binding slots`);
     }
   });
+}
+
+function mergeKeyBindings(value: Record<string, unknown>): KeyBindings {
+  const bindings = {} as KeyBindings;
+
+  (Object.keys(DEFAULT_SETTINGS.keyBindings) as Array<keyof KeyBindings>).forEach((key) => {
+    bindings[key] = normalizeBindingSlots(value[key], DEFAULT_SETTINGS.keyBindings[key]);
+  });
+
+  return bindings;
+}
+
+function normalizeBindingSlots(value: unknown, fallback: BindingSlots): BindingSlots {
+  if (isBindingSlots(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return [value, fallback[1]];
+  }
+
+  return [...fallback] as BindingSlots;
+}
+
+function isBindingSlots(value: unknown): value is BindingSlots {
+  return (
+    Array.isArray(value) &&
+    value.length === 2 &&
+    value.every((binding) => typeof binding === "string")
+  );
 }
 
 function isPositiveInteger(value: unknown): value is number {
