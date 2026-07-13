@@ -8,19 +8,21 @@ const settings = loadSettings();
 
 let workspaceSize = settings.workspaceSize;
 
-let currentIndex = loadWordProgress();
+let currentIndex = alignToWorkspaceStart(loadWordProgress());
 
 export function getCurrentWords(): Word[] {
   return words.slice(currentIndex, currentIndex + workspaceSize);
 }
 
 export function nextWordGroup(): Word[] {
-  currentIndex = (currentIndex + workspaceSize) % words.length;
+  const nextIndex = currentIndex + workspaceSize;
+
+  currentIndex = nextIndex >= words.length ? getLastWorkspaceStart() : nextIndex;
   return getCurrentWords();
 }
 
 export function previousWordGroup(): Word[] {
-  currentIndex = (currentIndex - workspaceSize + words.length) % words.length;
+  currentIndex = currentIndex <= 0 ? 0 : currentIndex - workspaceSize;
   return getCurrentWords();
 }
 
@@ -38,4 +40,15 @@ export function saveCurrentWordProgress() {
 
 export function reloadWordSettings() {
   workspaceSize = loadSettings().workspaceSize;
+  currentIndex = alignToWorkspaceStart(currentIndex);
+}
+
+function alignToWorkspaceStart(index: number) {
+  const safeIndex = Math.min(Math.max(index, 0), Math.max(words.length - 1, 0));
+
+  return Math.floor(safeIndex / workspaceSize) * workspaceSize;
+}
+
+function getLastWorkspaceStart() {
+  return Math.floor((words.length - 1) / workspaceSize) * workspaceSize;
 }

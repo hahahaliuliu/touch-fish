@@ -1,10 +1,10 @@
 # Settings Plan / 设置功能草稿
 
-> Status: v0.3 已开始。当前已经完成 Settings model、默认设置和本地 settings 读取基础。
+> Status: v0.3 已开始。当前已经完成 Settings model、默认设置、本地 settings 读取基础，以及初版设置界面。
 
 这个文档用来保存 Settings 的产品想法，防止以后忘记。
 
-当前不要提前实现 Settings UI。先把设置数据结构和读取逻辑稳定下来。
+当前 Settings 应该小步实现：先支持真正会影响学习流程的设置，再逐步完善界面体验。
 
 ## Goal / 目标
 
@@ -29,6 +29,26 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 - Workspace Size 控制一页显示几个单词
 - 这两个不是同一个概念
 
+### Workspace Size / 每组单词数
+
+选择每个 Workspace 页面显示几个单词。
+
+当前已支持：
+
+- 1
+- 3
+- 5
+
+未来可以支持：
+
+- custom
+
+注意：
+
+- 这个设置影响 `A` / `D` 每次切换时移动多少个单词
+- 当前默认值是 3
+- 它不是“每天背多少个单词”，只是“当前屏幕一次显示多少个单词”
+
 ### Study Order / 学习顺序
 
 选择单词出现顺序。
@@ -43,6 +63,26 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 - `sequential` 按词库顺序学习
 - `random` 应该生成并保存一个稳定的随机顺序
 - 随机模式应避免一轮没结束就重复出现太多旧词
+
+### Navigation Loop / 头尾循环
+
+选择到达词库开头或结尾时，继续导航是否循环。
+
+可能选项：
+
+- `false` 不循环：到第一组后继续按上一组仍停在第一组；到最后一组后继续按下一组仍停在最后一组
+- `true` 循环：第一组按上一组跳到最后一组；最后一组按下一组跳到第一组
+
+当前行为：
+
+- 默认不循环
+- 暂时还没有放进 Settings UI
+
+注意：
+
+- 这个设置以后可以叫 `navigationLoop`
+- 不循环更适合新手，因为不会误以为前几个单词丢了
+- 循环适合复习模式或熟悉键位之后使用
 
 ### Vocabulary Book / 单词书
 
@@ -133,12 +173,15 @@ assets/settings.json
 assets/settings.example.json
 ```
 
-结构：
+未来完整结构草稿：
+
+> 注意：下面不是当前全部可用的配置。当前已经可用的是 `workspaceSize`，其他字段会按实现顺序逐步接入。
 
 ```json
 {
   "dailyWordCount": 20,
   "workspaceSize": 3,
+  "navigationLoop": false,
   "studyOrder": "sequential",
   "activeVocabularyBook": "ielts-basic",
   "displayMode": "english",
@@ -171,17 +214,17 @@ v0.3 推荐顺序：
 4. 支持默认 `displayMode` `[done]`
 5. 增加 `touchfish setting` 只读设置视图 `[done]`
 6. 支持在 `touchfish setting` 中修改 `workspaceSize` `[done]`
-7. 支持 `studyOrder`
-8. 支持选择当前词库
-9. 支持可见字段配置
-10. 支持终端主题
-11. 支持自定义快捷键
+7. 支持 `navigationLoop`
+8. 支持 `studyOrder`
+9. 支持选择当前词库
+10. 支持可见字段配置
+11. 支持终端主题
+12. 支持自定义快捷键
 
-## Not Yet / 当前不做
+## Not Yet / 当前暂不做
 
-v0.2 不要实现：
+当前先不急着实现：
 
-- 可修改的 Settings UI
 - Theme switching
 - 多词库切换
 - 每日学习计划
