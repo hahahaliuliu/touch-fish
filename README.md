@@ -71,7 +71,13 @@ Settings 当前支持：
 
 当前可修改：
 
-- Workspace Size: 1 / 3 / 5
+- Group Vocabulary: on / off
+- Page Size: 1 / 3 / 5 / custom
+- Group Size: 10 / 20 / 30 / custom
+- Navigation Loop: on / off
+
+`Page Size` 和 `Group Size` 进入编辑后，可以用左右键切换预设值和 `custom`。
+选中 `custom` 时显示 `_`，直接输入任意正整数后按 Enter 保存。
 
 如果想在任意目录使用 `touchfish word`，可以执行：
 
@@ -141,22 +147,27 @@ npm link
 - `touchfish word`
 - Word Session
 - 键盘交互
-- Workspace：默认一页 3 个单词
+- Workspace：默认一页 3 个单词，支持自定义每页数量
+- 可选学习分组：默认每组 20 个单词，支持自定义组大小
+- 分组内循环与整本词书连续浏览
 - Display Mode：英文、中文、英文 + 中文
 - JSON 词库
 - 本地学习进度保存
 - Build Log 风格界面
-- `?` Debug/Help 视图，尽量保持低调
+- `?` Help 视图，显示快捷键和当前 Workspace 状态
 
 ## Keyboard / 快捷键
 
 | 按键 | 作用 |
 | --- | --- |
-| `A` | 上一组 |
-| `D` | 下一组 |
+| `A` / `←` | 当前范围内上一页 |
+| `D` / `→` | 当前范围内下一页 |
+| `[` / `↑` | 上一学习组 |
+| `]` / `↓` | 下一学习组 |
 | `Space` | 重复上一次导航 |
 | `Tab` | 切换显示模式 |
-| `?` | 切换 Debug/Help 视图 |
+| `Ctrl+O` | 打开 Settings；在 Settings 中返回 Word |
+| `?` | 打开 / 关闭 Help 视图 |
 | `Q` | 退出 |
 
 ## Vocabulary / 词库

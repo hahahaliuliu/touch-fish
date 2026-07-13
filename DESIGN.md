@@ -1,6 +1,6 @@
 # Touch Fish Design / 设计文档
 
-> Version: v0.2-dev
+> Version: v0.3-dev
 
 Learn in the gaps. Stay in the terminal.
 
@@ -45,6 +45,7 @@ Touch Fish 应该记住本地状态。
 当前保存：
 
 - 当前单词位置
+- 本地 Settings（页面大小、分组、循环等）
 
 未来可以保存：
 
@@ -89,11 +90,15 @@ Word Session 使用 Workspace 模型。
 3 words
 ```
 
-未来 Settings 可以支持：
+当前 Settings 支持：
 
-- 1 word
-- 3 words
-- 5 words
+- 每页显示 `1 / 3 / 5 / custom` 个单词
+- 开启或关闭学习分组
+- 每组 `10 / 20 / 30 / custom` 个单词
+- 在当前导航范围内开启或关闭首尾循环
+
+开启分组时，`A` / `D` 或 `←` / `→` 在当前组内翻页，
+`[` / `]` 或 `↑` / `↓` 切换学习组。关闭分组时整本词书作为一个连续范围。
 
 ## 5. Display Mode / 显示模式
 
@@ -154,7 +159,8 @@ Help View 可以显示：
 - 当前快捷键
 - 当前运行状态
 
-但文案应呈现为 diagnostics，而不是普通背单词软件的帮助面板。
+当前阶段优先保证信息清楚：Help 显示快捷键和当前 Workspace 状态，
+并覆盖主界面而不是追加在下面。
 
 ## 8. Theme Direction / 主题方向
 

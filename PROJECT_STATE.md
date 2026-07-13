@@ -99,7 +99,7 @@ npm link
 - [x] `D` 下一组
 - [x] `Space` 重复上一次导航
 - [x] `Tab` 切换显示模式
-- [x] `?` 切换 Debug/Help 视图
+- [x] `?` 打开或关闭 Help 视图
 - [x] `Q` 退出
 
 ### Vocabulary / 词库
@@ -127,11 +127,20 @@ npm link
 - [x] Word Session 使用 settings 中的默认 `displayMode`
 - [x] `touchfish setting` 只读设置视图
 - [x] `touchfish setting` 支持编辑并保存 `workspaceSize`
+- [x] `touchfish setting` 支持自定义 `workspaceSize`
+- [x] `touchfish setting` 支持开关学习分组 `studyGroupEnabled`
+- [x] `touchfish setting` 支持编辑学习组大小 `dailyWordCount`
+- [x] `touchfish setting` 支持自定义学习组大小
+- [x] `touchfish setting` 支持 `navigationLoop`
 
 ### Workspace
 
 - [x] 默认一页显示 3 个单词
 - [x] 按组切换
+- [x] `[` / `]` 或 `↑` / `↓` 切换学习组
+- [x] `A` / `D` 或 `←` / `→` 在当前范围内翻页
+- [x] 可关闭分组，连续浏览整本词书
+- [x] 分组内或整本词书循环导航
 - [x] 英文 / 中文 / 英文 + 中文显示模式
 - [x] 默认英文显示，增强伪装效果
 
@@ -140,7 +149,7 @@ npm link
 - [x] Build Log 风格默认主题
 - [x] 主界面像缓存构建输出
 - [x] Help 视图覆盖主界面，而不是追加在下面
-- [x] Help 视图呈现为 runtime diagnostics
+- [x] Help 视图清楚显示快捷键和当前 Workspace 状态
 
 ## Current Vocabulary Format / 当前词库格式
 
