@@ -14,7 +14,13 @@ interface BindingItem {
   label: string;
 }
 
-type SettingItem = ConfigItem | BindingItem;
+interface ActionItem {
+  kind: "action";
+  id: "download-vocabulary";
+  label: string;
+}
+
+type SettingItem = ConfigItem | BindingItem | ActionItem;
 
 interface RenderSettingSessionOptions {
   settings: Settings;
@@ -72,6 +78,11 @@ export function renderSettingSession(options: RenderSettingSessionOptions) {
       return;
     }
 
+    if (item.kind === "action") {
+      renderActionItem(item, selected);
+      return;
+    }
+
     renderConfigItem(
       item,
       activeSettings,
@@ -108,6 +119,11 @@ export function renderSettingSession(options: RenderSettingSessionOptions) {
   if (editError) {
     console.log(`[WARN] ${editError}`);
   }
+}
+
+function renderActionItem(item: ActionItem, selected: boolean) {
+  const mark = selected ? ">" : " ";
+  console.log(`${mark} ${item.label.padEnd(20, " ")} ${"[open]"}`);
 }
 
 function renderConfigItem(

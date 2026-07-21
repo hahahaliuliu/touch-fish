@@ -1,6 +1,6 @@
 # Vocabulary Sources / 词库来源
 
-Touch Fish 的完整本地词库不会提交到 Git。仓库只保留格式示例和来源说明，用户自己的词库保存在 `assets/vocabulary/` 中。
+用户自己的完整词库不会提交到 Git，保存在 `assets/vocabulary/` 中。仓库另外会在 `assets/downloads/` 保存可以公开再分发的下载词书，并附上来源和许可证说明。
 
 ## ECDICT
 
@@ -14,6 +14,8 @@ Touch Fish 的完整本地词库不会提交到 Git。仓库只保留格式示�
 ECDICT 是一份开源英汉词典数据库，包含考试标签、中文释义、音标、词性和语料库词频。
 
 ## Generated Local Books / 本地生成词书
+
+下面这些文件是开发者本机使用的本地词书，仍然不会提交到 Git。
 
 ### Luran IELTS Vocabulary
 
@@ -57,3 +59,14 @@ AWL 是面向学术英语学习的公认词表，并不是 IELTS 官方词书。
 - Phonetic and part-of-speech fields are retained when available
 - Example and note fields remain empty for later features
 - AWL sublist information is retained in each word's `tags`
+
+## Public Download Books / 公开下载词书
+
+`assets/downloads/` 中的五本公开词书同样来自 ECDICT，并按以下规则生成：
+
+- `high-school-vocabulary.json`：全部有效的 `gk` 标签词条，按英文排序。
+- 其余四本高频词书：按 ECDICT 的 `frq` 字段从高频到低频取前 1,500 个有效词条。
+- 所有词书都移除没有中文释义或英文词形不规范的条目，并在每个单词的 `tags` 中保留来源、考试标签和频率信息。
+- 这些是基于公开词典数据的学习筛选结果，不宣称为官方考试词表。
+
+ECDICT 的 MIT 许可证副本位于 `assets/downloads/LICENSE-ECDICT.txt`。

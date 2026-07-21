@@ -3,6 +3,7 @@ import { reshuffleRandomOrder } from "../services/randomOrder.js";
 import { loadSettings, saveSettings } from "../services/settingsLoader.js";
 import { listVocabularyBooks } from "../services/vocabularyLoader.js";
 import { renderSettingSession } from "../ui/settingsRenderer.js";
+import { startVocabularyDownloadSession } from "./vocabularyDownloadSession.js";
 
 const RETURN_TO_WORD_KEY = "\u000f";
 const WORKSPACE_SIZES = [1, 3, 5];
@@ -32,7 +33,13 @@ interface BindingItem {
   label: string;
 }
 
-type SettingItem = ConfigItem | BindingItem;
+interface ActionItem {
+  kind: "action";
+  id: "download-vocabulary";
+  label: string;
+}
+
+type SettingItem = ConfigItem | BindingItem | ActionItem;
 
 let onReturnToPreviousSession: (() => void) | undefined;
 let settings = loadSettings();
@@ -183,6 +190,11 @@ function moveSelection(direction: -1 | 1) {
 function confirmOrStartEdit() {
   const item = getSelectedItem();
 
+  if (isActionItem(item)) {
+    openVocabularyDownloadSession();
+    return;
+  }
+
   if (isBindingItem(item)) {
     isEditing = true;
     editError = "";
@@ -266,7 +278,7 @@ function changeCurrentValue(direction: -1 | 1) {
     return;
   }
 
-  if (!isEditing || !item.options || isInactive(item)) {
+  if (!isConfigItem(item) || !isEditing || !item.options || isInactive(item)) {
     return;
   }
 
@@ -438,6 +450,10 @@ function isConfigItem(item: SettingItem): item is ConfigItem {
   return item.kind === "setting";
 }
 
+function isActionItem(item: SettingItem): item is ActionItem {
+  return item.kind === "action";
+}
+
 function isNumericItem(item: SettingItem): item is ConfigItem {
   return isConfigItem(item) && item.acceptsNumber === true;
 }
@@ -508,6 +524,7 @@ function createSettingItems(): SettingItem[] {
     { kind: "setting", key: "displayMode", label: "Display Mode" },
     { kind: "setting", key: "studyOrder", label: "Study Order", options: STUDY_ORDERS },
     { kind: "setting", key: "activeVocabularyBook", label: "Vocabulary Book", options: vocabularyBookIds },
+    { kind: "action", id: "download-vocabulary", label: "Download Vocabulary" },
     { kind: "setting", key: "theme", label: "Theme", options: AVAILABLE_THEMES },
     { kind: "binding", key: "previous", label: "Previous Page" },
     { kind: "binding", key: "next", label: "Next Page" },
@@ -517,6 +534,17 @@ function createSettingItems(): SettingItem[] {
     { kind: "binding", key: "switchDisplayMode", label: "Switch Display" },
     { kind: "binding", key: "toggleHelp", label: "Toggle Help" },
   ];
+}
+
+function openVocabularyDownloadSession() {
+  process.stdin.off("data", handleKeyPress);
+  void startVocabularyDownloadSession({
+    onReturn: () => {
+      startSettingSession(
+        onReturnToPreviousSession ? { onReturn: onReturnToPreviousSession } : {}
+      );
+    },
+  });
 }
 
 function resetEditState() {

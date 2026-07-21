@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "books": [
+    {
+      "id": "ielts-example",
+      "name": "IELTS Example",
+      "description": "A small starter vocabulary book bundled with Touch Fish.",
+      "availability": "available",
+      "wordCount": 30,
+      "version": 1,
+      "license": "MIT",
+      "sourceUrl": "https://github.com/hahahaliuliu/touch-fish/blob/main/assets/vocabulary/ielts.example.json",
+      "downloadUrl": "https://raw.githubusercontent.com/hahahaliuliu/touch-fish/main/assets/vocabulary/ielts.example.json"
+    },
+    {
+      "id": "high-school-vocabulary",
+      "name": "High School Vocabulary",
+      "description": "3,674 ECDICT entries tagged for Chinese high school exams (gk).",
+      "availability": "available",
+      "wordCount": 3674,
+      "version": 1,
+      "license": "MIT (ECDICT)",
+      "sourceUrl": "https://github.com/skywind3000/ECDICT",
+      "downloadUrl": "https://raw.githubusercontent.com/hahahaliuliu/touch-fish/main/assets/downloads/high-school-vocabulary.json"
+    },
+    {
+      "id": "high-school-frequency",
+      "name": "High School High Frequency",
+      "description": "Top 1,500 ECDICT high school exam entries by modern corpus frequency.",
+      "availability": "available",
+      "wordCount": 1500,
+      "version": 1,
+      "license": "MIT (ECDICT)",
+      "sourceUrl": "https://github.com/skywind3000/ECDICT",
+      "downloadUrl": "https://raw.githubusercontent.com/hahahaliuliu/touch-fish/main/assets/downloads/high-school-frequency.json"
+    },
+    {
+      "id": "cet4-frequency",
+      "name": "CET-4 High Frequency",
+      "description": "Top 1,500 ECDICT CET-4 tagged entries by modern corpus frequency.",
+      "availability": "available",
+      "wordCount": 1500,
+      "version": 1,
+      "license": "MIT (ECDICT)",
+      "sourceUrl": "https://github.com/skywind3000/ECDICT",
+      "downloadUrl": "https://raw.githubusercontent.com/hahahaliuliu/touch-fish/main/assets/downloads/cet4-frequency.json"
+    },
+    {
+      "id": "cet6-frequency",
+      "name": "CET-6 High Frequency",
+      "description": "Top 1,500 ECDICT CET-6 tagged entries by modern corpus frequency.",
+      "availability": "available",
+      "wordCount": 1500,
+      "version": 1,
+      "license": "MIT (ECDICT)",
+      "sourceUrl": "https://github.com/skywind3000/ECDICT",
+      "downloadUrl": "https://raw.githubusercontent.com/hahahaliuliu/touch-fish/main/assets/downloads/cet6-frequency.json"
+    },
+    {
+      "id": "ielts-frequency",
+      "name": "IELTS High Frequency",
+      "description": "Top 1,500 ECDICT IELTS tagged entries by modern corpus frequency.",
+      "availability": "available",
+      "wordCount": 1500,
+      "version": 1,
+      "license": "MIT (ECDICT)",
+      "sourceUrl": "https://github.com/skywind3000/ECDICT",
+      "downloadUrl": "https://raw.githubusercontent.com/hahahaliuliu/touch-fish/main/assets/downloads/ielts-frequency.json"
+    }
+  ]
+}

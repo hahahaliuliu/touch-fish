@@ -111,6 +111,8 @@ npm link
 - [x] 本地大词库不提交到 Git
 - [x] 自动扫描 `assets/vocabulary/` 中的本地词书
 - [x] Settings 中切换当前词书
+- [x] Settings 中打开在线词库下载列表
+- [x] 下载词书后校验并原子安装到本地词库目录
 
 ### Progress / 进度
 

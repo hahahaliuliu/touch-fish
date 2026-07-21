@@ -71,6 +71,7 @@ Settings 当前支持：
 - Navigation Loop: on / off
 - Study Order: sequential / random
 - Vocabulary Book: automatically discovered local JSON books
+- Download Vocabulary: download public vocabulary books from the catalog
 - Theme: build-log / backend-log
 - Custom key bindings for Word navigation and display controls
 
@@ -106,6 +107,12 @@ assets/vocabulary/ielts.example.json
 
 程序在没有真实词书时会自动使用它。你自己的完整词书放进 `assets/vocabulary/` 后，重新启动即可被自动识别。
 
+也可以在 Settings 中打开 `Download Vocabulary` 下载公开目录中的词书。目录与内容规则见：
+
+```txt
+docs/vocabulary-downloads.md
+```
+
 ## Run / 运行方式
 
 开发时使用：
@@ -139,6 +146,7 @@ npm link
 - 顺序与随机学习模式，分别保存各自的学习位置
 - Display Mode：英文、中文、英文 + 中文
 - JSON 词库
+- 在线词库目录和下载校验
 - 本地学习进度保存
 - Build Log 风格界面
 - `?` Help 视图，显示快捷键和当前 Workspace 状态

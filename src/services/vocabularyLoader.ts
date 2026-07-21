@@ -73,31 +73,46 @@ function getVocabularyFilePaths(vocabularyDirectory: string): string[] {
 }
 
 function loadVocabularyBookFile(filePath: string): LocatedVocabularyBook {
+  try {
+    return {
+      book: parseVocabularyBook(fs.readFileSync(filePath, "utf-8"), filePath),
+      filePath,
+    };
+  } catch (error) {
+    if (error instanceof VocabularyFormatError) {
+      throw error;
+    }
+
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Unable to read vocabulary file: ${filePath}\n- ${message}`);
+  }
+}
+
+export function parseVocabularyBook(content: string, sourceName: string): VocabularyBook {
   let vocabularyBook: unknown;
 
   try {
-    vocabularyBook = JSON.parse(fs.readFileSync(filePath, "utf-8")) as unknown;
+    vocabularyBook = JSON.parse(content) as unknown;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Unable to read vocabulary file: ${filePath}\n- ${message}`);
+    throw new VocabularyFormatError(`Invalid vocabulary book JSON: ${sourceName}\n- ${message}`);
   }
 
   const errors = validateVocabularyBook(vocabularyBook);
 
   if (errors.length > 0) {
-    throw new Error(
+    throw new VocabularyFormatError(
       [
-        `Invalid vocabulary book format: ${filePath}`,
+        `Invalid vocabulary book format: ${sourceName}`,
         ...errors.map((error) => `- ${error}`),
       ].join("\n")
     );
   }
 
-  return {
-    book: vocabularyBook as VocabularyBook,
-    filePath,
-  };
+  return vocabularyBook as VocabularyBook;
 }
+
+class VocabularyFormatError extends Error {}
 
 function validateUniqueBookIds(books: LocatedVocabularyBook[]) {
   const pathsById = new Map<string, string>();
