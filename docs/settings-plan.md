@@ -107,10 +107,12 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 - 程序会自动扫描并验证词书，优先按 `activeVocabularyBook` 的词库 id 加载；找不到时回退到第一本可用词书
 - 没有真实词书时会回退到 `.example.json` 示例词书
 
-后续仍需支持：
+当前行为：
 
-- Settings 中选择当前词书
-- 学习进度按词书分别保存
+- Settings 的 `Vocabulary Book` 会列出自动扫描到的词书 id；编辑时用 `A` / `D` 或左右方向键切换，按 `Enter` 保存
+- 返回 Word Session 后会立即加载新词书，不需要重新启动程序
+- 每本词书在 `assets/progress/` 下拥有独立进度文件，分别保存顺序位置、随机位置、随机顺序和显示模式
+- 旧版唯一的 `word-progress.json` 会在升级后的第一次启动时迁移为当前词书的进度文件，避免丢失原有进度
 
 ### Custom Key Bindings / 自定义快捷键
 
@@ -218,7 +220,7 @@ assets/settings.example.json
 
 未来完整结构草稿：
 
-> 注意：下面不是当前全部可用的配置。除 `activeVocabularyBook` 和 `visibleFields` 尚未接入实际功能外，其余字段已经在当前 Settings 流程中使用。
+> 注意：下面不是当前全部可用的配置。除 `visibleFields` 尚未接入实际功能外，其余字段已经在当前 Settings 流程中使用。
 
 ```json
 {
@@ -266,16 +268,16 @@ v0.3 推荐顺序：
 10. 支持 `navigationLoop` `[done]`
 11. 支持 `studyOrder` `[done]`
 12. 支持识别并加载当前词库 `[done: discovery/loading]`
-13. 支持在 Settings 中选择词库
-14. 支持可见字段配置
-15. 支持终端主题 `[done: build-log / backend-log]`
-16. 支持自定义快捷键 `[done]`
+13. 支持在 Settings 中选择词库 `[done]`
+14. 支持词库独立学习进度 `[done]`
+15. 支持可见字段配置
+16. 支持终端主题 `[done: build-log / backend-log]`
+17. 支持自定义快捷键 `[done]`
 
 ## Not Yet / 当前暂不做
 
 当前先不急着实现：
 
-- 多词库切换
 - 每日学习计划
 - 单词详情字段显示
 - 单词测试和小组测试

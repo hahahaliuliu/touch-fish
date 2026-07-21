@@ -3,7 +3,8 @@ import path from "node:path";
 import { resolveAssetPath } from "../config/paths.js";
 import type { DisplayMode } from "../models/settings.js";
 
-const progressPath = resolveAssetPath("progress", "word-progress.json");
+const progressDirectory = resolveAssetPath("progress");
+const legacyProgressPath = resolveAssetPath("progress", "word-progress.json");
 
 export interface WordProgress {
   sequentialIndex: number;
@@ -12,7 +13,13 @@ export interface WordProgress {
   displayMode?: DisplayMode;
 }
 
-export function loadWordProgress(): WordProgress {
+export function loadWordProgress(bookId: string): WordProgress {
+  const progressPath = getProgressPath(bookId);
+
+  if (!fs.existsSync(progressPath)) {
+    migrateLegacyProgress(progressPath);
+  }
+
   if (!fs.existsSync(progressPath)) {
     return createEmptyProgress();
   }
@@ -31,7 +38,8 @@ export function loadWordProgress(): WordProgress {
   };
 }
 
-export function saveWordProgress(progress: WordProgress) {
+export function saveWordProgress(bookId: string, progress: WordProgress) {
+  const progressPath = getProgressPath(bookId);
   const dir = path.dirname(progressPath);
 
   if (!fs.existsSync(dir)) {
@@ -50,6 +58,24 @@ export function saveWordProgress(progress: WordProgress) {
     ),
     "utf-8"
   );
+}
+
+function getProgressPath(bookId: string): string {
+  return path.join(progressDirectory, `${encodeURIComponent(bookId)}.json`);
+}
+
+function migrateLegacyProgress(progressPath: string) {
+  if (!fs.existsSync(legacyProgressPath)) {
+    return;
+  }
+
+  const dir = path.dirname(progressPath);
+
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  fs.renameSync(legacyProgressPath, progressPath);
 }
 
 function createEmptyProgress(): WordProgress {

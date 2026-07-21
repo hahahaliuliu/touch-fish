@@ -1,6 +1,7 @@
 import type { KeyBindings, Settings, ThemeName } from "../models/settings.js";
 import { reshuffleRandomOrder } from "../services/randomOrder.js";
 import { loadSettings, saveSettings } from "../services/settingsLoader.js";
+import { listVocabularyBooks } from "../services/vocabularyLoader.js";
 import { renderSettingSession } from "../ui/settingsRenderer.js";
 
 const RETURN_TO_WORD_KEY = "\u000f";
@@ -33,26 +34,9 @@ interface BindingItem {
 
 type SettingItem = ConfigItem | BindingItem;
 
-const SETTING_ITEMS: SettingItem[] = [
-  { kind: "setting", key: "studyGroupEnabled", label: "Group Vocabulary", options: [false, true] },
-  { kind: "setting", key: "workspaceSize", label: "Page Size", options: WORKSPACE_SIZES, acceptsNumber: true },
-  { kind: "setting", key: "dailyWordCount", label: "Group Size", options: STUDY_GROUP_SIZES, acceptsNumber: true },
-  { kind: "setting", key: "navigationLoop", label: "Navigation Loop", options: [false, true] },
-  { kind: "setting", key: "displayMode", label: "Display Mode" },
-  { kind: "setting", key: "studyOrder", label: "Study Order", options: STUDY_ORDERS },
-  { kind: "setting", key: "activeVocabularyBook", label: "Vocabulary Book" },
-  { kind: "setting", key: "theme", label: "Theme", options: AVAILABLE_THEMES },
-  { kind: "binding", key: "previous", label: "Previous Page" },
-  { kind: "binding", key: "next", label: "Next Page" },
-  { kind: "binding", key: "previousGroup", label: "Previous Group" },
-  { kind: "binding", key: "nextGroup", label: "Next Group" },
-  { kind: "binding", key: "repeat", label: "Repeat Navigation" },
-  { kind: "binding", key: "switchDisplayMode", label: "Switch Display" },
-  { kind: "binding", key: "toggleHelp", label: "Toggle Help" },
-];
-
 let onReturnToPreviousSession: (() => void) | undefined;
 let settings = loadSettings();
+let settingItems = createSettingItems();
 let selectedIndex = 0;
 let selectedBindingSlot: BindingSlot = 0;
 let isEditing = false;
@@ -67,6 +51,7 @@ let isReshuffleArmed = false;
 export function startSettingSession(options: StartSettingSessionOptions = {}) {
   onReturnToPreviousSession = options.onReturn;
   settings = loadSettings();
+  settingItems = createSettingItems();
   selectedIndex = 0;
   selectedBindingSlot = 0;
   isEditing = false;
@@ -190,7 +175,7 @@ function moveSelection(direction: -1 | 1) {
     return;
   }
 
-  selectedIndex = (selectedIndex + direction + SETTING_ITEMS.length) % SETTING_ITEMS.length;
+  selectedIndex = (selectedIndex + direction + settingItems.length) % settingItems.length;
   selectedBindingSlot = 0;
   render();
 }
@@ -306,6 +291,14 @@ function changeCurrentValue(direction: -1 | 1) {
     selectedStudyOrderOption = nextOption;
     isReshuffleArmed = false;
     draftSettings = { ...draftSettings, studyOrder: nextOption === "reshuffle" ? "random" : nextOption };
+  }
+
+  if (item.key === "activeVocabularyBook" && item.options) {
+    const bookIds = item.options as readonly string[];
+    draftSettings = {
+      ...draftSettings,
+      activeVocabularyBook: getNextValue(draftSettings.activeVocabularyBook, bookIds, direction),
+    };
   }
 
   if (item.key === "theme") {
@@ -480,7 +473,7 @@ function getNextNumericOption(currentOption: NumericOption, presets: readonly nu
 }
 
 function getSelectedItem(): SettingItem {
-  return SETTING_ITEMS[selectedIndex] ?? SETTING_ITEMS[0]!;
+  return settingItems[selectedIndex] ?? settingItems[0]!;
 }
 
 function render() {
@@ -490,7 +483,7 @@ function render() {
   renderSettingSession({
     settings,
     draftSettings,
-    items: SETTING_ITEMS,
+    items: settingItems,
     selectedIndex,
     selectedBindingSlot,
     isEditing,
@@ -502,6 +495,28 @@ function render() {
     editError,
     isReshuffleArmed,
   });
+}
+
+function createSettingItems(): SettingItem[] {
+  const vocabularyBookIds = listVocabularyBooks().map((book) => book.id);
+
+  return [
+    { kind: "setting", key: "studyGroupEnabled", label: "Group Vocabulary", options: [false, true] },
+    { kind: "setting", key: "workspaceSize", label: "Page Size", options: WORKSPACE_SIZES, acceptsNumber: true },
+    { kind: "setting", key: "dailyWordCount", label: "Group Size", options: STUDY_GROUP_SIZES, acceptsNumber: true },
+    { kind: "setting", key: "navigationLoop", label: "Navigation Loop", options: [false, true] },
+    { kind: "setting", key: "displayMode", label: "Display Mode" },
+    { kind: "setting", key: "studyOrder", label: "Study Order", options: STUDY_ORDERS },
+    { kind: "setting", key: "activeVocabularyBook", label: "Vocabulary Book", options: vocabularyBookIds },
+    { kind: "setting", key: "theme", label: "Theme", options: AVAILABLE_THEMES },
+    { kind: "binding", key: "previous", label: "Previous Page" },
+    { kind: "binding", key: "next", label: "Next Page" },
+    { kind: "binding", key: "previousGroup", label: "Previous Group" },
+    { kind: "binding", key: "nextGroup", label: "Next Group" },
+    { kind: "binding", key: "repeat", label: "Repeat Navigation" },
+    { kind: "binding", key: "switchDisplayMode", label: "Switch Display" },
+    { kind: "binding", key: "toggleHelp", label: "Toggle Help" },
+  ];
 }
 
 function resetEditState() {

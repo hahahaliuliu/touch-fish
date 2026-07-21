@@ -28,7 +28,7 @@ build/
 HANDOVER.md
 
 # Local learning progress
-assets/progress/word-progress.json
+assets/progress/*.json
 
 # Local settings
 assets/settings.json

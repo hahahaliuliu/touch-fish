@@ -1,6 +1,6 @@
 import { loadWordProgress, saveWordProgress } from "../storage/progress.js";
 import { loadSettings } from "./settingsLoader.js";
-import { loadVocabulary } from "./vocabularyLoader.js";
+import { loadVocabularyBook } from "./vocabularyLoader.js";
 
 export function createRandomOrder(wordCount: number): number[] {
   const order = Array.from({ length: wordCount }, (_, index) => index);
@@ -16,13 +16,13 @@ export function createRandomOrder(wordCount: number): number[] {
 }
 
 export function reshuffleRandomOrder() {
-  const progress = loadWordProgress();
   const settings = loadSettings();
-  const wordCount = loadVocabulary(settings.activeVocabularyBook).length;
+  const vocabularyBook = loadVocabularyBook(settings.activeVocabularyBook);
+  const progress = loadWordProgress(vocabularyBook.id);
 
-  saveWordProgress({
+  saveWordProgress(vocabularyBook.id, {
     ...progress,
     randomIndex: 0,
-    randomOrder: createRandomOrder(wordCount),
+    randomOrder: createRandomOrder(vocabularyBook.words.length),
   });
 }

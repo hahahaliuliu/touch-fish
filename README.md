@@ -70,6 +70,9 @@ Settings 当前支持：
 - Group Size: 10 / 20 / 30 / custom
 - Navigation Loop: on / off
 - Study Order: sequential / random
+- Vocabulary Book: automatically discovered local JSON books
+- Theme: build-log / backend-log
+- Custom key bindings for Word navigation and display controls
 
 `Page Size` 和 `Group Size` 进入编辑后，可以用左右键切换预设值和 `custom`。
 选中 `custom` 时显示 `_`，直接输入任意正整数后按 Enter 保存。
@@ -202,8 +205,6 @@ docs/         项目说明和未来计划
 - 云同步
 - AI 功能
 - 数据库
-- Settings UI
-- 多词库切换 UI
 - Read Mode
 
 这些功能属于后续阶段。

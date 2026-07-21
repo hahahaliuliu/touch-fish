@@ -6,11 +6,12 @@ import {
 } from "../storage/progress.js";
 import { createRandomOrder } from "./randomOrder.js";
 import { loadSettings } from "./settingsLoader.js";
-import { loadVocabulary } from "./vocabularyLoader.js";
+import { loadVocabularyBook } from "./vocabularyLoader.js";
 
-const settings = loadSettings();
-const words: Word[] = loadVocabulary(settings.activeVocabularyBook);
-const sequentialOrder = words.map((_, index) => index);
+let settings = loadSettings();
+let vocabularyBook = loadVocabularyBook(settings.activeVocabularyBook);
+let words: Word[] = vocabularyBook.words;
+let sequentialOrder = words.map((_, index) => index);
 
 let workspaceSize = settings.workspaceSize;
 let studyGroupSize = settings.dailyWordCount;
@@ -18,7 +19,7 @@ let studyGroupEnabled = settings.studyGroupEnabled;
 let navigationLoop = settings.navigationLoop;
 let studyOrder = settings.studyOrder;
 let theme = settings.theme;
-let progress = loadWordProgress();
+let progress = loadWordProgress(vocabularyBook.id);
 let wordOrder = getWordOrder();
 let currentIndex = alignToPageStart(getSavedIndex());
 
@@ -101,7 +102,7 @@ export function getWordProgress() {
 
 export function saveCurrentWordProgress() {
   updateSavedIndex();
-  saveWordProgress(progress);
+  saveWordProgress(vocabularyBook.id, progress);
 }
 
 export function getSavedDisplayMode(): DisplayMode {
@@ -111,15 +112,20 @@ export function getSavedDisplayMode(): DisplayMode {
 export function saveDisplayMode(displayMode: DisplayMode) {
   updateSavedIndex();
   progress = { ...progress, displayMode };
-  saveWordProgress(progress);
+  saveWordProgress(vocabularyBook.id, progress);
 }
 
 export function reloadWordSettings() {
   updateSavedIndex();
-  progress = loadWordProgress();
+  saveWordProgress(vocabularyBook.id, progress);
 
   const updatedSettings = loadSettings();
 
+  settings = updatedSettings;
+  vocabularyBook = loadVocabularyBook(settings.activeVocabularyBook);
+  words = vocabularyBook.words;
+  sequentialOrder = words.map((_, index) => index);
+  progress = loadWordProgress(vocabularyBook.id);
   workspaceSize = updatedSettings.workspaceSize;
   studyGroupSize = updatedSettings.dailyWordCount;
   studyGroupEnabled = updatedSettings.studyGroupEnabled;

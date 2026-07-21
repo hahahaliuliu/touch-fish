@@ -109,12 +109,16 @@ npm link
 - [x] 示例词库 `assets/vocabulary/ielts.example.json`
 - [x] 词库格式校验
 - [x] 本地大词库不提交到 Git
+- [x] 自动扫描 `assets/vocabulary/` 中的本地词书
+- [x] Settings 中切换当前词书
 
 ### Progress / 进度
 
 - [x] 保存当前单词位置
 - [x] 恢复当前单词位置
 - [x] 从项目根目录解析进度文件路径
+- [x] 每本词书分别保存顺序、随机和显示模式进度
+- [x] 兼容迁移旧版唯一进度文件
 
 ### Settings / 设置
 
@@ -133,6 +137,7 @@ npm link
 - [x] `touchfish setting` 支持自定义学习组大小
 - [x] `touchfish setting` 支持 `navigationLoop`
 - [x] `touchfish setting` 支持 `studyOrder`：顺序 / 随机
+- [x] `touchfish setting` 支持选择 `activeVocabularyBook`
 
 ### Workspace
 
@@ -226,8 +231,7 @@ Touch Fish 始终运行在终端里。
 
 1. 继续保持 Settings 小步开发。
 2. 下一步可以完善 Display Mode 的 Settings 配置。
-3. 后续实现多词库。
-4. 后续实现 Read Mode。
+3. 后续实现 Read Mode。
 
 ## Development Principles / 开发原则
 

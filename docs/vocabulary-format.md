@@ -82,7 +82,8 @@ assets/vocabulary/ielts.example.json
 - 优先加载 `activeVocabularyBook` 指定的词书；如果该 id 不存在，则自动加载按文件名排序后的第一本可用词书
 - `.example.json` 文件只在没有真实词书时作为启动回退
 - 重复的词书 `id`、损坏 JSON 或缺少必填字段会阻止启动，并显示具体文件和原因
-- 当前词书由 `activeVocabularyBook` 决定；Settings 中的可视化切换和按词书独立进度仍在后续实现
+- 当前词书由 `activeVocabularyBook` 决定；可在 Settings 的 `Vocabulary Book` 项中切换，返回 Word Session 后立即生效
+- 每本词书分别保存顺序位置、随机位置、随机顺序和显示模式
 - Word Workspace 当前只使用 `english` 和 `chinese`
 - 其他字段保留给 Settings 和未来显示模式
 - 空字符串和空数组是合法占位

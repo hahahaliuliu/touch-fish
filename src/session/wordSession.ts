@@ -202,6 +202,7 @@ function openSettingSession() {
     onReturn: () => {
       reloadWordSettings();
       keyBindings = loadSettings().keyBindings;
+      displayMode = getSavedDisplayMode();
       startWordSession();
     },
   });
