@@ -1,5 +1,10 @@
 import type { Word } from "../models/word.js";
-import type { DisplayMode, KeyBindings, StudyOrder } from "../models/settings.js";
+import type {
+  DisplayMode,
+  InterfaceLanguage,
+  KeyBindings,
+  StudyOrder,
+} from "../models/settings.js";
 
 interface RenderLogThemeOptions {
   words: Word[];
@@ -15,6 +20,7 @@ interface RenderLogThemeOptions {
   studyOrder: StudyOrder;
   keyBindings: KeyBindings;
   displayMode: DisplayMode;
+  interfaceLanguage: InterfaceLanguage;
   showHelp: boolean;
 }
 
@@ -33,6 +39,7 @@ export function renderLogTheme(options: RenderLogThemeOptions) {
     studyOrder,
     keyBindings,
     displayMode,
+    interfaceLanguage,
     showHelp,
   } = options;
 
@@ -52,6 +59,7 @@ export function renderLogTheme(options: RenderLogThemeOptions) {
       navigationLoop,
       studyOrder,
       keyBindings,
+      interfaceLanguage,
     });
     return;
   }
@@ -102,6 +110,7 @@ interface RenderLogHelpOptions {
   navigationLoop: boolean;
   studyOrder: StudyOrder;
   keyBindings: KeyBindings;
+  interfaceLanguage: InterfaceLanguage;
 }
 
 function renderLogHelp(options: RenderLogHelpOptions) {
@@ -118,39 +127,102 @@ function renderLogHelp(options: RenderLogHelpOptions) {
     navigationLoop,
     studyOrder,
     keyBindings,
+    interfaceLanguage,
   } = options;
 
-  console.log("Touch Fish Help");
+  const text = getHelpText(interfaceLanguage);
+
+  console.log(text.title);
   console.log("");
-  console.log("Navigation");
-  console.log(`  ${formatBindings(keyBindings.previous).padEnd(21, " ")} previous page`);
-  console.log(`  ${formatBindings(keyBindings.next).padEnd(21, " ")} next page`);
-  console.log(`  ${formatBindings(keyBindings.previousGroup).padEnd(21, " ")} previous group`);
-  console.log(`  ${formatBindings(keyBindings.nextGroup).padEnd(21, " ")} next group`);
-  console.log(`  ${formatBindings(keyBindings.repeat).padEnd(21, " ")} repeat last page navigation`);
+  console.log(text.navigation);
+  console.log(`  ${formatBindings(keyBindings.previous, interfaceLanguage).padEnd(21, " ")}${text.previousPage}`);
+  console.log(`  ${formatBindings(keyBindings.next, interfaceLanguage).padEnd(21, " ")}${text.nextPage}`);
+  console.log(`  ${formatBindings(keyBindings.previousGroup, interfaceLanguage).padEnd(21, " ")}${text.previousGroup}`);
+  console.log(`  ${formatBindings(keyBindings.nextGroup, interfaceLanguage).padEnd(21, " ")}${text.nextGroup}`);
+  console.log(`  ${formatBindings(keyBindings.repeat, interfaceLanguage).padEnd(21, " ")}${text.repeatNavigation}`);
   console.log("");
-  console.log("Display");
-  console.log(`  ${formatBindings(keyBindings.switchDisplayMode).padEnd(21, " ")} switch display mode`);
-  console.log(`  ${"Ctrl+O".padEnd(21, " ")} open settings`);
-  console.log(`  ${formatBindings(keyBindings.toggleHelp).padEnd(21, " ")} close help`);
-  console.log(`  ${"Q".padEnd(21, " ")} quit`);
+  console.log(text.actions);
+  console.log(`  ${formatBindings(keyBindings.switchDisplayMode, interfaceLanguage).padEnd(21, " ")}${text.switchDisplay}`);
+  console.log(`  ${"Ctrl+O".padEnd(21, " ")}${text.openSettings}`);
+  console.log(`  ${formatBindings(keyBindings.toggleHelp, interfaceLanguage).padEnd(21, " ")}${text.closeHelp}`);
+  console.log(`  ${"Q".padEnd(21, " ")}${text.quit}`);
   console.log("");
-  console.log("Current Workspace");
-  console.log(`  position             ${current} / ${total}`);
-  console.log(`  page size            ${workspaceSize}`);
-  console.log(`  visible entries      ${windowSize}`);
-  console.log(`  grouping             ${studyGroupEnabled ? "enabled" : "disabled"}`);
-  console.log(`  group                ${studyGroupCurrent} / ${studyGroupTotal}`);
-  console.log(`  group range          ${studyGroupStart}-${studyGroupEnd}`);
-  console.log(`  navigation loop      ${navigationLoop ? "enabled" : "disabled"}`);
-  console.log(`  study order          ${studyOrder}`);
+  console.log(text.currentWorkspace);
+  console.log(`  ${text.position.padEnd(21, " ")}${current} / ${total}`);
+  console.log(`  ${text.pageSize.padEnd(21, " ")}${workspaceSize}`);
+  console.log(`  ${text.visibleEntries.padEnd(21, " ")}${windowSize}`);
+  console.log(`  ${text.grouping.padEnd(21, " ")}${studyGroupEnabled ? text.enabled : text.disabled}`);
+  console.log(`  ${text.group.padEnd(21, " ")}${studyGroupCurrent} / ${studyGroupTotal}`);
+  console.log(`  ${text.groupRange.padEnd(21, " ")}${studyGroupStart}-${studyGroupEnd}`);
+  console.log(`  ${text.navigationLoop.padEnd(21, " ")}${navigationLoop ? text.enabled : text.disabled}`);
+  console.log(`  ${text.studyOrder.padEnd(21, " ")}${studyOrder === "sequential" ? text.sequential : text.random}`);
 }
 
-function formatBindings(bindings: [string, string]): string {
-  return bindings.filter(Boolean).map(formatBinding).join(" / ") || "unbound";
+function getHelpText(language: InterfaceLanguage) {
+  if (language === "chinese") {
+    return {
+      title: "Touch Fish 帮助",
+      navigation: "导航",
+      previousPage: "上一页",
+      nextPage: "下一页",
+      previousGroup: "上一组",
+      nextGroup: "下一组",
+      repeatNavigation: "重复上次翻页",
+      actions: "操作",
+      switchDisplay: "切换单词显示",
+      openSettings: "打开设置",
+      closeHelp: "关闭帮助",
+      quit: "退出",
+      currentWorkspace: "当前学习区",
+      position: "当前位置",
+      pageSize: "每页数量",
+      visibleEntries: "当前显示",
+      grouping: "分组学习",
+      group: "当前分组",
+      groupRange: "分组范围",
+      navigationLoop: "循环翻页",
+      studyOrder: "学习顺序",
+      enabled: "开启",
+      disabled: "关闭",
+      sequential: "顺序",
+      random: "随机",
+    };
+  }
+
+  return {
+    title: "Touch Fish Help",
+    navigation: "Navigation",
+    previousPage: "previous page",
+    nextPage: "next page",
+    previousGroup: "previous group",
+    nextGroup: "next group",
+    repeatNavigation: "repeat last page navigation",
+    actions: "Display",
+    switchDisplay: "switch display mode",
+    openSettings: "open settings",
+    closeHelp: "close help",
+    quit: "quit",
+    currentWorkspace: "Current Workspace",
+    position: "position",
+    pageSize: "page size",
+    visibleEntries: "visible entries",
+    grouping: "grouping",
+    group: "group",
+    groupRange: "group range",
+    navigationLoop: "navigation loop",
+    studyOrder: "study order",
+    enabled: "enabled",
+    disabled: "disabled",
+    sequential: "sequential",
+    random: "random",
+  };
 }
 
-function formatBinding(binding: string): string {
+function formatBindings(bindings: [string, string], language: InterfaceLanguage): string {
+  return bindings.filter(Boolean).map((binding) => formatBinding(binding, language)).join(" / ") || "unbound";
+}
+
+function formatBinding(binding: string, language: InterfaceLanguage): string {
   const names: Record<string, string> = {
     space: "Space",
     tab: "Tab",
@@ -160,7 +232,19 @@ function formatBinding(binding: string): string {
     "arrow-right": "Right Arrow",
   };
 
-  return names[binding] ?? binding.toUpperCase();
+  const value = names[binding] ?? binding.toUpperCase();
+
+  if (language !== "chinese") {
+    return value;
+  }
+
+  return {
+    Space: "空格",
+    "Up Arrow": "上方向键",
+    "Down Arrow": "下方向键",
+    "Left Arrow": "左方向键",
+    "Right Arrow": "右方向键",
+  }[value] ?? value;
 }
 
 function getDisplayValue(word: Word, displayMode: DisplayMode): string {

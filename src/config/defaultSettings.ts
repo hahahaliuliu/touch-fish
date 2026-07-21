@@ -8,6 +8,7 @@ export const DEFAULT_SETTINGS: Settings = {
   studyOrder: "sequential",
   activeVocabularyBook: "ielts-luran",
   displayMode: "english",
+  interfaceLanguage: "english",
   theme: "build-log",
   visibleFields: {
     phonetic: false,

@@ -1,4 +1,4 @@
-import type { KeyBindings, Settings } from "../models/settings.js";
+import type { InterfaceLanguage, KeyBindings, Settings } from "../models/settings.js";
 
 interface ConfigItem {
   kind: "setting";
@@ -55,12 +55,14 @@ export function renderSettingSession(options: RenderSettingSessionOptions) {
     isReshuffleArmed,
   } = options;
   const activeSettings = isEditing ? draftSettings : settings;
+  const language = activeSettings.interfaceLanguage;
+  const text = getSettingsText(language);
   let hasRenderedBindings = false;
 
   console.clear();
-  console.log("Touch Fish Settings");
+  console.log(text.title);
   console.log("");
-  console.log("[INFO] configuration ready");
+  console.log(text.ready);
   console.log("");
 
   items.forEach((item, index) => {
@@ -69,12 +71,12 @@ export function renderSettingSession(options: RenderSettingSessionOptions) {
     if (item.kind === "binding") {
       if (!hasRenderedBindings) {
         hasRenderedBindings = true;
-        console.log("Word Details  phonetic / example / part of speech: locked");
+        console.log(text.wordDetails);
         console.log("");
-        console.log("Key Bindings");
+        console.log(text.keyBindings);
       }
 
-      renderBindingItem(item, activeSettings, selected, selectedBindingSlot, isBindingCapture && selected);
+      renderBindingItem(item, activeSettings, selected, selectedBindingSlot, isBindingCapture && selected, language);
       return;
     }
 
@@ -92,32 +94,33 @@ export function renderSettingSession(options: RenderSettingSessionOptions) {
       isNumericCursor,
       selectedNumericOption,
       selectedStudyOrderOption
+      ,language
     );
   });
 
   console.log("");
-  console.log("Controls  W/S move | A/D setting or slot | Enter edit | Backspace clear");
-  console.log("          Esc cancel | Ctrl+O return to word | Q quit");
+  console.log(text.controlsFirstLine);
+  console.log(text.controlsSecondLine);
 
   if (isBindingCapture) {
-    console.log("[BIND] English key, symbol, Space, Tab, or arrow key; occupied keys clear their previous slot");
+    console.log(text.bindingHint);
   } else if (isEditing && numericInput !== undefined) {
-    console.log("[CUSTOM] type a positive whole number, then Enter; A/D cycles presets and custom");
+    console.log(text.customHint);
   } else if (isEditing) {
-    console.log("[EDIT] change value, then press Enter to save");
+    console.log(text.editHint);
   }
 
   if (isEditing && selectedStudyOrderOption === "reshuffle" && !isReshuffleArmed) {
-    console.log("[RESHUFFLE] Press Space to arm the reset, then press Enter to apply it");
+    console.log(text.reshuffleHint);
   }
 
   if (isReshuffleArmed) {
-    console.log("[WARN] Reshuffle armed: this replaces the saved random order and resets random progress to 1");
-    console.log("[CONFIRM] Press Enter to reshuffle, or Esc to cancel");
+    console.log(text.reshuffleWarning);
+    console.log(text.reshuffleConfirm);
   }
 
   if (editError) {
-    console.log(`[WARN] ${editError}`);
+    console.log(`${text.warningPrefix}${editError}`);
   }
 }
 
@@ -134,20 +137,23 @@ function renderConfigItem(
   numericInput: string | undefined,
   isNumericCursor: boolean,
   selectedNumericOption: number | "custom" | undefined,
-  selectedStudyOrderOption: Settings["studyOrder"] | "reshuffle" | undefined
+  selectedStudyOrderOption: Settings["studyOrder"] | "reshuffle" | undefined,
+  language: InterfaceLanguage
 ) {
   const inactive = item.key === "dailyWordCount" && !settings.studyGroupEnabled;
   const value = formatSettingValue(
     settings,
     item.key,
-    selected && isEditing && item.acceptsNumber ? numericInput : undefined
+    selected && isEditing && item.acceptsNumber ? numericInput : undefined,
+    language
   );
   const optionText = formatOptionText(
     item,
     inactive,
     selected && isEditing ? settings : undefined,
     selected && isEditing && item.acceptsNumber ? selectedNumericOption : undefined,
-    selected && isEditing && item.key === "studyOrder" ? selectedStudyOrderOption : undefined
+    selected && isEditing && item.key === "studyOrder" ? selectedStudyOrderOption : undefined,
+    language
   );
   const editMark = selected && isEditing ? "*" : selected ? ">" : " ";
 
@@ -159,11 +165,12 @@ function renderBindingItem(
   settings: Settings,
   selected: boolean,
   selectedSlot: 0 | 1,
-  isCapturing: boolean
+  isCapturing: boolean,
+  language: InterfaceLanguage
 ) {
   const bindings = settings.keyBindings[item.key];
-  const first = formatBindingSlot(bindings[0], selected && selectedSlot === 0, isCapturing && selectedSlot === 0);
-  const second = formatBindingSlot(bindings[1], selected && selectedSlot === 1, isCapturing && selectedSlot === 1);
+  const first = formatBindingSlot(bindings[0], selected && selectedSlot === 0, isCapturing && selectedSlot === 0, language);
+  const second = formatBindingSlot(bindings[1], selected && selectedSlot === 1, isCapturing && selectedSlot === 1, language);
   const mark = selected && isCapturing ? "*" : selected ? ">" : " ";
 
   console.log(`${mark} ${item.label.padEnd(20, " ")} ${first.padEnd(17, " ")} ${second}`);
@@ -172,13 +179,14 @@ function renderBindingItem(
 function formatBindingSlot(
   binding: string,
   selected: boolean,
-  isCapturing: boolean
+  isCapturing: boolean,
+  language: InterfaceLanguage = "english"
 ): string {
   if (isCapturing) {
     return `${blinkingCursor()}${" ".repeat(16)}`;
   }
 
-  const value = formatBinding(binding).padEnd(17, " ");
+  const value = formatBinding(binding, language).padEnd(17, " ");
   return selected ? formatOption(value, true) : value;
 }
 
@@ -194,19 +202,28 @@ function blinkingCursor(): string {
   return "\u001b[5m_\u001b[0m";
 }
 
-function formatSettingValue(settings: Settings, key: keyof Settings, editingValue?: string): string {
+function formatSettingValue(
+  settings: Settings,
+  key: keyof Settings,
+  editingValue: string | undefined,
+  language: InterfaceLanguage
+): string {
   if (editingValue !== undefined) {
     return editingValue || "_";
   }
 
   const value = settings[key];
 
-  if (typeof value === "string" || typeof value === "number") {
+  if (typeof value === "string") {
+    return formatOptionValue(value, language);
+  }
+
+  if (typeof value === "number") {
     return String(value);
   }
 
   if (typeof value === "boolean") {
-    return value ? "on" : "off";
+    return formatOptionValue(value ? "on" : "off", language);
   }
 
   return "configured";
@@ -217,35 +234,36 @@ function formatOptionText(
   inactive: boolean,
   editingSettings?: Settings,
   selectedNumericOption?: number | "custom",
-  selectedStudyOrderOption?: Settings["studyOrder"] | "reshuffle"
+  selectedStudyOrderOption?: Settings["studyOrder"] | "reshuffle",
+  language: InterfaceLanguage = "english"
 ): string {
   if (inactive) {
-    return "[inactive]";
+    return `[${formatOptionValue("inactive", language)}]`;
   }
 
   if (item.key === "studyGroupEnabled" || item.key === "navigationLoop") {
     const value = editingSettings?.[item.key];
-    return `[${formatOption("off", value === false)} / ${formatOption("on", value === true)}]`;
+    return `[${formatOption(formatOptionValue("off", language), value === false)} / ${formatOption(formatOptionValue("on", language), value === true)}]`;
   }
 
   if (item.key === "studyOrder" && item.options) {
     const value = selectedStudyOrderOption ?? editingSettings?.studyOrder;
-    return `[${[...item.options, "reshuffle"].map((option) => formatOption(String(option), option === value)).join(" / ")}]`;
+    return `[${[...item.options, "reshuffle"].map((option) => formatOption(formatOptionValue(String(option), language), option === value)).join(" / ")}]`;
   }
 
   if (item.acceptsNumber && item.options) {
-    return `[${[...item.options, "custom"].map((option) => formatOption(String(option), option === selectedNumericOption)).join(" / ")}]`;
+    return `[${[...item.options, "custom"].map((option) => formatOption(formatOptionValue(String(option), language), option === selectedNumericOption)).join(" / ")}]`;
   }
 
   if (item.options && editingSettings) {
     const value = editingSettings[item.key];
-    return `[${item.options.map((option) => formatOption(String(option), option === value)).join(" / ")}]`;
+    return `[${item.options.map((option) => formatOption(formatOptionValue(String(option), language), option === value)).join(" / ")}]`;
   }
 
-  return item.options ? `[${item.options.join(" / ")}]` : "[locked]";
+  return item.options ? `[${item.options.map((option) => formatOptionValue(String(option), language)).join(" / ")}]` : `[${formatOptionValue("locked", language)}]`;
 }
 
-function formatBinding(binding: string): string {
+function formatBinding(binding: string, language: InterfaceLanguage): string {
   const names: Record<string, string> = {
     "": "_",
     space: "Space",
@@ -256,7 +274,75 @@ function formatBinding(binding: string): string {
     "arrow-right": "Right Arrow",
   };
 
-  return names[binding] ?? binding.toUpperCase();
+  const value = names[binding] ?? binding.toUpperCase();
+  if (language !== "chinese") {
+    return value;
+  }
+
+  return {
+    Space: "空格",
+    "Up Arrow": "上方向键",
+    "Down Arrow": "下方向键",
+    "Left Arrow": "左方向键",
+    "Right Arrow": "右方向键",
+  }[value] ?? value;
+}
+
+function formatOptionValue(value: string, language: InterfaceLanguage): string {
+  if (language !== "chinese") {
+    return value;
+  }
+
+  const names: Record<string, string> = {
+    on: "开启",
+    off: "关闭",
+    inactive: "未启用",
+    locked: "暂未开放",
+    custom: "自定义",
+    sequential: "顺序",
+    random: "随机",
+    reshuffle: "重新随机",
+    english: "英文",
+    chinese: "中文",
+  };
+
+  return names[value] ?? value;
+}
+
+function getSettingsText(language: InterfaceLanguage) {
+  if (language === "chinese") {
+    return {
+      title: "Touch Fish 设置",
+      ready: "[INFO] 配置已就绪",
+      wordDetails: "词语详情  音标 / 例句 / 词性：暂未开放",
+      keyBindings: "按键绑定",
+      controlsFirstLine: "操作  W/S 移动 | A/D 修改设置或切换键位 | Enter 编辑 | Backspace 清空",
+      controlsSecondLine: "      Esc 取消 | Ctrl+O 返回单词 | Q 退出",
+      bindingHint: "[绑定] 请按英文键、符号、空格、Tab 或方向键；已占用的键会自动清空原位置",
+      customHint: "[自定义] 输入正整数后按 Enter 保存；A/D 可切换预设值和自定义",
+      editHint: "[编辑] 修改后按 Enter 保存",
+      reshuffleHint: "[重新随机] 按空格确认，再按 Enter 执行",
+      reshuffleWarning: "[警告] 将替换已保存的随机顺序，并把随机进度重置为 1",
+      reshuffleConfirm: "[确认] 按 Enter 重新随机，或按 Esc 取消",
+      warningPrefix: "[警告] ",
+    };
+  }
+
+  return {
+    title: "Touch Fish Settings",
+    ready: "[INFO] configuration ready",
+    wordDetails: "Word Details  phonetic / example / part of speech: locked",
+    keyBindings: "Key Bindings",
+    controlsFirstLine: "Controls  W/S move | A/D setting or slot | Enter edit | Backspace clear",
+    controlsSecondLine: "          Esc cancel | Ctrl+O return to word | Q quit",
+    bindingHint: "[BIND] English key, symbol, Space, Tab, or arrow key; occupied keys clear their previous slot",
+    customHint: "[CUSTOM] type a positive whole number, then Enter; A/D cycles presets and custom",
+    editHint: "[EDIT] change value, then press Enter to save",
+    reshuffleHint: "[RESHUFFLE] Press Space to arm the reset, then press Enter to apply it",
+    reshuffleWarning: "[WARN] Reshuffle armed: this replaces the saved random order and resets random progress to 1",
+    reshuffleConfirm: "[CONFIRM] Press Enter to reshuffle, or Esc to cancel",
+    warningPrefix: "[WARN] ",
+  };
 }
 
 function formatOption(option: string, selected: boolean): string {

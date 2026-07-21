@@ -1,5 +1,7 @@
 export type DisplayMode = "both" | "english" | "chinese";
 
+export type InterfaceLanguage = "english" | "chinese";
+
 export type StudyOrder = "sequential" | "random";
 
 export type ThemeName =
@@ -41,6 +43,7 @@ export interface Settings {
   studyOrder: StudyOrder;
   activeVocabularyBook: string;
   displayMode: DisplayMode;
+  interfaceLanguage: InterfaceLanguage;
   theme: ThemeName;
   visibleFields: VisibleWordFields;
   keyBindings: KeyBindings;

@@ -235,7 +235,7 @@ Touch Fish 始终运行在终端里。
 推荐顺序：
 
 1. 继续保持 Settings 小步开发。
-2. 下一步可以完善 Display Mode 的 Settings 配置。
+2. Settings 和 Help 已支持 English / 中文界面切换；单词显示模式继续由 `Tab` 在 Word Session 中切换并保存。
 3. 后续实现 Read Mode。
 
 ## Development Principles / 开发原则

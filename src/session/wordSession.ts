@@ -24,6 +24,7 @@ type LastNavigation = "next" | "previous";
 const OPEN_SETTINGS_KEY = "\u000f";
 let displayMode: DisplayMode = getSavedDisplayMode();
 let keyBindings = loadSettings().keyBindings;
+let interfaceLanguage = loadSettings().interfaceLanguage;
 let lastNavigation: LastNavigation = "next";
 let showHelp = false;
 
@@ -191,6 +192,7 @@ function renderSession() {
     theme: progress.theme,
     keyBindings,
     displayMode,
+    interfaceLanguage,
     showHelp,
   });
 }
@@ -202,6 +204,7 @@ function openSettingSession() {
     onReturn: () => {
       reloadWordSettings();
       keyBindings = loadSettings().keyBindings;
+      interfaceLanguage = loadSettings().interfaceLanguage;
       displayMode = getSavedDisplayMode();
       startWordSession();
     },

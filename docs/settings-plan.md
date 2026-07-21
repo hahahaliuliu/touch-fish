@@ -1,6 +1,6 @@
 # Settings Plan / 设置功能草稿
 
-> Status: v0.3 进行中。当前已经完成 Settings 基础、可编辑设置界面、学习分组、顺序/随机模式、显示模式保存、主题切换和双键槽快捷键配置。多单词书、单词详情字段和测试功能尚未完成。
+> Status: v0.3 进行中。当前已经完成 Settings 基础、可编辑设置界面、学习分组、顺序/随机模式、显示模式保存、界面语言、主题切换和双键槽快捷键配置。多单词书、单词详情字段和测试功能尚未完成。
 
 这个文档用来保存 Settings 的产品想法，防止以后忘记。
 
@@ -62,6 +62,21 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 - `sequential` 与 `random` 分别保存自己的当前位置；切换模式不会覆盖另一种模式的进度
 - 随机顺序在同一本词书不变时会保留
 - Settings 中的 `reshuffle` 是受确认保护的操作：确认后生成新的随机顺序，并将随机模式进度重置到开头；顺序模式进度不会受影响
+
+### Interface Language / 界面语言
+
+选择 Settings 和 Help 的文字语言。
+
+当前已支持：
+
+- `english`
+- `chinese`
+
+注意：
+
+- 这个设置只影响 Settings 和 Help，主界面的伪装日志始终保持英文
+- 它不等于单词显示模式
+- 单词显示模式仍由 Word Session 中的 `Tab` 切换：英文、中文、英文 + 中文，并且会按词书保存
 
 ### Navigation Loop / 头尾循环
 
@@ -245,6 +260,7 @@ assets/settings.example.json
   "studyOrder": "sequential",
   "activeVocabularyBook": "ielts-luran",
   "displayMode": "english",
+  "interfaceLanguage": "english",
   "theme": "build-log",
   "visibleFields": {
     "phonetic": false,
@@ -273,7 +289,7 @@ v0.3 推荐顺序：
 1. 创建 settings model 和默认设置 `[done]`
 2. 从本地 JSON 读取 settings，没有文件时使用默认值 `[done]`
 3. 支持 `workspaceSize` `[done]`
-4. 支持默认 `displayMode` `[done]`
+4. 支持默认 `displayMode` 并由 `Tab` 保存 `[done]`
 5. 增加 `touchfish setting` 只读设置视图 `[done]`
 6. 支持在 `touchfish setting` 中修改 `workspaceSize` `[done]`
 7. 支持自定义 `workspaceSize` 和 `dailyWordCount` `[done]`
@@ -284,9 +300,10 @@ v0.3 推荐顺序：
 12. 支持识别并加载当前词库 `[done: discovery/loading]`
 13. 支持在 Settings 中选择词库 `[done]`
 14. 支持词库独立学习进度 `[done]`
-15. 支持可见字段配置
-16. 支持终端主题 `[done: build-log / backend-log]`
-17. 支持自定义快捷键 `[done]`
+15. 支持 Settings / Help 界面语言 `[done]`
+16. 支持可见字段配置
+17. 支持终端主题 `[done: build-log / backend-log]`
+18. 支持自定义快捷键 `[done]`
 
 ## Not Yet / 当前暂不做
 

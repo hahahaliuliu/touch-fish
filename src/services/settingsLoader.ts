@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS } from "../config/defaultSettings.js";
 import { resolveAssetPath } from "../config/paths.js";
 import type {
   DisplayMode,
+  InterfaceLanguage,
   BindingSlots,
   KeyBindings,
   Settings,
@@ -121,6 +122,10 @@ function validateSettings(value: unknown): string[] {
     errors.push("displayMode must be both, english, or chinese");
   }
 
+  if (!isInterfaceLanguage(value.interfaceLanguage)) {
+    errors.push("interfaceLanguage must be english or chinese");
+  }
+
   if (!isThemeName(value.theme)) {
     errors.push("theme is not supported");
   }
@@ -220,6 +225,10 @@ function isStudyOrder(value: unknown): value is StudyOrder {
 
 function isDisplayMode(value: unknown): value is DisplayMode {
   return value === "both" || value === "english" || value === "chinese";
+}
+
+function isInterfaceLanguage(value: unknown): value is InterfaceLanguage {
+  return value === "english" || value === "chinese";
 }
 
 function isThemeName(value: unknown): value is ThemeName {
