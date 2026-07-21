@@ -6,7 +6,7 @@ export const DEFAULT_SETTINGS: Settings = {
   studyGroupEnabled: true,
   navigationLoop: false,
   studyOrder: "sequential",
-  activeVocabularyBook: "ielts-basic",
+  activeVocabularyBook: "ielts-luran",
   displayMode: "english",
   theme: "build-log",
   visibleFields: {

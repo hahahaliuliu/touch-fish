@@ -105,7 +105,7 @@ npm link
 ### Vocabulary / 词库
 
 - [x] JSON 词库格式
-- [x] 本地词库 `assets/vocabulary/ielts.json`
+- [x] 本地词库 `assets/vocabulary/ielts-luran.json`
 - [x] 示例词库 `assets/vocabulary/ielts.example.json`
 - [x] 词库格式校验
 - [x] 本地大词库不提交到 Git

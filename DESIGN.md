@@ -190,7 +190,7 @@ Theme 应该是终端输出风格，不是桌面应用皮肤。
 当前 v0.2 词库文件：
 
 ```txt
-assets/vocabulary/ielts.json
+assets/vocabulary/ielts-luran.json
 ```
 
 真实本地词库不会提交到 Git。

@@ -3,7 +3,7 @@
 Touch Fish v0.2 当前只读取一本本地默认词库：
 
 ```txt
-assets/vocabulary/ielts.json
+assets/vocabulary/ielts-luran.json
 ```
 
 这个文件会被 Git 忽略，因为真实词库可能很大，也可能是用户自己整理的内容。
@@ -17,13 +17,13 @@ assets/vocabulary/ielts.example.json
 第一次使用时，把示例词库复制成本地词库：
 
 ```txt
-assets/vocabulary/ielts.example.json -> assets/vocabulary/ielts.json
+assets/vocabulary/ielts.example.json -> assets/vocabulary/ielts-luran.json
 ```
 
 PowerShell 命令：
 
 ```powershell
-Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts.json
+Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts-luran.json
 ```
 
 ## Book Shape / 词库结构
@@ -32,8 +32,8 @@ Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts.json
 
 ```json
 {
-  "id": "ielts-basic",
-  "name": "IELTS Basic",
+  "id": "example-book",
+  "name": "Example Vocabulary Book",
   "description": "Default vocabulary book for Touch Fish word workspace.",
   "language": {
     "source": "en",
@@ -91,7 +91,7 @@ Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts.json
 
 ## Current v0.2 Behavior / 当前行为
 
-- Touch Fish 只读取 `assets/vocabulary/ielts.json`
+- Touch Fish 只读取 `assets/vocabulary/ielts-luran.json`
 - `assets/vocabulary/ielts.example.json` 只是模板
 - Word Workspace 当前只使用 `english` 和 `chinese`
 - 其他字段保留给 Settings 和未来显示模式

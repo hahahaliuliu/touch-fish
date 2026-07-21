@@ -3,7 +3,7 @@ import { resolveAssetPath } from "../config/paths.js";
 import type { VocabularyBook, Word } from "../models/word.js";
 
 export function loadVocabulary(): Word[] {
-  const vocabularyPath = resolveAssetPath("vocabulary", "ielts.json");
+  const vocabularyPath = resolveAssetPath("vocabulary", "ielts-luran.json");
   const exampleVocabularyPath = resolveAssetPath(
     "vocabulary",
     "ielts.example.json"

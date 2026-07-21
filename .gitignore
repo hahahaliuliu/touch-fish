@@ -34,4 +34,5 @@ assets/progress/word-progress.json
 assets/settings.json
 
 # Local vocabulary data
-assets/vocabulary/ielts.json
+assets/vocabulary/*.json
+!assets/vocabulary/*.example.json

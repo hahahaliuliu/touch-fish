@@ -45,7 +45,7 @@ npm install
 创建本地词库文件：
 
 ```powershell
-Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts.json
+Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts-luran.json
 ```
 
 启动 Word Session：
@@ -104,7 +104,7 @@ touchfish setting
 程序运行时需要这个本地词库文件：
 
 ```txt
-assets/vocabulary/ielts.json
+assets/vocabulary/ielts-luran.json
 ```
 
 但这个文件不会提交到 GitHub，因为真实词库可能很大，也可能包含个人整理内容。
@@ -118,7 +118,7 @@ assets/vocabulary/ielts.example.json
 如果你看到 `Vocabulary file not found`，说明还没有创建本地词库。重新复制一份即可：
 
 ```powershell
-Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts.json
+Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts-luran.json
 ```
 
 ## Run / 运行方式
@@ -177,7 +177,7 @@ npm link
 本地词库文件：
 
 ```txt
-assets/vocabulary/ielts.json
+assets/vocabulary/ielts-luran.json
 ```
 
 这个文件会被 Git 忽略。

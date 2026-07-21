@@ -109,7 +109,7 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 
 当前 v0.2 行为：
 
-- 只读取 `assets/vocabulary/ielts.json`
+- 只读取 `assets/vocabulary/ielts-luran.json`
 
 ### Custom Key Bindings / 自定义快捷键
 
@@ -226,7 +226,7 @@ assets/settings.example.json
   "studyGroupEnabled": true,
   "navigationLoop": false,
   "studyOrder": "sequential",
-  "activeVocabularyBook": "ielts-basic",
+  "activeVocabularyBook": "ielts-luran",
   "displayMode": "english",
   "theme": "build-log",
   "visibleFields": {
