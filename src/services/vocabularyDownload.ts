@@ -5,7 +5,10 @@ import type { DownloadableVocabularyBook } from "../models/vocabularyCatalog.js"
 import type { VocabularyBook } from "../models/word.js";
 import { deleteWordProgress } from "../storage/progress.js";
 import { parseVocabularyBook, removeVocabularyBook } from "./vocabularyLoader.js";
-import { parseImportedVocabulary } from "./vocabularyImportParser.js";
+import {
+  parseImportedPdf,
+  parseImportedVocabulary,
+} from "./vocabularyImportParser.js";
 
 export async function downloadVocabularyBook(
   entry: DownloadableVocabularyBook
@@ -40,19 +43,22 @@ export async function downloadVocabularyBook(
   return vocabularyBook;
 }
 
-export function importVocabularyBook(sourcePath: string): VocabularyBook {
+export async function importVocabularyBook(sourcePath: string): Promise<VocabularyBook> {
   const normalizedPath = sourcePath.trim().replace(/^"|"$/g, "");
 
   if (!normalizedPath) {
-    throw new Error("Enter the full path to a vocabulary JSON, TXT, or CSV file");
+    throw new Error("Enter the full path to a vocabulary JSON, TXT, CSV, or PDF file");
   }
 
   if (!fs.existsSync(normalizedPath)) {
     throw new Error(`Vocabulary file not found: ${normalizedPath}`);
   }
 
-  const content = fs.readFileSync(normalizedPath, "utf-8");
-  const vocabularyBook = parseImportedVocabulary(content, normalizedPath);
+  const extension = path.extname(normalizedPath).toLowerCase();
+  const vocabularyBook = extension === ".pdf"
+    ? await parseImportedPdf(fs.readFileSync(normalizedPath), normalizedPath)
+    : parseImportedVocabulary(fs.readFileSync(normalizedPath, "utf-8"), normalizedPath);
+
   installVocabularyBook(vocabularyBook, JSON.stringify(vocabularyBook, null, 2));
   return vocabularyBook;
 }

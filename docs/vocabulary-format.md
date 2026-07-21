@@ -1,6 +1,6 @@
 # Vocabulary Format / 词库格式
 
-Touch Fish 会扫描 `assets/vocabulary/` 中安装好的 JSON 词书，并根据当前 Settings 的 `activeVocabularyBook` 选择对应的词书。导入页面还支持把 JSON、TXT、CSV 文件转换并安装为词书。
+Touch Fish 会扫描 `assets/vocabulary/` 中安装好的 JSON 词书，并根据当前 Settings 的 `activeVocabularyBook` 选择对应的词书。导入页面还支持把 JSON、TXT、CSV、PDF 文件转换并安装为词书。
 
 真实词书会被 Git 忽略，因为它们可能很大，也可能是用户自己整理的内容。
 
@@ -120,4 +120,8 @@ benefit,利益；好处
 
 TXT 和 CSV 导入时，Touch Fish 会从文件名自动生成词书名称和 id，并只保留英文、中文两个必填字段。
 
-PDF 暂不支持自动导入。PDF 的版式、分栏和扫描质量差异很大，后续会为它单独设计可预览和可校对的导入流程。
+### PDF
+
+PDF 只支持带可复制文本的词书，并要求提取后的每行仍符合 TXT 的“英文 + 分隔符 + 中文”规则。图片扫描件、复杂双栏或表格 PDF 很可能无法可靠还原词条，程序会提示失败而不会写入半本词书。
+
+PDF 导入不会保留原 PDF 的字体、版式或图片，只提取符合规则的单词文本。

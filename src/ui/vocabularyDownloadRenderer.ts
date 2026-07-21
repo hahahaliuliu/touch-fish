@@ -79,7 +79,7 @@ function renderControls(options: RenderVocabularyDownloadOptions) {
 
   if (options.selectedIndex === options.books.length) {
     console.log(`Controls  ${sharedControls}`);
-    console.log("Action    Enter import | paste a JSON, TXT, or CSV file path | Enter confirm");
+    console.log("Action    Enter import | paste a JSON, TXT, CSV, or PDF file path | Enter confirm");
     return;
   }
 
@@ -150,7 +150,7 @@ function renderSelectedBookDetails(options: RenderVocabularyDownloadOptions) {
   if (!selectedBook) {
     if (!options.isImporting) {
       console.log("Selected Action");
-      console.log("  Import a vocabulary JSON, TXT, or CSV file from any local path.");
+      console.log("  Import a vocabulary JSON, TXT, CSV, or PDF file from any local path.");
       console.log("  The file will be validated and copied into Touch Fish.");
     }
     return;

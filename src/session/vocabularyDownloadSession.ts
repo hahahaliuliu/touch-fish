@@ -213,7 +213,7 @@ function handleImportInput(input: string) {
   }
 
   if (input === "\r" || input === "\n") {
-    importSelectedFile();
+    void importSelectedFile();
     return;
   }
 
@@ -229,9 +229,9 @@ function handleImportInput(input: string) {
   }
 }
 
-function importSelectedFile() {
+async function importSelectedFile() {
   try {
-    const importedBook = importVocabularyBook(importPath);
+    const importedBook = await importVocabularyBook(importPath);
     refreshBooks();
     selectedIndex = books.findIndex((book) => book.id === importedBook.id);
     message = `[INFO] imported ${importedBook.name}`;

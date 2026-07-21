@@ -30,9 +30,9 @@ assets/vocabulary/<book-id>.json
 
 ## Import Vocabulary File / 导入词书文件
 
-下载列表最后一项是 `Import Vocabulary File`。选中它后按 `Enter`，粘贴词书 JSON、TXT 或 CSV 的完整文件路径，再按一次 `Enter` 导入。
+下载列表最后一项是 `Import Vocabulary File`。选中它后按 `Enter`，粘贴词书 JSON、TXT、CSV 或 PDF 的完整文件路径，再按一次 `Enter` 导入。
 
-- Windows Terminal 或 PowerShell 中可以直接把 JSON、TXT 或 CSV 文件拖进终端，自动填入路径。
+- Windows Terminal 或 PowerShell 中可以直接把 JSON、TXT、CSV 或 PDF 文件拖进终端，自动填入路径。
 - 路径两侧的英文双引号会被自动忽略。
 - `Esc` 取消输入；`Backspace` 删除一个字符。
 - 导入时会按 Touch Fish 的词库格式校验，并复制一份到 `assets/vocabulary/`；原文件不会被修改。

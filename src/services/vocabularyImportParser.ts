@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import path from "node:path";
+import { PDFParse } from "pdf-parse";
 import type { VocabularyBook, Word } from "../models/word.js";
 import { parseVocabularyBook } from "./vocabularyLoader.js";
 
@@ -18,7 +19,62 @@ export function parseImportedVocabulary(content: string, sourcePath: string): Vo
     return createImportedBook(parseCsvWords(content, sourcePath), sourcePath);
   }
 
-  throw new Error("Supported vocabulary files are JSON, TXT, and CSV");
+  throw new Error("Supported vocabulary files are JSON, TXT, CSV, and PDF");
+}
+
+export async function parseImportedPdf(
+  content: Uint8Array,
+  sourcePath: string
+): Promise<VocabularyBook> {
+  const parser = new PDFParse({ data: content });
+
+  try {
+    const result = await parser.getText();
+    return createImportedBook(parsePdfWords(result.text, sourcePath), sourcePath);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Unable to import PDF vocabulary from ${sourcePath}\n- ${message}\n- PDF import requires selectable text with one vocabulary entry per line`
+    );
+  } finally {
+    await parser.destroy();
+  }
+}
+
+function parsePdfWords(content: string, sourcePath: string): Word[] {
+  const words: Word[] = [];
+
+  content.split(/\r?\n/).forEach((line) => {
+    const trimmed = line.trim();
+    const numberedEntry = trimmed.match(
+      /^\d+\s+([a-z][a-z'-]*)\s+(\[[^\]]+\])\s+(.+)$/i
+    );
+
+    if (numberedEntry) {
+      const [, english, phonetic, chinese] = numberedEntry;
+
+      if (english && phonetic && chinese) {
+        words.push({ english, chinese: chinese.trim(), phonetic: phonetic.trim() });
+      }
+      return;
+    }
+
+    const plainEntry = splitTextEntry(trimmed);
+
+    if (plainEntry && isEnglishWord(plainEntry.english) && containsChinese(plainEntry.chinese)) {
+      words.push(plainEntry);
+    }
+  });
+
+  const uniqueWords = removeDuplicateWords(words);
+
+  if (uniqueWords.length === 0) {
+    throw new Error(
+      `No supported vocabulary entries were found in ${sourcePath}\n- PDF entries must look like: 1 abandon [phonetic] 放弃`
+    );
+  }
+
+  return uniqueWords;
 }
 
 function createImportedBook(words: Word[], sourcePath: string): VocabularyBook {
@@ -193,13 +249,21 @@ function removeDuplicateWords(words: Word[]): Word[] {
   });
 }
 
+function isEnglishWord(value: string): boolean {
+  return /^[a-z][a-z'-]*$/i.test(value.trim());
+}
+
+function containsChinese(value: string): boolean {
+  return /[\u3400-\u9fff]/.test(value);
+}
+
 function createBookId(fileName: string, sourcePath: string): string {
   const normalizedName = fileName
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-  if (normalizedName) {
+  if (/[a-z]/.test(normalizedName)) {
     return normalizedName;
   }
 
