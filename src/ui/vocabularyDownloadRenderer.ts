@@ -10,6 +10,8 @@ interface RenderVocabularyDownloadOptions {
   isLoading: boolean;
   isDownloading: boolean;
   isConfirmingUninstall: boolean;
+  isImporting: boolean;
+  importPath: string;
   message: string;
 }
 
@@ -28,12 +30,12 @@ export function renderVocabularyDownloadSession(options: RenderVocabularyDownloa
   }
 
   renderBookSection(
-    "Installed",
+    "Installed (Enter to uninstall)",
     options,
     (book) => options.installedBookIds.has(book.id)
   );
   renderBookSection(
-    "Available to Download",
+    "Available to Download (Enter to download)",
     options,
     (book) => book.availability === "available" && !options.installedBookIds.has(book.id)
   );
@@ -43,10 +45,12 @@ export function renderVocabularyDownloadSession(options: RenderVocabularyDownloa
     (book) => book.availability === "coming-soon"
   );
 
+  renderImportAction(options);
+
   renderSelectedBookDetails(options);
 
   console.log("");
-  console.log("Controls  W/S or Up/Down move | Enter download or uninstall | Esc return | Q quit");
+  renderControls(options);
 
   if (options.isDownloading) {
     console.log("[INFO] downloading and validating vocabulary book...");
@@ -62,6 +66,57 @@ export function renderVocabularyDownloadSession(options: RenderVocabularyDownloa
   if (options.message) {
     console.log(options.message);
   }
+}
+
+function renderControls(options: RenderVocabularyDownloadOptions) {
+  const selectedBook = options.books[options.selectedIndex];
+  const sharedControls = "W/S or Up/Down move | Esc return | Q quit";
+
+  if (options.isImporting) {
+    console.log("Controls  Enter import | Backspace delete | Esc cancel");
+    return;
+  }
+
+  if (options.selectedIndex === options.books.length) {
+    console.log(`Controls  ${sharedControls}`);
+    console.log("Action    Enter import | paste your JSON file's full path | Enter confirm");
+    return;
+  }
+
+  if (!selectedBook) {
+    console.log(`Controls  ${sharedControls}`);
+    return;
+  }
+
+  if (options.installedBookIds.has(selectedBook.id)) {
+    console.log(`Controls  ${sharedControls}`);
+    console.log("Action    Enter uninstall | then press Y to confirm deletion and reset progress");
+    return;
+  }
+
+  if (selectedBook.availability === "available") {
+    console.log(`Controls  ${sharedControls}`);
+    console.log("Action    Enter download selected book");
+    return;
+  }
+
+  console.log(`Controls  ${sharedControls}`);
+  console.log("Action    This book is coming soon and cannot be downloaded yet");
+}
+
+function renderImportAction(options: RenderVocabularyDownloadOptions) {
+  const selected = options.selectedIndex === options.books.length;
+  const marker = selected ? ">" : " ";
+
+  console.log(`${marker} Import Local JSON             [Enter to import]`);
+
+  if (options.isImporting) {
+    console.log("");
+    console.log("Import Path");
+    console.log(`  ${options.importPath || "_"}`);
+  }
+
+  console.log("");
 }
 
 function renderBookSection(
@@ -93,6 +148,11 @@ function renderSelectedBookDetails(options: RenderVocabularyDownloadOptions) {
   const selectedBook = options.books[options.selectedIndex];
 
   if (!selectedBook) {
+    if (!options.isImporting) {
+      console.log("Selected Action");
+      console.log("  Import a vocabulary JSON file from any local path.");
+      console.log("  The file will be validated and copied into Touch Fish.");
+    }
     return;
   }
 

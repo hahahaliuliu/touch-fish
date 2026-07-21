@@ -6,6 +6,7 @@ import { loadVocabularyCatalog } from "../services/vocabularyCatalog.js";
 import { loadSettings, saveSettings } from "../services/settingsLoader.js";
 import {
   downloadVocabularyBook,
+  importVocabularyBook,
   uninstallVocabularyBook,
 } from "../services/vocabularyDownload.js";
 import { listVocabularyBooks } from "../services/vocabularyLoader.js";
@@ -23,6 +24,8 @@ let selectedIndex = 0;
 let isLoading = true;
 let isDownloading = false;
 let isConfirmingUninstall = false;
+let isImporting = false;
+let importPath = "";
 let message = "";
 
 export async function startVocabularyDownloadSession(
@@ -36,6 +39,8 @@ export async function startVocabularyDownloadSession(
   isLoading = true;
   isDownloading = false;
   isConfirmingUninstall = false;
+  isImporting = false;
+  importPath = "";
   message = "";
   render();
 
@@ -59,7 +64,17 @@ export async function startVocabularyDownloadSession(
 
 function handleKeyPress(key: string) {
   for (const input of parseInputs(key.toString())) {
-    if (input === "\u0003" || input.toLowerCase() === "q") {
+    if (input === "\u0003") {
+      quit();
+      return;
+    }
+
+    if (isImporting) {
+      handleImportInput(input);
+      return;
+    }
+
+    if (input.toLowerCase() === "q") {
       quit();
       return;
     }
@@ -134,16 +149,25 @@ function parseInputs(input: string): string[] {
 }
 
 function move(direction: -1 | 1) {
-  if (books.length === 0 || isConfirmingUninstall) {
+  if (isConfirmingUninstall) {
     return;
   }
 
-  selectedIndex = (selectedIndex + direction + books.length) % books.length;
+  const itemCount = books.length + 1;
+  selectedIndex = (selectedIndex + direction + itemCount) % itemCount;
   message = "";
   render();
 }
 
 async function activateSelectedBook() {
+  if (isImportSelected()) {
+    isImporting = true;
+    importPath = "";
+    message = "";
+    render();
+    return;
+  }
+
   const selectedBook = books[selectedIndex];
 
   if (!selectedBook) {
@@ -179,6 +203,47 @@ async function activateSelectedBook() {
   }
 }
 
+function handleImportInput(input: string) {
+  if (input === "\u001b") {
+    isImporting = false;
+    importPath = "";
+    message = "[INFO] import cancelled";
+    render();
+    return;
+  }
+
+  if (input === "\r" || input === "\n") {
+    importSelectedFile();
+    return;
+  }
+
+  if (input === "\b" || input === "\u007f") {
+    importPath = importPath.slice(0, -1);
+    render();
+    return;
+  }
+
+  if (/^[^\u0000-\u001f\u007f]+$/.test(input)) {
+    importPath += input;
+    render();
+  }
+}
+
+function importSelectedFile() {
+  try {
+    const importedBook = importVocabularyBook(importPath);
+    refreshBooks();
+    selectedIndex = books.findIndex((book) => book.id === importedBook.id);
+    message = `[INFO] imported ${importedBook.name}`;
+  } catch (error) {
+    message = formatError(error);
+  } finally {
+    isImporting = false;
+    importPath = "";
+    render();
+  }
+}
+
 async function uninstallSelectedBook() {
   const selectedBook = books[selectedIndex];
 
@@ -203,21 +268,34 @@ async function uninstallSelectedBook() {
 function refreshBooks() {
   const installedBooks = listVocabularyBooks();
   installedBookIds = new Set(installedBooks.map((book) => book.id));
-  const catalogIds = new Set(catalogBooks.map((book) => book.id));
-  const localOnlyBooks: ManagedVocabularyBook[] = installedBooks
-    .filter((book) => !catalogIds.has(book.id))
-    .map((book) => ({
+  const catalogById = new Map(catalogBooks.map((book) => [book.id, book]));
+  const installed = installedBooks.map((book) => {
+    const catalogBook = catalogById.get(book.id);
+
+    if (catalogBook) {
+      return { ...catalogBook, source: "catalog" as const };
+    }
+
+    return {
       ...book,
       description: "A local vocabulary book imported outside the public catalog.",
-      availability: "available",
-      source: "local",
-    }));
+      availability: "available" as const,
+      source: "local" as const,
+    };
+  });
+  const downloadable = catalogBooks
+    .filter((book) => book.availability === "available" && !installedBookIds.has(book.id))
+    .map((book) => ({ ...book, source: "catalog" as const }));
+  const comingSoon = catalogBooks
+    .filter((book) => book.availability === "coming-soon")
+    .map((book) => ({ ...book, source: "catalog" as const }));
 
-  books = [
-    ...catalogBooks.map((book) => ({ ...book, source: "catalog" as const })),
-    ...localOnlyBooks,
-  ];
+  books = [...installed, ...downloadable, ...comingSoon];
   selectedIndex = Math.min(selectedIndex, Math.max(books.length - 1, 0));
+}
+
+function isImportSelected(): boolean {
+  return selectedIndex === books.length;
 }
 
 function updateActiveBookAfterUninstall(removedBookId: string) {
@@ -241,6 +319,8 @@ function render() {
     isLoading,
     isDownloading,
     isConfirmingUninstall,
+    isImporting,
+    importPath,
     message,
   });
 }

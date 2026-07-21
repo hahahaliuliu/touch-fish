@@ -13,12 +13,6 @@ export async function downloadVocabularyBook(
     throw new Error(`${entry.name} is not available to download yet`);
   }
 
-  const destinationPath = getDestinationPath(entry.id);
-
-  if (fs.existsSync(destinationPath)) {
-    throw new Error(`Vocabulary book is already installed: ${entry.id}`);
-  }
-
   let response: Response;
 
   try {
@@ -41,6 +35,40 @@ export async function downloadVocabularyBook(
     );
   }
 
+  installVocabularyBook(vocabularyBook, content);
+  return vocabularyBook;
+}
+
+export function importVocabularyBook(sourcePath: string): VocabularyBook {
+  const normalizedPath = sourcePath.trim().replace(/^"|"$/g, "");
+
+  if (!normalizedPath) {
+    throw new Error("Enter the full path to a vocabulary JSON file");
+  }
+
+  if (!fs.existsSync(normalizedPath)) {
+    throw new Error(`Vocabulary file not found: ${normalizedPath}`);
+  }
+
+  const content = fs.readFileSync(normalizedPath, "utf-8");
+  const vocabularyBook = parseVocabularyBook(content, normalizedPath);
+  installVocabularyBook(vocabularyBook, content);
+  return vocabularyBook;
+}
+
+export function uninstallVocabularyBook(bookId: string) {
+  const removedBook = removeVocabularyBook(bookId);
+  deleteWordProgress(bookId);
+  return removedBook;
+}
+
+function installVocabularyBook(vocabularyBook: VocabularyBook, content: string) {
+  const destinationPath = getDestinationPath(vocabularyBook.id);
+
+  if (fs.existsSync(destinationPath)) {
+    throw new Error(`Vocabulary book is already installed: ${vocabularyBook.id}`);
+  }
+
   const directory = path.dirname(destinationPath);
   const temporaryPath = `${destinationPath}.download`;
 
@@ -57,13 +85,6 @@ export async function downloadVocabularyBook(
     }
   }
 
-  return vocabularyBook;
-}
-
-export function uninstallVocabularyBook(bookId: string) {
-  const removedBook = removeVocabularyBook(bookId);
-  deleteWordProgress(bookId);
-  return removedBook;
 }
 
 function getDestinationPath(bookId: string): string {
