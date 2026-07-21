@@ -1,6 +1,13 @@
-import type { DownloadableVocabularyBook } from "../models/vocabularyCatalog.js";
+import type {
+  DownloadableVocabularyBook,
+  ManagedVocabularyBook,
+} from "../models/vocabularyCatalog.js";
 import { loadVocabularyCatalog } from "../services/vocabularyCatalog.js";
-import { downloadVocabularyBook } from "../services/vocabularyDownload.js";
+import { loadSettings, saveSettings } from "../services/settingsLoader.js";
+import {
+  downloadVocabularyBook,
+  uninstallVocabularyBook,
+} from "../services/vocabularyDownload.js";
 import { listVocabularyBooks } from "../services/vocabularyLoader.js";
 import { renderVocabularyDownloadSession } from "../ui/vocabularyDownloadRenderer.js";
 
@@ -9,27 +16,32 @@ interface StartVocabularyDownloadSessionOptions {
 }
 
 let onReturnToSettings: (() => void) | undefined;
-let books: DownloadableVocabularyBook[] = [];
+let catalogBooks: DownloadableVocabularyBook[] = [];
+let books: ManagedVocabularyBook[] = [];
 let installedBookIds = new Set<string>();
 let selectedIndex = 0;
 let isLoading = true;
 let isDownloading = false;
+let isConfirmingUninstall = false;
 let message = "";
 
 export async function startVocabularyDownloadSession(
   options: StartVocabularyDownloadSessionOptions
 ) {
   onReturnToSettings = options.onReturn;
+  catalogBooks = [];
   books = [];
-  installedBookIds = new Set(listVocabularyBooks().map((book) => book.id));
+  refreshBooks();
   selectedIndex = 0;
   isLoading = true;
   isDownloading = false;
+  isConfirmingUninstall = false;
   message = "";
   render();
 
   try {
-    books = await loadVocabularyCatalog();
+    catalogBooks = await loadVocabularyCatalog();
+    refreshBooks();
   } catch (error) {
     message = formatError(error);
   } finally {
@@ -52,12 +64,26 @@ function handleKeyPress(key: string) {
       return;
     }
 
+    if (isConfirmingUninstall && input === "\u001b") {
+      isConfirmingUninstall = false;
+      message = "[INFO] uninstall cancelled";
+      render();
+      return;
+    }
+
     if (input === "\u001b") {
       returnToSettings();
       return;
     }
 
     if (isDownloading) {
+      return;
+    }
+
+    if (isConfirmingUninstall) {
+      if (input === "y" || input === "Y") {
+        void uninstallSelectedBook();
+      }
       return;
     }
 
@@ -72,7 +98,7 @@ function handleKeyPress(key: string) {
     }
 
     if (input === "\r" || input === "\n") {
-      void downloadSelectedBook();
+      void activateSelectedBook();
     }
   }
 }
@@ -108,7 +134,7 @@ function parseInputs(input: string): string[] {
 }
 
 function move(direction: -1 | 1) {
-  if (books.length === 0) {
+  if (books.length === 0 || isConfirmingUninstall) {
     return;
   }
 
@@ -117,21 +143,22 @@ function move(direction: -1 | 1) {
   render();
 }
 
-async function downloadSelectedBook() {
+async function activateSelectedBook() {
   const selectedBook = books[selectedIndex];
 
   if (!selectedBook) {
     return;
   }
 
-  if (selectedBook.availability === "coming-soon") {
-    message = `[INFO] ${selectedBook.name} is coming soon`;
+  if (installedBookIds.has(selectedBook.id)) {
+    isConfirmingUninstall = true;
+    message = "";
     render();
     return;
   }
 
-  if (installedBookIds.has(selectedBook.id)) {
-    message = `[INFO] ${selectedBook.name} is already installed`;
+  if (selectedBook.availability === "coming-soon") {
+    message = `[INFO] ${selectedBook.name} is coming soon`;
     render();
     return;
   }
@@ -142,7 +169,7 @@ async function downloadSelectedBook() {
 
   try {
     await downloadVocabularyBook(selectedBook);
-    installedBookIds.add(selectedBook.id);
+    refreshBooks();
     message = `[INFO] installed ${selectedBook.name}`;
   } catch (error) {
     message = formatError(error);
@@ -152,6 +179,60 @@ async function downloadSelectedBook() {
   }
 }
 
+async function uninstallSelectedBook() {
+  const selectedBook = books[selectedIndex];
+
+  if (!selectedBook || !installedBookIds.has(selectedBook.id)) {
+    isConfirmingUninstall = false;
+    return;
+  }
+
+  try {
+    const removedBook = uninstallVocabularyBook(selectedBook.id);
+    refreshBooks();
+    updateActiveBookAfterUninstall(removedBook.id);
+    message = `[INFO] uninstalled ${removedBook.name}; progress was removed`;
+  } catch (error) {
+    message = formatError(error);
+  } finally {
+    isConfirmingUninstall = false;
+    render();
+  }
+}
+
+function refreshBooks() {
+  const installedBooks = listVocabularyBooks();
+  installedBookIds = new Set(installedBooks.map((book) => book.id));
+  const catalogIds = new Set(catalogBooks.map((book) => book.id));
+  const localOnlyBooks: ManagedVocabularyBook[] = installedBooks
+    .filter((book) => !catalogIds.has(book.id))
+    .map((book) => ({
+      ...book,
+      description: "A local vocabulary book imported outside the public catalog.",
+      availability: "available",
+      source: "local",
+    }));
+
+  books = [
+    ...catalogBooks.map((book) => ({ ...book, source: "catalog" as const })),
+    ...localOnlyBooks,
+  ];
+  selectedIndex = Math.min(selectedIndex, Math.max(books.length - 1, 0));
+}
+
+function updateActiveBookAfterUninstall(removedBookId: string) {
+  const settings = loadSettings();
+
+  if (settings.activeVocabularyBook !== removedBookId) {
+    return;
+  }
+
+  saveSettings({
+    ...settings,
+    activeVocabularyBook: listVocabularyBooks()[0]?.id ?? "",
+  });
+}
+
 function render() {
   renderVocabularyDownloadSession({
     books,
@@ -159,6 +240,7 @@ function render() {
     selectedIndex,
     isLoading,
     isDownloading,
+    isConfirmingUninstall,
     message,
   });
 }

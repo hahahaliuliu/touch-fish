@@ -12,6 +12,10 @@ export interface DownloadableVocabularyBook {
   downloadUrl?: string;
 }
 
+export interface ManagedVocabularyBook extends DownloadableVocabularyBook {
+  source: "catalog" | "local";
+}
+
 export interface VocabularyCatalog {
   version: number;
   books: DownloadableVocabularyBook[];

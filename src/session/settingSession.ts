@@ -562,6 +562,12 @@ function isReshuffleSelected(): boolean {
 }
 
 function returnToPreviousSession() {
+  if (listVocabularyBooks().length === 0) {
+    editError = "Download or import a vocabulary book before returning to word mode";
+    render();
+    return;
+  }
+
   const onReturn = onReturnToPreviousSession;
   onReturnToPreviousSession = undefined;
   isEditing = false;

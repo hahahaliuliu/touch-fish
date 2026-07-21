@@ -12,9 +12,7 @@ program
 program
   .command("word")
   .description("Start word learning session")
-  .action(() => {
-    startWordCommand();
-  });
+  .action(() => startWordCommand());
 
 program
   .command("setting")

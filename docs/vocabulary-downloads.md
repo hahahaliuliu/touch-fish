@@ -17,6 +17,17 @@ assets/vocabulary/<book-id>.json
 
 安装后的词书会自动出现在 Settings 的 `Vocabulary Book` 中。下载服务会在写入文件前校验 JSON 结构和词书 id；下载中断或格式不正确时，不会留下半个词书文件。
 
+## Manage Installed Books / 管理已安装词书
+
+下载列表顶部会显示 `Installed`。这里包含公开目录下载的词书、内置示例词书，以及用户自己放进 `assets/vocabulary/` 的 JSON 词书。
+
+- 选中已安装词书后按 `Enter`，会打开卸载确认。
+- 按 `Y` 才会执行卸载；按 `Esc` 取消。
+- 卸载会删除该词书 JSON 文件，以及该词书保存的顺序进度、随机进度和随机顺序。
+- 重新下载同一本词书会从全新进度开始。
+
+手动导入的词书也可以卸载，因此确认提示会明确说明本地 JSON 文件会被删除。若卸载了最后一本词书，Touch Fish 会保留在 Settings；这时可以继续打开下载列表，或把新的 JSON 词书放入 `assets/vocabulary/`。
+
 ## Public Catalog / 公开目录
 
 默认目录地址：

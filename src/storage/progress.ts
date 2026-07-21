@@ -60,6 +60,14 @@ export function saveWordProgress(bookId: string, progress: WordProgress) {
   );
 }
 
+export function deleteWordProgress(bookId: string) {
+  const progressPath = getProgressPath(bookId);
+
+  if (fs.existsSync(progressPath)) {
+    fs.unlinkSync(progressPath);
+  }
+}
+
 function getProgressPath(bookId: string): string {
   return path.join(progressDirectory, `${encodeURIComponent(bookId)}.json`);
 }

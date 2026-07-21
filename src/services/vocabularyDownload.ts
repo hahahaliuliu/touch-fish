@@ -3,7 +3,8 @@ import path from "node:path";
 import { resolveAssetPath } from "../config/paths.js";
 import type { DownloadableVocabularyBook } from "../models/vocabularyCatalog.js";
 import type { VocabularyBook } from "../models/word.js";
-import { parseVocabularyBook } from "./vocabularyLoader.js";
+import { deleteWordProgress } from "../storage/progress.js";
+import { parseVocabularyBook, removeVocabularyBook } from "./vocabularyLoader.js";
 
 export async function downloadVocabularyBook(
   entry: DownloadableVocabularyBook
@@ -57,6 +58,12 @@ export async function downloadVocabularyBook(
   }
 
   return vocabularyBook;
+}
+
+export function uninstallVocabularyBook(bookId: string) {
+  const removedBook = removeVocabularyBook(bookId);
+  deleteWordProgress(bookId);
+  return removedBook;
 }
 
 function getDestinationPath(bookId: string): string {

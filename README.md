@@ -71,7 +71,7 @@ Settings 当前支持：
 - Navigation Loop: on / off
 - Study Order: sequential / random
 - Vocabulary Book: automatically discovered local JSON books
-- Download Vocabulary: download public vocabulary books from the catalog
+- Download Vocabulary: download, view, and uninstall public or locally imported vocabulary books
 - Theme: build-log / backend-log
 - Custom key bindings for Word navigation and display controls
 

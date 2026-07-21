@@ -1,11 +1,15 @@
-import type { DownloadableVocabularyBook } from "../models/vocabularyCatalog.js";
+import type {
+  DownloadableVocabularyBook,
+  ManagedVocabularyBook,
+} from "../models/vocabularyCatalog.js";
 
 interface RenderVocabularyDownloadOptions {
-  books: DownloadableVocabularyBook[];
+  books: ManagedVocabularyBook[];
   installedBookIds: Set<string>;
   selectedIndex: number;
   isLoading: boolean;
   isDownloading: boolean;
+  isConfirmingUninstall: boolean;
   message: string;
 }
 
@@ -24,9 +28,14 @@ export function renderVocabularyDownloadSession(options: RenderVocabularyDownloa
   }
 
   renderBookSection(
-    "Available Now",
+    "Installed",
     options,
-    (book) => book.availability === "available"
+    (book) => options.installedBookIds.has(book.id)
+  );
+  renderBookSection(
+    "Available to Download",
+    options,
+    (book) => book.availability === "available" && !options.installedBookIds.has(book.id)
   );
   renderBookSection(
     "Coming Soon",
@@ -37,10 +46,17 @@ export function renderVocabularyDownloadSession(options: RenderVocabularyDownloa
   renderSelectedBookDetails(options);
 
   console.log("");
-  console.log("Controls  W/S or Up/Down move | Enter download selected book | Esc return | Q quit");
+  console.log("Controls  W/S or Up/Down move | Enter download or uninstall | Esc return | Q quit");
 
   if (options.isDownloading) {
     console.log("[INFO] downloading and validating vocabulary book...");
+  }
+
+  if (options.isConfirmingUninstall) {
+    const selectedBook = options.books[options.selectedIndex];
+    console.log(`[CONFIRM] Uninstall ${selectedBook?.name ?? "this vocabulary book"}?`);
+    console.log("[WARN] The local JSON file and all progress for this book will be deleted");
+    console.log("[CONFIRM] Press Y to uninstall, or Esc to cancel");
   }
 
   if (options.message) {
@@ -85,7 +101,12 @@ function renderSelectedBookDetails(options: RenderVocabularyDownloadOptions) {
   console.log(`  id: ${selectedBook.id}`);
   console.log(`  license: ${selectedBook.license ?? "pending"}`);
 
-  if (selectedBook.availability === "available") {
+  if (options.installedBookIds.has(selectedBook.id)) {
+    if (selectedBook.source === "local") {
+      console.log("  source: imported locally");
+    }
+    console.log("  Enter opens uninstall confirmation");
+  } else if (selectedBook.availability === "available") {
     console.log("  Enter downloads this book");
   } else {
     console.log("  This book is planned and cannot be downloaded yet");

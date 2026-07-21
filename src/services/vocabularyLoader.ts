@@ -17,6 +17,17 @@ export function loadVocabulary(bookId: string): Word[] {
 
 export function loadVocabularyBook(bookId: string): VocabularyBook {
   const books = locateVocabularyBooks();
+
+  if (books.length === 0) {
+    throw new Error(
+      [
+        "No vocabulary books are installed.",
+        "",
+        "Open `touchfish setting` and choose Download Vocabulary.",
+      ].join("\n")
+    );
+  }
+
   const selectedBook = books.find(({ book }) => book.id === bookId);
 
   if (!selectedBook) {
@@ -32,6 +43,22 @@ export function listVocabularyBooks(): VocabularyBookSummary[] {
     name: book.name,
     wordCount: book.words.length,
   }));
+}
+
+export function removeVocabularyBook(bookId: string): VocabularyBookSummary {
+  const locatedBook = locateVocabularyBooks().find(({ book }) => book.id === bookId);
+
+  if (!locatedBook) {
+    throw new Error(`Vocabulary book is not installed: ${bookId}`);
+  }
+
+  fs.unlinkSync(locatedBook.filePath);
+
+  return {
+    id: locatedBook.book.id,
+    name: locatedBook.book.name,
+    wordCount: locatedBook.book.words.length,
+  };
 }
 
 function locateVocabularyBooks(): LocatedVocabularyBook[] {
@@ -52,22 +79,7 @@ function getVocabularyFilePaths(vocabularyDirectory: string): string[] {
   const fileNames = fs
     .readdirSync(vocabularyDirectory)
     .filter((fileName) => fileName.endsWith(".json"));
-  const localFileNames = fileNames.filter(
-    (fileName) => !fileName.endsWith(".example.json")
-  );
-  const selectedFileNames = localFileNames.length > 0 ? localFileNames : fileNames;
-
-  if (selectedFileNames.length === 0) {
-    throw new Error(
-      [
-        `No vocabulary books found in: ${vocabularyDirectory}`,
-        "",
-        "Add a vocabulary JSON file or restore an example vocabulary file.",
-      ].join("\n")
-    );
-  }
-
-  return selectedFileNames
+  return fileNames
     .sort((left, right) => left.localeCompare(right))
     .map((fileName) => resolveAssetPath("vocabulary", fileName));
 }
