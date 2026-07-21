@@ -101,15 +101,16 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 
 选择当前使用哪一本单词书。
 
-未来行为：
+当前已支持：
 
 - 每本单词书可以是 `assets/vocabulary/` 下的一个 JSON 文件
-- Settings 可以保存当前启用的词库 id 或文件路径
-- 学习进度应该按词库分别保存
+- 程序会自动扫描并验证词书，优先按 `activeVocabularyBook` 的词库 id 加载；找不到时回退到第一本可用词书
+- 没有真实词书时会回退到 `.example.json` 示例词书
 
-当前 v0.2 行为：
+后续仍需支持：
 
-- 只读取 `assets/vocabulary/ielts-luran.json`
+- Settings 中选择当前词书
+- 学习进度按词书分别保存
 
 ### Custom Key Bindings / 自定义快捷键
 
@@ -264,10 +265,11 @@ v0.3 推荐顺序：
 9. 支持 `dailyWordCount` 作为学习组大小 `[done]`
 10. 支持 `navigationLoop` `[done]`
 11. 支持 `studyOrder` `[done]`
-12. 支持选择当前词库
-13. 支持可见字段配置
-14. 支持终端主题 `[done: build-log / backend-log]`
-15. 支持自定义快捷键 `[done]`
+12. 支持识别并加载当前词库 `[done: discovery/loading]`
+13. 支持在 Settings 中选择词库
+14. 支持可见字段配置
+15. 支持终端主题 `[done: build-log / backend-log]`
+16. 支持自定义快捷键 `[done]`
 
 ## Not Yet / 当前暂不做
 

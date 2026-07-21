@@ -8,9 +8,9 @@ import { createRandomOrder } from "./randomOrder.js";
 import { loadSettings } from "./settingsLoader.js";
 import { loadVocabulary } from "./vocabularyLoader.js";
 
-const words: Word[] = loadVocabulary();
-const sequentialOrder = words.map((_, index) => index);
 const settings = loadSettings();
+const words: Word[] = loadVocabulary(settings.activeVocabularyBook);
+const sequentialOrder = words.map((_, index) => index);
 
 let workspaceSize = settings.workspaceSize;
 let studyGroupSize = settings.dailyWordCount;

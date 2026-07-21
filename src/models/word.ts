@@ -19,3 +19,9 @@ export interface VocabularyBook {
   version: number;
   words: Word[];
 }
+
+export interface VocabularyBookSummary {
+  id: string;
+  name: string;
+  wordCount: number;
+}

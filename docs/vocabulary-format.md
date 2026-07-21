@@ -1,12 +1,8 @@
 # Vocabulary Format / 词库格式
 
-Touch Fish v0.2 当前只读取一本本地默认词库：
+Touch Fish 会扫描 `assets/vocabulary/` 中的 JSON 词书，并根据当前 Settings 的 `activeVocabularyBook` 选择对应的词书。
 
-```txt
-assets/vocabulary/ielts-luran.json
-```
-
-这个文件会被 Git 忽略，因为真实词库可能很大，也可能是用户自己整理的内容。
+真实词书会被 Git 忽略，因为它们可能很大，也可能是用户自己整理的内容。
 
 仓库里提交的是示例词库：
 
@@ -14,17 +10,7 @@ assets/vocabulary/ielts-luran.json
 assets/vocabulary/ielts.example.json
 ```
 
-第一次使用时，把示例词库复制成本地词库：
-
-```txt
-assets/vocabulary/ielts.example.json -> assets/vocabulary/ielts-luran.json
-```
-
-PowerShell 命令：
-
-```powershell
-Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts-luran.json
-```
+当目录中没有真实词书时，Touch Fish 会自动使用示例词书，因此第一次启动不需要复制文件。
 
 ## Book Shape / 词库结构
 
@@ -89,11 +75,15 @@ Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts-luran.jso
 - `target` 不是词性
 - 词性应该放在单词自己的 `partOfSpeech` 字段里
 
-## Current v0.2 Behavior / 当前行为
+## Current Behavior / 当前行为
 
-- Touch Fish 只读取 `assets/vocabulary/ielts-luran.json`
-- `assets/vocabulary/ielts.example.json` 只是模板
+- Touch Fish 自动扫描 `assets/vocabulary/` 下的 `.json` 文件
+- 真实词书会按内部 `id` 被识别，例如 `cet4`、`cet6`、`ielts-luran`
+- 优先加载 `activeVocabularyBook` 指定的词书；如果该 id 不存在，则自动加载按文件名排序后的第一本可用词书
+- `.example.json` 文件只在没有真实词书时作为启动回退
+- 重复的词书 `id`、损坏 JSON 或缺少必填字段会阻止启动，并显示具体文件和原因
+- 当前词书由 `activeVocabularyBook` 决定；Settings 中的可视化切换和按词书独立进度仍在后续实现
 - Word Workspace 当前只使用 `english` 和 `chinese`
 - 其他字段保留给 Settings 和未来显示模式
 - 空字符串和空数组是合法占位
-- 多词库和导入命令暂时还没有实现
+- TXT、CSV、PDF 导入命令暂时还没有实现

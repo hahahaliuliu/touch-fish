@@ -42,12 +42,6 @@ cd "Touch Fish"
 npm install
 ```
 
-创建本地词库文件：
-
-```powershell
-Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts-luran.json
-```
-
 启动 Word Session：
 
 ```powershell
@@ -101,25 +95,13 @@ touchfish setting
 
 ## First-Time Setup Notes / 第一次配置说明
 
-程序运行时需要这个本地词库文件：
-
-```txt
-assets/vocabulary/ielts-luran.json
-```
-
-但这个文件不会提交到 GitHub，因为真实词库可能很大，也可能包含个人整理内容。
-
-仓库里只提交示例词库：
+仓库里提交了一份示例词库：
 
 ```txt
 assets/vocabulary/ielts.example.json
 ```
 
-如果你看到 `Vocabulary file not found`，说明还没有创建本地词库。重新复制一份即可：
-
-```powershell
-Copy-Item assets\vocabulary\ielts.example.json assets\vocabulary\ielts-luran.json
-```
+程序在没有真实词书时会自动使用它。你自己的完整词书放进 `assets/vocabulary/` 后，重新启动即可被自动识别。
 
 ## Run / 运行方式
 

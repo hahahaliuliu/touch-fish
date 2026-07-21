@@ -1,39 +1,122 @@
 import fs from "node:fs";
 import { resolveAssetPath } from "../config/paths.js";
-import type { VocabularyBook, Word } from "../models/word.js";
+import type {
+  VocabularyBook,
+  VocabularyBookSummary,
+  Word,
+} from "../models/word.js";
 
-export function loadVocabulary(): Word[] {
-  const vocabularyPath = resolveAssetPath("vocabulary", "ielts-luran.json");
-  const exampleVocabularyPath = resolveAssetPath(
-    "vocabulary",
-    "ielts.example.json"
+interface LocatedVocabularyBook {
+  book: VocabularyBook;
+  filePath: string;
+}
+
+export function loadVocabulary(bookId: string): Word[] {
+  return loadVocabularyBook(bookId).words;
+}
+
+export function loadVocabularyBook(bookId: string): VocabularyBook {
+  const books = locateVocabularyBooks();
+  const selectedBook = books.find(({ book }) => book.id === bookId);
+
+  if (!selectedBook) {
+    return books[0]!.book;
+  }
+
+  return selectedBook.book;
+}
+
+export function listVocabularyBooks(): VocabularyBookSummary[] {
+  return locateVocabularyBooks().map(({ book }) => ({
+    id: book.id,
+    name: book.name,
+    wordCount: book.words.length,
+  }));
+}
+
+function locateVocabularyBooks(): LocatedVocabularyBook[] {
+  const vocabularyDirectory = resolveAssetPath("vocabulary");
+  const filePaths = getVocabularyFilePaths(vocabularyDirectory);
+  const books = filePaths.map(loadVocabularyBookFile);
+
+  validateUniqueBookIds(books);
+
+  return books;
+}
+
+function getVocabularyFilePaths(vocabularyDirectory: string): string[] {
+  if (!fs.existsSync(vocabularyDirectory)) {
+    throw new Error(`Vocabulary directory not found: ${vocabularyDirectory}`);
+  }
+
+  const fileNames = fs
+    .readdirSync(vocabularyDirectory)
+    .filter((fileName) => fileName.endsWith(".json"));
+  const localFileNames = fileNames.filter(
+    (fileName) => !fileName.endsWith(".example.json")
   );
+  const selectedFileNames = localFileNames.length > 0 ? localFileNames : fileNames;
 
-  if (!fs.existsSync(vocabularyPath)) {
+  if (selectedFileNames.length === 0) {
     throw new Error(
       [
-        `Vocabulary file not found: ${vocabularyPath}`,
+        `No vocabulary books found in: ${vocabularyDirectory}`,
         "",
-        "Create a local vocabulary file by copying:",
-        `${exampleVocabularyPath} -> ${vocabularyPath}`,
+        "Add a vocabulary JSON file or restore an example vocabulary file.",
       ].join("\n")
     );
   }
 
-  const fileContent = fs.readFileSync(vocabularyPath, "utf-8");
-  const vocabularyBook = JSON.parse(fileContent) as unknown;
+  return selectedFileNames
+    .sort((left, right) => left.localeCompare(right))
+    .map((fileName) => resolveAssetPath("vocabulary", fileName));
+}
+
+function loadVocabularyBookFile(filePath: string): LocatedVocabularyBook {
+  let vocabularyBook: unknown;
+
+  try {
+    vocabularyBook = JSON.parse(fs.readFileSync(filePath, "utf-8")) as unknown;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Unable to read vocabulary file: ${filePath}\n- ${message}`);
+  }
+
   const errors = validateVocabularyBook(vocabularyBook);
 
   if (errors.length > 0) {
     throw new Error(
       [
-        `Invalid vocabulary book format: ${vocabularyPath}`,
+        `Invalid vocabulary book format: ${filePath}`,
         ...errors.map((error) => `- ${error}`),
       ].join("\n")
     );
   }
 
-  return (vocabularyBook as VocabularyBook).words;
+  return {
+    book: vocabularyBook as VocabularyBook,
+    filePath,
+  };
+}
+
+function validateUniqueBookIds(books: LocatedVocabularyBook[]) {
+  const pathsById = new Map<string, string>();
+
+  books.forEach(({ book, filePath }) => {
+    const existingPath = pathsById.get(book.id);
+
+    if (existingPath) {
+      throw new Error(
+        [
+          `Duplicate vocabulary book id: ${book.id}`,
+          `- ${existingPath}`,
+          `- ${filePath}`,
+        ].join("\n")
+      );
+    }
+
+    pathsById.set(book.id, filePath);
+  });
 }
 
 function validateVocabularyBook(value: unknown): string[] {
