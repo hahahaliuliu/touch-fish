@@ -1,6 +1,6 @@
 # Settings Plan / 设置功能草稿
 
-> Status: v0.3 已开始。当前已经完成 Settings model、默认设置、本地 settings 读取基础，以及初版设置界面。
+> Status: v0.3 进行中。当前已经完成 Settings 基础、可编辑设置界面、学习分组、顺序/随机模式、显示模式保存、主题切换和双键槽快捷键配置。多单词书、单词详情字段和测试功能尚未完成。
 
 这个文档用来保存 Settings 的产品想法，防止以后忘记。
 
@@ -12,9 +12,9 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 
 ## Planned Settings / 计划中的设置
 
-### Daily Word Count / 每日单词数
+### Study Group Size / 学习组大小
 
-选择每天学习多少个新单词。
+选择一个学习组包含多少个单词。
 
 可能选项：
 
@@ -25,9 +25,9 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 
 注意：
 
-- Daily Word Count 控制每天学习计划
-- Workspace Size 控制一页显示几个单词
-- 这两个不是同一个概念
+- 当前代码中的字段名仍是 `dailyWordCount`，但实际行为是学习组大小
+- Workspace Size 控制一页显示几个单词，Study Group Size 控制一个学习范围包含多少单词
+- 真正按日期计算的“每日学习计划”尚未实现，后续实现时应使用独立概念，避免与学习组混淆
 
 ### Workspace Size / 每组单词数
 
@@ -60,7 +60,8 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 - `sequential` 按词库顺序学习
 - `random` 对整本词书生成并保存一份稳定随机顺序，再按学习组和页面拆分
 - `sequential` 与 `random` 分别保存自己的当前位置；切换模式不会覆盖另一种模式的进度
-- 随机顺序在同一本词书不变时会保留，之后可以增加“重新随机并从头开始”的操作
+- 随机顺序在同一本词书不变时会保留
+- Settings 中的 `reshuffle` 是受确认保护的操作：确认后生成新的随机顺序，并将随机模式进度重置到开头；顺序模式进度不会受影响
 
 ### Navigation Loop / 头尾循环
 
@@ -114,6 +115,15 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 
 允许用户自定义键盘控制。
 
+当前已经支持：
+
+- 每个可配置操作提供两个按键槽位
+- `W` / `S` 或上下方向键选择操作，`A` / `D` 或左右方向键选择槽位
+- `Enter` 进入按键捕获，`Backspace` 清空槽位，`Esc` 取消
+- 新按键如果已被其他操作占用，会从旧槽位中自动移除，避免冲突
+- 英文字母不区分大小写，支持英文半角字符；中文全角 `？` 会按 `?` 处理
+- `Q`、`Ctrl+O`、`Enter` 和 `Esc` 属于安全保留键，不开放自定义
+
 当前默认快捷键：
 
 - `A` / `←`: 当前范围内上一页
@@ -126,11 +136,7 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 - `?`: 切换 Help 视图
 - `Q`: 退出
 
-未来可以支持：
-
-- 修改导航键
-- 修改 Help 键
-- 修改退出键
+当前可修改上一页、下一页、上一组、下一组、重复导航、切换显示和 Help 的按键。退出与返回操作暂时保持固定，避免用户误操作后无法离开界面。
 
 ### Word Test / 单词测试
 
@@ -188,8 +194,9 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 注意：
 
 - `build-log` 是当前默认主题
-- 其他主题等 Theme 系统更稳定后再做
-- Theme 切换属于 Settings，不属于当前 v0.2 的 Workspace 打磨
+- `build-log` 和 `backend-log` 已经可以在 Settings 中切换并保存
+- 其他主题等 Theme 系统更稳定后再逐步增加
+- Theme 切换属于 v0.3 Settings 功能
 - Theme 应该模拟终端输出，而不是完整桌面应用窗口或 IDE 布局
 
 ## Possible Settings File / 未来设置文件
@@ -210,7 +217,7 @@ assets/settings.example.json
 
 未来完整结构草稿：
 
-> 注意：下面不是当前全部可用的配置。当前已经可用的是 `studyGroupEnabled`、`dailyWordCount`、`workspaceSize`、`navigationLoop` 和 `studyOrder`，其他字段会按实现顺序逐步接入。
+> 注意：下面不是当前全部可用的配置。除 `activeVocabularyBook` 和 `visibleFields` 尚未接入实际功能外，其余字段已经在当前 Settings 流程中使用。
 
 ```json
 {
@@ -230,12 +237,14 @@ assets/settings.example.json
     "tags": false
   },
   "keyBindings": {
-    "previous": "a",
-    "next": "d",
-    "repeat": "space",
-    "switchDisplayMode": "tab",
-    "toggleHelp": "?",
-    "quit": "q"
+    "previous": ["a", "arrow-left"],
+    "next": ["d", "arrow-right"],
+    "previousGroup": ["[", "arrow-up"],
+    "nextGroup": ["]", "arrow-down"],
+    "repeat": ["space", ""],
+    "switchDisplayMode": ["tab", ""],
+    "toggleHelp": ["?", ""],
+    "quit": ["q", ""]
   }
 }
 ```
@@ -257,14 +266,15 @@ v0.3 推荐顺序：
 11. 支持 `studyOrder` `[done]`
 12. 支持选择当前词库
 13. 支持可见字段配置
-14. 支持终端主题
-15. 支持自定义快捷键
+14. 支持终端主题 `[done: build-log / backend-log]`
+15. 支持自定义快捷键 `[done]`
 
 ## Not Yet / 当前暂不做
 
 当前先不急着实现：
 
-- Theme switching
 - 多词库切换
 - 每日学习计划
-- 自定义快捷键运行时配置
+- 单词详情字段显示
+- 单词测试和小组测试
+- 更多终端主题
