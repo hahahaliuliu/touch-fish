@@ -113,7 +113,7 @@ assets/vocabulary/ielts.example.json
 docs/vocabulary-downloads.md
 ```
 
-在同一个页面还可以选择 `Import Local JSON`，粘贴自己 JSON 词书的完整路径后导入。
+在同一个页面还可以选择 `Import Vocabulary File`，粘贴自己 JSON、TXT 或 CSV 词书的完整路径后导入。
 
 ## Run / 运行方式
 

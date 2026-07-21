@@ -79,7 +79,7 @@ function renderControls(options: RenderVocabularyDownloadOptions) {
 
   if (options.selectedIndex === options.books.length) {
     console.log(`Controls  ${sharedControls}`);
-    console.log("Action    Enter import | paste your JSON file's full path | Enter confirm");
+    console.log("Action    Enter import | paste a JSON, TXT, or CSV file path | Enter confirm");
     return;
   }
 
@@ -108,7 +108,7 @@ function renderImportAction(options: RenderVocabularyDownloadOptions) {
   const selected = options.selectedIndex === options.books.length;
   const marker = selected ? ">" : " ";
 
-  console.log(`${marker} Import Local JSON             [Enter to import]`);
+  console.log(`${marker} Import Vocabulary File         [Enter to import]`);
 
   if (options.isImporting) {
     console.log("");
@@ -150,7 +150,7 @@ function renderSelectedBookDetails(options: RenderVocabularyDownloadOptions) {
   if (!selectedBook) {
     if (!options.isImporting) {
       console.log("Selected Action");
-      console.log("  Import a vocabulary JSON file from any local path.");
+      console.log("  Import a vocabulary JSON, TXT, or CSV file from any local path.");
       console.log("  The file will be validated and copied into Touch Fish.");
     }
     return;

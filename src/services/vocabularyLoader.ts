@@ -66,9 +66,7 @@ function locateVocabularyBooks(): LocatedVocabularyBook[] {
   const filePaths = getVocabularyFilePaths(vocabularyDirectory);
   const books = filePaths.map(loadVocabularyBookFile);
 
-  validateUniqueBookIds(books);
-
-  return books;
+  return resolveDuplicateBookIds(books);
 }
 
 function getVocabularyFilePaths(vocabularyDirectory: string): string[] {
@@ -126,13 +124,27 @@ export function parseVocabularyBook(content: string, sourceName: string): Vocabu
 
 class VocabularyFormatError extends Error {}
 
-function validateUniqueBookIds(books: LocatedVocabularyBook[]) {
+function resolveDuplicateBookIds(books: LocatedVocabularyBook[]): LocatedVocabularyBook[] {
   const pathsById = new Map<string, string>();
+  const booksById = new Map<string, LocatedVocabularyBook>();
 
-  books.forEach(({ book, filePath }) => {
+  books.forEach((locatedBook) => {
+    const { book, filePath } = locatedBook;
     const existingPath = pathsById.get(book.id);
 
     if (existingPath) {
+      const existingBook = booksById.get(book.id)!;
+
+      if (isBundledExample(existingBook.filePath)) {
+        booksById.set(book.id, locatedBook);
+        pathsById.set(book.id, filePath);
+        return;
+      }
+
+      if (isBundledExample(filePath)) {
+        return;
+      }
+
       throw new Error(
         [
           `Duplicate vocabulary book id: ${book.id}`,
@@ -143,7 +155,14 @@ function validateUniqueBookIds(books: LocatedVocabularyBook[]) {
     }
 
     pathsById.set(book.id, filePath);
+    booksById.set(book.id, locatedBook);
   });
+
+  return [...booksById.values()];
+}
+
+function isBundledExample(filePath: string): boolean {
+  return filePath.endsWith(".example.json");
 }
 
 function validateVocabularyBook(value: unknown): string[] {

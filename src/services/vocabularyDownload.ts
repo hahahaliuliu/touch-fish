@@ -5,6 +5,7 @@ import type { DownloadableVocabularyBook } from "../models/vocabularyCatalog.js"
 import type { VocabularyBook } from "../models/word.js";
 import { deleteWordProgress } from "../storage/progress.js";
 import { parseVocabularyBook, removeVocabularyBook } from "./vocabularyLoader.js";
+import { parseImportedVocabulary } from "./vocabularyImportParser.js";
 
 export async function downloadVocabularyBook(
   entry: DownloadableVocabularyBook
@@ -43,7 +44,7 @@ export function importVocabularyBook(sourcePath: string): VocabularyBook {
   const normalizedPath = sourcePath.trim().replace(/^"|"$/g, "");
 
   if (!normalizedPath) {
-    throw new Error("Enter the full path to a vocabulary JSON file");
+    throw new Error("Enter the full path to a vocabulary JSON, TXT, or CSV file");
   }
 
   if (!fs.existsSync(normalizedPath)) {
@@ -51,8 +52,8 @@ export function importVocabularyBook(sourcePath: string): VocabularyBook {
   }
 
   const content = fs.readFileSync(normalizedPath, "utf-8");
-  const vocabularyBook = parseVocabularyBook(content, normalizedPath);
-  installVocabularyBook(vocabularyBook, content);
+  const vocabularyBook = parseImportedVocabulary(content, normalizedPath);
+  installVocabularyBook(vocabularyBook, JSON.stringify(vocabularyBook, null, 2));
   return vocabularyBook;
 }
 

@@ -1,6 +1,6 @@
 # Vocabulary Format / 词库格式
 
-Touch Fish 会扫描 `assets/vocabulary/` 中的 JSON 词书，并根据当前 Settings 的 `activeVocabularyBook` 选择对应的词书。
+Touch Fish 会扫描 `assets/vocabulary/` 中安装好的 JSON 词书，并根据当前 Settings 的 `activeVocabularyBook` 选择对应的词书。导入页面还支持把 JSON、TXT、CSV 文件转换并安装为词书。
 
 真实词书会被 Git 忽略，因为它们可能很大，也可能是用户自己整理的内容。
 
@@ -87,4 +87,37 @@ assets/vocabulary/ielts.example.json
 - Word Workspace 当前只使用 `english` 和 `chinese`
 - 其他字段保留给 Settings 和未来显示模式
 - 空字符串和空数组是合法占位
-- TXT、CSV、PDF 导入命令暂时还没有实现
+## Import File Formats / 导入文件格式
+
+在 `Download Vocabulary` 页面选择 `Import Vocabulary File`，粘贴文件完整路径后可以导入以下格式：
+
+### JSON
+
+JSON 必须使用上面的完整词书结构。它会保留词书 id、名称和可选字段。
+
+### TXT
+
+TXT 每一行是一组英文和中文释义，支持以下分隔形式：
+
+```txt
+abandon	放弃；遗弃
+benefit - 利益；好处
+complex: 复杂的
+```
+
+空行与 `#` 开头的注释行会被忽略。每一行都必须同时包含英文和中文释义。
+
+### CSV
+
+CSV 支持两列无表头文件：
+
+```csv
+abandon,放弃；遗弃
+benefit,利益；好处
+```
+
+也支持常见表头：`english/chinese`、`word/translation`，以及 `英文/中文`、`单词/释义`。CSV 中重复的英文单词会自动合并，只保留第一次出现的释义。
+
+TXT 和 CSV 导入时，Touch Fish 会从文件名自动生成词书名称和 id，并只保留英文、中文两个必填字段。
+
+PDF 暂不支持自动导入。PDF 的版式、分栏和扫描质量差异很大，后续会为它单独设计可预览和可校对的导入流程。
