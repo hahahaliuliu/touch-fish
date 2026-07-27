@@ -195,7 +195,13 @@ Touch Fish 始终运行在终端里。
 
 不要画假的应用窗口，不要模拟完整 IDE，不要做 VS Code 侧边栏。终端本身已经是窗口，Touch Fish 只负责生成像开发工具一样的终端内容。
 
-适合的 Theme 方向：
+已实现主题：
+
+- build-log
+- backend-log
+- git
+
+后续适合的 Theme 方向：
 
 - CLI Build Log
 - Git output

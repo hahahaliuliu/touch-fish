@@ -72,7 +72,7 @@ Settings 当前支持：
 - Study Order: sequential / random
 - Vocabulary Book: automatically discovered local JSON books
 - Download Vocabulary: download, view, and uninstall public or locally imported vocabulary books
-- Theme: build-log / backend-log
+- Theme: build-log / backend-log / git
 - Custom key bindings for Word navigation and display controls
 
 `Page Size` 和 `Group Size` 进入编辑后，可以用左右键切换预设值和 `custom`。

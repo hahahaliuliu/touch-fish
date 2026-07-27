@@ -228,6 +228,7 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 
 - `build-log` 是当前默认主题
 - `build-log` 和 `backend-log` 已经可以在 Settings 中切换并保存
+- `git` 主题已实现，模拟暂存文件列表与代码 diff 输出
 - 其他主题等 Theme 系统更稳定后再逐步增加
 - Theme 切换属于 v0.3 Settings 功能
 - Theme 应该模拟终端输出，而不是完整桌面应用窗口或 IDE 布局
@@ -303,7 +304,7 @@ v0.3 推荐顺序：
 14. 支持词库独立学习进度 `[done]`
 15. 支持 Settings / Help 界面语言 `[done]`
 16. 支持可见字段配置
-17. 支持终端主题 `[done: build-log / backend-log]`
+17. 支持终端主题 `[done: build-log / backend-log / git]`
 18. 支持自定义快捷键 `[done]`
 
 ## Not Yet / 当前暂不做

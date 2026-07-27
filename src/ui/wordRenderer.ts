@@ -10,6 +10,7 @@ import {
   renderBackendLogQuitMessage,
   renderBackendLogTheme,
 } from "./backendLogTheme.js";
+import { renderGitQuitMessage, renderGitTheme } from "./gitTheme.js";
 import { renderLogQuitMessage, renderLogTheme } from "./logTheme.js";
 
 export type { DisplayMode } from "../models/settings.js";
@@ -44,12 +45,22 @@ export function renderWordSession(options: RenderWordSessionOptions) {
     return;
   }
 
+  if (options.theme === "git") {
+    renderGitTheme(options);
+    return;
+  }
+
   renderLogTheme(options);
 }
 
 export function renderQuitMessage(theme: ThemeName) {
   if (theme === "backend-log") {
     renderBackendLogQuitMessage();
+    return;
+  }
+
+  if (theme === "git") {
+    renderGitQuitMessage();
     return;
   }
 
