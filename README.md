@@ -150,6 +150,7 @@ npm link
 - Settings 和 Help 支持 English / 中文界面切换
 - JSON 词库
 - 在线词库目录和下载校验
+- 词书管理界面支持 English / 中文切换，包含下载、卸载和本地导入提示
 - 本地学习进度保存
 - Build Log 风格界面
 - `?` Help 视图，显示快捷键和当前 Workspace 状态

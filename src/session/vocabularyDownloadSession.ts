@@ -2,6 +2,7 @@ import type {
   DownloadableVocabularyBook,
   ManagedVocabularyBook,
 } from "../models/vocabularyCatalog.js";
+import type { InterfaceLanguage } from "../models/settings.js";
 import { loadVocabularyCatalog } from "../services/vocabularyCatalog.js";
 import { loadSettings, saveSettings } from "../services/settingsLoader.js";
 import {
@@ -27,11 +28,13 @@ let isConfirmingUninstall = false;
 let isImporting = false;
 let importPath = "";
 let message = "";
+let interfaceLanguage: InterfaceLanguage = "english";
 
 export async function startVocabularyDownloadSession(
   options: StartVocabularyDownloadSessionOptions
 ) {
   onReturnToSettings = options.onReturn;
+  interfaceLanguage = loadSettings().interfaceLanguage;
   catalogBooks = [];
   books = [];
   refreshBooks();
@@ -81,7 +84,7 @@ function handleKeyPress(key: string) {
 
     if (isConfirmingUninstall && input === "\u001b") {
       isConfirmingUninstall = false;
-      message = "[INFO] uninstall cancelled";
+      message = getSessionText().uninstallCancelled;
       render();
       return;
     }
@@ -182,7 +185,7 @@ async function activateSelectedBook() {
   }
 
   if (selectedBook.availability === "coming-soon") {
-    message = `[INFO] ${selectedBook.name} is coming soon`;
+    message = getSessionText().comingSoon(selectedBook.name);
     render();
     return;
   }
@@ -194,7 +197,7 @@ async function activateSelectedBook() {
   try {
     await downloadVocabularyBook(selectedBook);
     refreshBooks();
-    message = `[INFO] installed ${selectedBook.name}`;
+    message = getSessionText().installed(selectedBook.name);
   } catch (error) {
     message = formatError(error);
   } finally {
@@ -207,7 +210,7 @@ function handleImportInput(input: string) {
   if (input === "\u001b") {
     isImporting = false;
     importPath = "";
-    message = "[INFO] import cancelled";
+    message = getSessionText().importCancelled;
     render();
     return;
   }
@@ -234,7 +237,7 @@ async function importSelectedFile() {
     const importedBook = await importVocabularyBook(importPath);
     refreshBooks();
     selectedIndex = books.findIndex((book) => book.id === importedBook.id);
-    message = `[INFO] imported ${importedBook.name}`;
+    message = getSessionText().imported(importedBook.name);
   } catch (error) {
     message = formatError(error);
   } finally {
@@ -256,7 +259,7 @@ async function uninstallSelectedBook() {
     const removedBook = uninstallVocabularyBook(selectedBook.id);
     refreshBooks();
     updateActiveBookAfterUninstall(removedBook.id);
-    message = `[INFO] uninstalled ${removedBook.name}; progress was removed`;
+    message = getSessionText().uninstalled(removedBook.name);
   } catch (error) {
     message = formatError(error);
   } finally {
@@ -322,6 +325,7 @@ function render() {
     isImporting,
     importPath,
     message,
+    interfaceLanguage,
   });
 }
 
@@ -334,7 +338,7 @@ function returnToSettings() {
 
 function quit() {
   console.clear();
-  console.log("[INFO] vocabulary download session closed");
+  console.log(getSessionText().sessionClosed);
 
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(false);
@@ -345,5 +349,31 @@ function quit() {
 
 function formatError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
-  return `[WARN] ${message}`;
+  return `${getSessionText().warningPrefix}${message}`;
+}
+
+function getSessionText() {
+  if (interfaceLanguage === "chinese") {
+    return {
+      uninstallCancelled: "[INFO] 已取消卸载",
+      comingSoon: (name: string) => `[INFO] ${name} 即将提供`,
+      installed: (name: string) => `[INFO] 已安装 ${name}`,
+      importCancelled: "[INFO] 已取消导入",
+      imported: (name: string) => `[INFO] 已导入 ${name}`,
+      uninstalled: (name: string) => `[INFO] 已卸载 ${name}，学习进度已删除`,
+      sessionClosed: "[INFO] 词书管理已关闭",
+      warningPrefix: "[警告] ",
+    };
+  }
+
+  return {
+    uninstallCancelled: "[INFO] uninstall cancelled",
+    comingSoon: (name: string) => `[INFO] ${name} is coming soon`,
+    installed: (name: string) => `[INFO] installed ${name}`,
+    importCancelled: "[INFO] import cancelled",
+    imported: (name: string) => `[INFO] imported ${name}`,
+    uninstalled: (name: string) => `[INFO] uninstalled ${name}; progress was removed`,
+    sessionClosed: "[INFO] vocabulary download session closed",
+    warningPrefix: "[WARN] ",
+  };
 }
