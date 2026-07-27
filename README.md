@@ -1,168 +1,145 @@
 # Touch Fish
 
-Touch Fish 是一个 Terminal Learning Tool。
+Touch Fish 是一个适合开发间隙使用的终端学习工具。
 
-它不是普通背单词软件，而是一个适合开发间隙使用的低调终端学习工具。
-
-核心理念：
+它把背单词内容呈现成开发日志、构建输出等终端内容，让用户在等待构建、工具响应或上下文切换时，顺手学习几个单词。
 
 > Learn in the gaps. Stay in the terminal.
 
-简单说：
+当前项目处于 `v0.2 Product Experience` 阶段，重点是让 Word Workspace 稳定、好用，并自然地融入终端开发环境。
 
-> 在等待构建、工具响应或上下文切换的时候，顺手背几个单词。
+## 安装与启动
 
-## Current Stage / 当前阶段
+### 1. 环境准备
 
-当前项目处于：
+先检查当前环境中是否已经安装 Node.js 和 npm：
 
-```txt
-v0.2 Product Experience
+```shell
+node --version
+npm --version
 ```
 
-这个阶段的重点不是疯狂加功能，而是让 Word Workspace 稳定、好用，并且更自然地融入终端开发环境。
+Touch Fish 当前需要：
 
-## Quick Start / 快速开始
+- Node.js `>= 22.12.0`
+- npm 可以正常运行
 
-你需要先安装：
+推荐使用 Node.js 24 LTS。如果两个命令都能显示版本，并且 Node.js 版本符合要求，可以直接跳到“获取项目”。
 
-- Node.js
-- npm
+如果命令不存在或 Node.js 版本太低，请根据自己的系统安装或升级 Node.js。
 
-下载项目：
+#### Windows 安装
+
+可以从 [Node.js 官网](https://nodejs.org/)下载安装 Node.js 24 LTS，也可以使用 Windows Package Manager：
 
 ```powershell
-git clone <your-repo-url>
-cd "Touch Fish"
+winget install OpenJS.NodeJS.LTS
 ```
 
-安装依赖：
+#### Ubuntu / WSL 安装
 
-```powershell
+推荐使用 [nvm](https://github.com/nvm-sh/nvm) 管理 Node.js：
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash
+source ~/.bashrc
+nvm install 24
+nvm alias default 24
+```
+
+安装或升级完成后，请重新检查版本：
+
+```shell
+node --version
+npm --version
+```
+
+两个命令都能正常显示版本，才表示运行环境准备完成。
+
+### 2. 获取项目
+
+可以任选一种方式。
+
+使用 Git：
+
+```shell
+git clone https://github.com/hahahaliuliu/touch-fish.git
+cd touch-fish
+```
+
+不使用 Git：
+
+1. 在 GitHub 项目页面点击 `Code`。
+2. 点击 `Download ZIP`。
+3. 解压文件。
+4. 在解压后的项目文件夹中打开终端。
+
+后续命令都必须在包含 `package.json` 的项目根目录执行。
+
+### 3. 安装项目依赖
+
+进入克隆或解压后的 Touch Fish 项目根目录，也就是包含 `package.json` 的目录，然后执行：
+
+```shell
 npm install
 ```
 
-启动 Word Session：
+依赖会安装到项目自己的 `node_modules/` 目录。
 
-```powershell
+### 4. 启动 Word Session
+
+在项目根目录中，使用开发方式启动：
+
+```shell
 npm run dev -- word
 ```
 
-运行自动测试：
+看到开发日志风格的单词界面，就表示安装和启动成功。
 
-```powershell
-npm test
-```
+### 5. 在任意目录使用 `touchfish`
 
-查看当前设置：
+在项目根目录执行一次：
 
-```powershell
-npm run dev -- setting
-```
-
-Settings 当前支持：
-
-- W/S 或 ↑/↓ 移动选择项
-- Enter 进入编辑 / 确认
-- A/D 或 ←/→ 修改当前值
-- Esc 取消编辑
-- Ctrl+O 返回 Word
-- Q 退出
-
-当前可修改：
-
-- Group Vocabulary: on / off
-- Page Size: 1 / 3 / 5 / custom
-- Group Size: 10 / 20 / 30 / custom
-- Navigation Loop: on / off
-- Study Order: sequential / random
-- Vocabulary Book: automatically discovered local JSON books
-- Download Vocabulary: download, view, and uninstall public or locally imported vocabulary books
-- Theme: build-log / backend-log / git
-- Custom key bindings for Word navigation and display controls
-
-`Page Size` 和 `Group Size` 进入编辑后，可以用左右键切换预设值和 `custom`。
-选中 `custom` 时显示 `_`，直接输入任意正整数后按 Enter 保存。
-
-如果想在任意目录使用 `touchfish word`，可以执行：
-
-```powershell
+```shell
 npm link
+```
+
+之后可以在当前系统的任意目录启动：
+
+```shell
 touchfish word
 ```
 
-`npm link` 只需要在项目目录里执行一次。之后就可以在其他目录运行：
+打开独立 Settings：
 
-```powershell
-touchfish word
-```
-
-查看当前设置：
-
-```powershell
+```shell
 touchfish setting
 ```
 
-## First-Time Setup Notes / 第一次配置说明
+`npm link` 通常只需执行一次。请不要移动或删除项目目录；如果通过 nvm 更换了 Node.js 版本，可能需要重新执行 `npm link`。
 
-仓库里提交了一份示例词库：
+## 第一次使用
 
-```txt
+仓库自带一份 30 词示例词书：
+
+```text
 assets/vocabulary/ielts.example.json
 ```
 
-程序在没有真实词书时会自动使用它。你自己的完整词书放进 `assets/vocabulary/` 后，重新启动即可被自动识别。
+没有安装其他词书时，Touch Fish 会自动使用它，因此第一次启动不需要手动准备词书。
 
-也可以在 Settings 中打开 `Download Vocabulary` 下载公开目录中的词书。目录与内容规则见：
+在 Word Session 中按 `Ctrl+O` 可以打开 Settings。Settings 支持：
 
-```txt
-docs/vocabulary-downloads.md
-```
+- 调整每页单词数量和学习组大小
+- 切换顺序或随机学习
+- 切换终端伪装主题
+- 自定义快捷键
+- 下载、切换或卸载词书
+- 导入 JSON、TXT、CSV 或带可复制文本的 PDF 词书
 
-在同一个页面还可以选择 `Import Vocabulary File`，粘贴自己 JSON、TXT、CSV 或 PDF 词书的完整路径后导入。PDF 需要包含可复制的文本，扫描图片 PDF 暂不支持。
+词书下载说明见 [docs/vocabulary-downloads.md](docs/vocabulary-downloads.md)，自定义词书格式见 [docs/vocabulary-format.md](docs/vocabulary-format.md)。
 
-## Run / 运行方式
-
-开发时使用：
-
-```powershell
-npm run dev -- word
-```
-
-本地链接 CLI 后使用：
-
-```powershell
-touchfish word
-```
-
-链接 CLI：
-
-```powershell
-cd "D:\Touch Fish"
-npm link
-```
-
-## Current Features / 当前功能
-
-- CLI 入口
-- `touchfish word`
-- Word Session
-- 键盘交互
-- Workspace：默认一页 3 个单词，支持自定义每页数量
-- 可选学习分组：默认每组 20 个单词，支持自定义组大小
-- 分组内循环与整本词书连续浏览
-- 顺序与随机学习模式，分别保存各自的学习位置
-- Display Mode：英文、中文、英文 + 中文
-- 当前学习组测试：默认显示英文并输入中文，`Tab` 可切换方向
-- Settings 和 Help 支持 English / 中文界面切换
-- JSON 词库
-- 在线词库目录和下载校验
-- 词书管理界面支持 English / 中文切换，包含下载、卸载和本地导入提示
-- 本地学习进度保存
-- Build Log 风格界面
-- `?` Help 视图，显示快捷键和当前 Workspace 状态
-
-## Keyboard / 快捷键
+## 常用快捷键
 
 | 按键 | 作用 |
 | --- | --- |
@@ -171,38 +148,47 @@ npm link
 | `[` / `↑` | 上一学习组 |
 | `]` / `↓` | 下一学习组 |
 | `Space` | 重复上一次导航 |
-| `Tab` | 切换显示模式 |
+| `Tab` | 切换单词显示模式 |
 | `T` | 开始当前学习组测试 |
-| `Esc` | 在 Help 返回背词；在 Settings 取消编辑或返回背词 |
 | `Ctrl+O` | 打开 Settings；在 Settings 中返回 Word |
-| `?` | 打开 / 关闭 Help 视图 |
-| `Q` | 退出 |
+| `?` | 打开或关闭 Help |
+| `Esc` | 从 Help 返回；在 Settings 中取消编辑或返回 Word |
+| `Q` | 保存进度并退出 |
 
-## Vocabulary / 词库
+快捷键可以在 Settings 中修改。
 
-本地词库文件：
+## 当前功能
 
-```txt
-assets/vocabulary/ielts-luran.json
+- CLI 入口：`touchfish word`、`touchfish setting`
+- 终端 Word Session 和键盘交互
+- 自定义每页单词数量
+- 可选学习分组和自定义组大小
+- 分组内循环与整本词书连续浏览
+- 顺序和随机学习模式，并分别保存进度
+- 英文、中文、英文 + 中文显示模式
+- 当前学习组测试，支持双向测试
+- Build Log、Backend Log 和 Git 终端主题
+- Settings、Help 和词书管理界面的中英文切换
+- 本地学习进度和用户设置保存
+- 词书自动发现、下载、卸载和本地导入
+
+## 开发与测试
+
+运行自动测试：
+
+```shell
+npm test
 ```
 
-这个文件会被 Git 忽略。
+不使用全局链接时打开 Settings：
 
-示例词库文件：
-
-```txt
-assets/vocabulary/ielts.example.json
+```shell
+npm run dev -- setting
 ```
 
-词库格式说明见：
+项目主要结构：
 
-```txt
-docs/vocabulary-format.md
-```
-
-## Project Structure / 项目结构
-
-```txt
+```text
 src/
   commands/   CLI 命令入口
   session/    Session 生命周期
@@ -213,13 +199,13 @@ src/
   ui/         终端渲染和主题
 
 assets/
-  vocabulary/ 词库
+  vocabulary/ 词书
   progress/   本地进度
 
-docs/         项目说明和未来计划
+docs/         格式说明和开发计划
 ```
 
-## Not Doing Now / 当前不做
+## 当前不做
 
 - Electron
 - 登录
@@ -228,4 +214,4 @@ docs/         项目说明和未来计划
 - 数据库
 - Read Mode
 
-这些功能属于后续阶段。
+这些功能不属于当前阶段目标。
