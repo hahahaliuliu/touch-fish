@@ -174,6 +174,7 @@ function validateKeyBindings(value: unknown, errors: string[]) {
     "nextGroup",
     "repeat",
     "switchDisplayMode",
+    "startQuiz",
     "toggleHelp",
     "quit",
   ];

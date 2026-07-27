@@ -6,6 +6,7 @@ import {
 
 import {
   getCurrentWords,
+  getCurrentStudyGroupWords,
   getSavedDisplayMode,
   getWordProgress,
   nextWordGroup as moveToNextWordGroup,
@@ -18,6 +19,7 @@ import {
 } from "../services/wordService.js";
 import { loadSettings } from "../services/settingsLoader.js";
 import { startSettingSession } from "./settingSession.js";
+import { startGroupQuizSession } from "./groupQuizSession.js";
 
 type LastNavigation = "next" | "previous";
 
@@ -121,6 +123,11 @@ function handleInput(input: string): boolean {
     return true;
   }
 
+  if (matchesBinding(binding, "startQuiz")) {
+    openGroupQuiz();
+    return false;
+  }
+
   if (matchesBinding(binding, "toggleHelp")) {
     showHelp = !showHelp;
     renderSession();
@@ -206,6 +213,19 @@ function openSettingSession() {
       keyBindings = loadSettings().keyBindings;
       interfaceLanguage = loadSettings().interfaceLanguage;
       displayMode = getSavedDisplayMode();
+      startWordSession();
+    },
+  });
+}
+
+function openGroupQuiz() {
+  const groupWords = getCurrentStudyGroupWords();
+
+  process.stdin.off("data", handleKeyPress);
+  startGroupQuizSession({
+    words: groupWords,
+    interfaceLanguage,
+    onReturn: () => {
       startWordSession();
     },
   });

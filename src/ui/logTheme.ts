@@ -143,6 +143,7 @@ function renderLogHelp(options: RenderLogHelpOptions) {
   console.log("");
   console.log(text.actions);
   console.log(`  ${formatBindings(keyBindings.switchDisplayMode, interfaceLanguage).padEnd(21, " ")}${text.switchDisplay}`);
+  console.log(`  ${formatBindings(keyBindings.startQuiz, interfaceLanguage).padEnd(21, " ")}${text.startQuiz}`);
   console.log(`  ${"Ctrl+O".padEnd(21, " ")}${text.openSettings}`);
   console.log(`  ${formatBindings(keyBindings.toggleHelp, interfaceLanguage).padEnd(21, " ")}${text.closeHelp}`);
   console.log(`  ${"Q".padEnd(21, " ")}${text.quit}`);
@@ -170,6 +171,7 @@ function getHelpText(language: InterfaceLanguage) {
       repeatNavigation: "重复上次翻页",
       actions: "操作",
       switchDisplay: "切换单词显示",
+      startQuiz: "开始组内测试",
       openSettings: "打开设置",
       closeHelp: "关闭帮助",
       quit: "退出",
@@ -199,6 +201,7 @@ function getHelpText(language: InterfaceLanguage) {
     repeatNavigation: "repeat last page navigation",
     actions: "Display",
     switchDisplay: "switch display mode",
+    startQuiz: "start group quiz",
     openSettings: "open settings",
     closeHelp: "close help",
     quit: "quit",

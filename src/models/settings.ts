@@ -29,6 +29,7 @@ export interface KeyBindings {
   nextGroup: BindingSlots;
   repeat: BindingSlots;
   switchDisplayMode: BindingSlots;
+  startQuiz: BindingSlots;
   toggleHelp: BindingSlots;
   quit: BindingSlots;
 }

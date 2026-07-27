@@ -34,6 +34,7 @@ v0.2 Product Experience
 4. 保持 Renderer 和 Theme 的职责分离。
 5. Settings、多词库、Read Mode 放到后续版本。
 6. 核心设置、随机顺序和词书导入应保持自动测试覆盖。
+7. 当前学习组测试已支持双向答题和错误单词结果页；错题保存与 Review 后续再做。
 
 ## Current Architecture / 当前架构
 

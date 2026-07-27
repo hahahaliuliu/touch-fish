@@ -24,6 +24,7 @@ export const DEFAULT_SETTINGS: Settings = {
     nextGroup: ["]", "arrow-down"],
     repeat: ["space", ""],
     switchDisplayMode: ["tab", ""],
+    startQuiz: ["t", ""],
     toggleHelp: ["?", ""],
     quit: ["q", ""],
   },

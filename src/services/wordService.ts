@@ -31,6 +31,13 @@ export function getCurrentWords(): Word[] {
     .filter((word): word is Word => word !== undefined);
 }
 
+export function getCurrentStudyGroupWords(): Word[] {
+  return wordOrder
+    .slice(getCurrentGroupStart(), getCurrentGroupEnd())
+    .map((wordIndex) => words[wordIndex])
+    .filter((word): word is Word => word !== undefined);
+}
+
 export function nextWordGroup(): Word[] {
   currentIndex = getNextPageIndex({
     currentIndex,

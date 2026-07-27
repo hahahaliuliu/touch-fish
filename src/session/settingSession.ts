@@ -544,6 +544,7 @@ function createSettingItems(language: InterfaceLanguage = settings.interfaceLang
     { kind: "binding", key: "nextGroup", label: labels.nextGroup },
     { kind: "binding", key: "repeat", label: labels.repeatNavigation },
     { kind: "binding", key: "switchDisplayMode", label: labels.switchDisplay },
+    { kind: "binding", key: "startQuiz", label: labels.startQuiz },
     { kind: "binding", key: "toggleHelp", label: labels.toggleHelp },
   ];
 }
@@ -566,6 +567,7 @@ function getSettingLabels(language: InterfaceLanguage) {
       nextGroup: "下一组",
       repeatNavigation: "重复翻页",
       switchDisplay: "切换单词显示",
+      startQuiz: "开始组内测试",
       toggleHelp: "打开帮助",
     };
   }
@@ -586,6 +588,7 @@ function getSettingLabels(language: InterfaceLanguage) {
     nextGroup: "Next Group",
     repeatNavigation: "Repeat Navigation",
     switchDisplay: "Switch Display",
+    startQuiz: "Start Group Quiz",
     toggleHelp: "Toggle Help",
   };
 }
