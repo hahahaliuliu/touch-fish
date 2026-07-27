@@ -260,6 +260,9 @@ function confirmOrStartEdit() {
 
 function cancelEdit() {
   if (!isEditing) {
+    if (onReturnToPreviousSession) {
+      returnToPreviousSession();
+    }
     return;
   }
 
@@ -647,7 +650,6 @@ function quitSettingSession() {
 function cloneSettings(value: Settings): Settings {
   return {
     ...value,
-    visibleFields: { ...value.visibleFields },
     keyBindings: cloneKeyBindings(value.keyBindings),
   };
 }

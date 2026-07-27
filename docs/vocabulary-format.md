@@ -32,7 +32,6 @@ assets/vocabulary/ielts.example.json
       "chinese": "放弃；遗弃",
       "phonetic": "",
       "example": "",
-      "partOfSpeech": "",
       "note": "",
       "tags": []
     }
@@ -62,18 +61,15 @@ assets/vocabulary/ielts.example.json
 
 - `phonetic`
 - `example`
-- `partOfSpeech`
 - `note`
 - `tags`
 
-这些字段是给后续阶段预留的。v0.2 可以留空。
+这些字段是词书可以携带的附加数据；当前 Word Session 只显示 `english` 和 `chinese`，其余字段可以留空。
 
 说明：
 
 - `language.source` 是源语言，例如 `en`
 - `language.target` 是目标语言，例如 `zh-CN`
-- `target` 不是词性
-- 词性应该放在单词自己的 `partOfSpeech` 字段里
 
 ## Current Behavior / 当前行为
 
@@ -85,7 +81,7 @@ assets/vocabulary/ielts.example.json
 - 当前词书由 `activeVocabularyBook` 决定；可在 Settings 的 `Vocabulary Book` 项中切换，返回 Word Session 后立即生效
 - 每本词书分别保存顺序位置、随机位置、随机顺序和显示模式
 - Word Workspace 当前只使用 `english` 和 `chinese`
-- 其他字段保留给 Settings 和未来显示模式
+- 音标、例句、笔记和标签会随 JSON 词书保留，但当前不在 Settings 中配置，也不会显示
 - 空字符串和空数组是合法占位
 ## Import File Formats / 导入文件格式
 

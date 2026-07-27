@@ -177,7 +177,6 @@ npm link
 
 - `phonetic`
 - `example`
-- `partOfSpeech`
 - `note`
 - `tags`
 

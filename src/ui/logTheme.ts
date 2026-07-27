@@ -146,6 +146,7 @@ function renderLogHelp(options: RenderLogHelpOptions) {
   console.log(`  ${formatBindings(keyBindings.startQuiz, interfaceLanguage).padEnd(21, " ")}${text.startQuiz}`);
   console.log(`  ${"Ctrl+O".padEnd(21, " ")}${text.openSettings}`);
   console.log(`  ${formatBindings(keyBindings.toggleHelp, interfaceLanguage).padEnd(21, " ")}${text.closeHelp}`);
+  console.log(`  ${"Esc".padEnd(21, " ")}${text.returnToWord}`);
   console.log(`  ${"Q".padEnd(21, " ")}${text.quit}`);
   console.log("");
   console.log(text.currentWorkspace);
@@ -174,6 +175,7 @@ function getHelpText(language: InterfaceLanguage) {
       startQuiz: "开始组内测试",
       openSettings: "打开设置",
       closeHelp: "关闭帮助",
+      returnToWord: "返回背词",
       quit: "退出",
       currentWorkspace: "当前学习区",
       position: "当前位置",
@@ -204,6 +206,7 @@ function getHelpText(language: InterfaceLanguage) {
     startQuiz: "start group quiz",
     openSettings: "open settings",
     closeHelp: "close help",
+    returnToWord: "return to word",
     quit: "quit",
     currentWorkspace: "Current Workspace",
     position: "position",

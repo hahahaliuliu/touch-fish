@@ -152,7 +152,7 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 
 - 每个可配置操作提供两个按键槽位
 - `W` / `S` 或上下方向键选择操作，`A` / `D` 或左右方向键选择槽位
-- `Enter` 进入按键捕获，`Backspace` 清空槽位，`Esc` 取消
+- `Enter` 进入按键捕获，`Backspace` 清空槽位，`Esc` 取消编辑；从 Word 打开的 Settings 在未编辑时按 `Esc` 返回 Word
 - 新按键如果已被其他操作占用，会从旧槽位中自动移除，避免冲突
 - 英文字母不区分大小写，支持英文半角字符；中文全角 `？` 会按 `?` 处理
 - `Q`、`Ctrl+O`、`Enter` 和 `Esc` 属于安全保留键，不开放自定义
@@ -197,27 +197,14 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 
 - 默认测试类型：单词测试 / 小组测试
 - 默认测试方向
-- 是否显示例句、音标或词性作为提示
 
 注意：测试结果、错题和统计属于后续 Daily Use 阶段，当前只保留设计位置。
 
-### Word Detail Fields / 单词详情字段
+### Vocabulary Metadata / 词书附加数据
 
-选择是否显示一些额外字段。
+词书可以保留 `phonetic`、`example`、`note` 和 `tags` 等附加数据，方便导入时不丢失原始信息。
 
-字段：
-
-- phonetic 音标
-- example 例句
-- partOfSpeech 词性
-- note 笔记
-- tags 标签
-
-注意：
-
-- 这些字段已经在词库格式中预留
-- v0.2 默认不显示
-- 以后 Settings 可以决定这些字段显示在主界面、详情视图，还是 Debug/Help 视图中
+当前版本不在 Settings 中配置这些字段，也不会在 Word Session 或测试界面显示它们。
 
 ### Terminal Theme / 终端主题
 
@@ -259,9 +246,7 @@ assets/settings.json
 assets/settings.example.json
 ```
 
-未来完整结构草稿：
-
-> 注意：下面不是当前全部可用的配置。除 `visibleFields` 尚未接入实际功能外，其余字段已经在当前 Settings 流程中使用。
+当前设置文件结构：
 
 ```json
 {
@@ -274,13 +259,6 @@ assets/settings.example.json
   "displayMode": "english",
   "interfaceLanguage": "english",
   "theme": "build-log",
-  "visibleFields": {
-    "phonetic": false,
-    "example": false,
-    "partOfSpeech": false,
-    "note": false,
-    "tags": false
-  },
   "keyBindings": {
     "previous": ["a", "arrow-left"],
     "next": ["d", "arrow-right"],
@@ -313,15 +291,13 @@ v0.3 推荐顺序：
 13. 支持在 Settings 中选择词库 `[done]`
 14. 支持词库独立学习进度 `[done]`
 15. 支持 Settings / Help 界面语言 `[done]`
-16. 支持可见字段配置
-17. 支持终端主题 `[done: build-log / backend-log / git]`
-18. 支持自定义快捷键 `[done]`
+16. 支持终端主题 `[done: build-log / backend-log / git]`
+17. 支持自定义快捷键 `[done]`
 
 ## Not Yet / 当前暂不做
 
 当前先不急着实现：
 
 - 每日学习计划
-- 单词详情字段显示
 - 单词测试和小组测试
 - 更多终端主题

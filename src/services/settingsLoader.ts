@@ -10,7 +10,6 @@ import type {
   Settings,
   StudyOrder,
   ThemeName,
-  VisibleWordFields,
 } from "../models/settings.js";
 
 const settingsPath = resolveAssetPath("settings.json");
@@ -65,9 +64,6 @@ export function saveSettings(settings: Settings) {
 function cloneSettings(settings: Settings): Settings {
   return {
     ...settings,
-    visibleFields: {
-      ...settings.visibleFields,
-    },
     keyBindings: {
       ...settings.keyBindings,
     },
@@ -79,14 +75,14 @@ function mergeWithDefaultSettings(value: unknown): unknown {
     return value;
   }
 
+  // Ignore the retired visibleFields setting in existing local config files.
+  const { visibleFields: _legacyVisibleFields, ...settingsValue } = value;
+
   return {
     ...DEFAULT_SETTINGS,
-    ...value,
-    visibleFields: isRecord(value.visibleFields)
-      ? { ...DEFAULT_SETTINGS.visibleFields, ...value.visibleFields }
-      : { ...DEFAULT_SETTINGS.visibleFields },
-    keyBindings: isRecord(value.keyBindings)
-      ? mergeKeyBindings(value.keyBindings)
+    ...settingsValue,
+    keyBindings: isRecord(settingsValue.keyBindings)
+      ? mergeKeyBindings(settingsValue.keyBindings)
       : cloneKeyBindings(DEFAULT_SETTINGS.keyBindings),
   };
 }
@@ -134,31 +130,9 @@ function validateSettings(value: unknown): string[] {
     errors.push("theme is not supported");
   }
 
-  validateVisibleFields(value.visibleFields, errors);
   validateKeyBindings(value.keyBindings, errors);
 
   return errors;
-}
-
-function validateVisibleFields(value: unknown, errors: string[]) {
-  if (!isRecord(value)) {
-    errors.push("visibleFields must be a JSON object");
-    return;
-  }
-
-  const keys: Array<keyof VisibleWordFields> = [
-    "phonetic",
-    "example",
-    "partOfSpeech",
-    "note",
-    "tags",
-  ];
-
-  keys.forEach((key) => {
-    if (typeof value[key] !== "boolean") {
-      errors.push(`visibleFields.${key} must be a boolean`);
-    }
-  });
 }
 
 function validateKeyBindings(value: unknown, errors: string[]) {

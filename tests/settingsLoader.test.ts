@@ -7,6 +7,11 @@ test("old settings gain newly added defaults", () => {
   const settings = parseSettings({
     workspaceSize: 5,
     displayMode: "both",
+    visibleFields: {
+      phonetic: true,
+      example: true,
+      partOfSpeech: true,
+    },
   });
 
   assert.equal(settings.workspaceSize, 5);
@@ -14,6 +19,7 @@ test("old settings gain newly added defaults", () => {
   assert.equal(settings.interfaceLanguage, "english");
   assert.equal(settings.theme, "build-log");
   assert.deepEqual(settings.keyBindings, DEFAULT_SETTINGS.keyBindings);
+  assert.equal("visibleFields" in settings, false);
 });
 
 test("settings reject an unsupported interface language", () => {

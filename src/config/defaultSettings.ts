@@ -10,13 +10,6 @@ export const DEFAULT_SETTINGS: Settings = {
   displayMode: "english",
   interfaceLanguage: "english",
   theme: "build-log",
-  visibleFields: {
-    phonetic: false,
-    example: false,
-    partOfSpeech: false,
-    note: false,
-    tags: false,
-  },
   keyBindings: {
     previous: ["a", "arrow-left"],
     next: ["d", "arrow-right"],

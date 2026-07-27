@@ -82,6 +82,12 @@ function handleInput(input: string): boolean {
     quitWordSession();
   }
 
+  if (input === "\u001b" && showHelp) {
+    showHelp = false;
+    renderSession();
+    return true;
+  }
+
   if (input === OPEN_SETTINGS_KEY) {
     openSettingSession();
     return false;

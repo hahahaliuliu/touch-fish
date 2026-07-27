@@ -220,7 +220,6 @@ function validateWord(value: unknown, pathName: string, errors: string[]) {
   requireNonEmptyString(value.chinese, `${pathName}.chinese`, errors);
   requireOptionalString(value.phonetic, `${pathName}.phonetic`, errors);
   requireOptionalString(value.example, `${pathName}.example`, errors);
-  requireOptionalString(value.partOfSpeech, `${pathName}.partOfSpeech`, errors);
   requireOptionalString(value.note, `${pathName}.note`, errors);
 
   if (value.tags !== undefined) {

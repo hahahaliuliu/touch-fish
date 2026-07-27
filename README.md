@@ -173,6 +173,7 @@ npm link
 | `Space` | 重复上一次导航 |
 | `Tab` | 切换显示模式 |
 | `T` | 开始当前学习组测试 |
+| `Esc` | 在 Help 返回背词；在 Settings 取消编辑或返回背词 |
 | `Ctrl+O` | 打开 Settings；在 Settings 中返回 Word |
 | `?` | 打开 / 关闭 Help 视图 |
 | `Q` | 退出 |

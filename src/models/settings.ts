@@ -14,14 +14,6 @@ export type ThemeName =
   | "python-repl"
   | "sql-console";
 
-export interface VisibleWordFields {
-  phonetic: boolean;
-  example: boolean;
-  partOfSpeech: boolean;
-  note: boolean;
-  tags: boolean;
-}
-
 export interface KeyBindings {
   previous: BindingSlots;
   next: BindingSlots;
@@ -46,6 +38,5 @@ export interface Settings {
   displayMode: DisplayMode;
   interfaceLanguage: InterfaceLanguage;
   theme: ThemeName;
-  visibleFields: VisibleWordFields;
   keyBindings: KeyBindings;
 }

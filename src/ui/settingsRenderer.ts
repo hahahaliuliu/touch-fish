@@ -71,8 +71,6 @@ export function renderSettingSession(options: RenderSettingSessionOptions) {
     if (item.kind === "binding") {
       if (!hasRenderedBindings) {
         hasRenderedBindings = true;
-        console.log(text.wordDetails);
-        console.log("");
         console.log(text.keyBindings);
       }
 
@@ -314,10 +312,9 @@ function getSettingsText(language: InterfaceLanguage) {
     return {
       title: "Touch Fish 设置",
       ready: "[INFO] 配置已就绪",
-      wordDetails: "词语详情  音标 / 例句 / 词性：暂未开放",
       keyBindings: "按键绑定",
       controlsFirstLine: "操作  W/S 移动 | A/D 修改设置或切换键位 | Enter 编辑 | Backspace 清空",
-      controlsSecondLine: "      Esc 取消 | Ctrl+O 返回单词 | Q 退出",
+      controlsSecondLine: "      Esc 取消编辑 / 返回背词 | Ctrl+O 返回背词 | Q 退出",
       bindingHint: "[绑定] 请按英文键、符号、空格、Tab 或方向键；已占用的键会自动清空原位置",
       customHint: "[自定义] 输入正整数后按 Enter 保存；A/D 可切换预设值和自定义",
       editHint: "[编辑] 修改后按 Enter 保存",
@@ -331,10 +328,9 @@ function getSettingsText(language: InterfaceLanguage) {
   return {
     title: "Touch Fish Settings",
     ready: "[INFO] configuration ready",
-    wordDetails: "Word Details  phonetic / example / part of speech: locked",
     keyBindings: "Key Bindings",
     controlsFirstLine: "Controls  W/S move | A/D setting or slot | Enter edit | Backspace clear",
-    controlsSecondLine: "          Esc cancel | Ctrl+O return to word | Q quit",
+    controlsSecondLine: "          Esc cancel edit / return to word | Ctrl+O return to word | Q quit",
     bindingHint: "[BIND] English key, symbol, Space, Tab, or arrow key; occupied keys clear their previous slot",
     customHint: "[CUSTOM] type a positive whole number, then Enter; A/D cycles presets and custom",
     editHint: "[EDIT] change value, then press Enter to save",

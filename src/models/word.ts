@@ -3,7 +3,6 @@ export interface Word {
   chinese: string;
   phonetic?: string;
   example?: string;
-  partOfSpeech?: string;
   note?: string;
   tags?: string[];
 }

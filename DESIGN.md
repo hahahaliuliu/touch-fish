@@ -118,7 +118,6 @@ Word Session 使用 Workspace 模型。
 - Mask
 - Review
 - Phonetic
-- Part of speech
 
 这些属于后续阶段。
 
@@ -204,7 +203,6 @@ assets/vocabulary/ielts-luran.json
 
 - `phonetic`
 - `example`
-- `partOfSpeech`
 - `note`
 - `tags`
 
