@@ -7,6 +7,7 @@ import {
 import { createRandomOrder } from "./randomOrder.js";
 import { loadSettings } from "./settingsLoader.js";
 import { loadVocabularyBook } from "./vocabularyLoader.js";
+import { getNextPageIndex, getPreviousPageIndex } from "./workspaceNavigation.js";
 
 let settings = loadSettings();
 let vocabularyBook = loadVocabularyBook(settings.activeVocabularyBook);
@@ -31,25 +32,25 @@ export function getCurrentWords(): Word[] {
 }
 
 export function nextWordGroup(): Word[] {
-  const nextIndex = currentIndex + workspaceSize;
-
-  if (nextIndex >= getCurrentGroupEnd() && navigationLoop) {
-    currentIndex = getCurrentGroupStart();
-  } else if (nextIndex < getCurrentGroupEnd()) {
-    currentIndex = nextIndex;
-  }
+  currentIndex = getNextPageIndex({
+    currentIndex,
+    workspaceSize,
+    rangeStart: getCurrentGroupStart(),
+    rangeEnd: getCurrentGroupEnd(),
+    navigationLoop,
+  });
 
   return getCurrentWords();
 }
 
 export function previousWordGroup(): Word[] {
-  const previousIndex = currentIndex - workspaceSize;
-
-  if (previousIndex < getCurrentGroupStart() && navigationLoop) {
-    currentIndex = getLastPageStartInCurrentGroup();
-  } else if (previousIndex >= getCurrentGroupStart()) {
-    currentIndex = previousIndex;
-  }
+  currentIndex = getPreviousPageIndex({
+    currentIndex,
+    workspaceSize,
+    rangeStart: getCurrentGroupStart(),
+    rangeEnd: getCurrentGroupEnd(),
+    navigationLoop,
+  });
 
   return getCurrentWords();
 }
@@ -188,13 +189,6 @@ function getCurrentGroupEnd() {
   }
 
   return Math.min(getCurrentGroupStart() + studyGroupSize, words.length);
-}
-
-function getLastPageStartInCurrentGroup() {
-  const groupStart = getCurrentGroupStart();
-  const groupLength = getCurrentGroupEnd() - groupStart;
-
-  return groupStart + Math.floor((groupLength - 1) / workspaceSize) * workspaceSize;
 }
 
 function isValidRandomOrder(order: number[]): boolean {

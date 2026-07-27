@@ -48,6 +48,12 @@ npm install
 npm run dev -- word
 ```
 
+运行自动测试：
+
+```powershell
+npm test
+```
+
 查看当前设置：
 
 ```powershell

@@ -22,7 +22,11 @@ export function loadSettings(): Settings {
 
   const fileContent = fs.readFileSync(settingsPath, "utf-8");
   const parsedSettings = JSON.parse(fileContent) as unknown;
-  const settings = mergeWithDefaultSettings(parsedSettings);
+  return parseSettings(parsedSettings);
+}
+
+export function parseSettings(value: unknown): Settings {
+  const settings = mergeWithDefaultSettings(value);
   const errors = validateSettings(settings);
 
   if (errors.length > 0) {
@@ -80,10 +84,10 @@ function mergeWithDefaultSettings(value: unknown): unknown {
     ...value,
     visibleFields: isRecord(value.visibleFields)
       ? { ...DEFAULT_SETTINGS.visibleFields, ...value.visibleFields }
-      : value.visibleFields,
+      : { ...DEFAULT_SETTINGS.visibleFields },
     keyBindings: isRecord(value.keyBindings)
       ? mergeKeyBindings(value.keyBindings)
-      : value.keyBindings,
+      : cloneKeyBindings(DEFAULT_SETTINGS.keyBindings),
   };
 }
 
@@ -186,6 +190,16 @@ function mergeKeyBindings(value: Record<string, unknown>): KeyBindings {
 
   (Object.keys(DEFAULT_SETTINGS.keyBindings) as Array<keyof KeyBindings>).forEach((key) => {
     bindings[key] = normalizeBindingSlots(value[key], DEFAULT_SETTINGS.keyBindings[key]);
+  });
+
+  return bindings;
+}
+
+function cloneKeyBindings(value: KeyBindings): KeyBindings {
+  const bindings = {} as KeyBindings;
+
+  (Object.keys(value) as Array<keyof KeyBindings>).forEach((key) => {
+    bindings[key] = [...value[key]] as BindingSlots;
   });
 
   return bindings;
