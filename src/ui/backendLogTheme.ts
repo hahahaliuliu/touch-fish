@@ -1,6 +1,7 @@
 import type { Word } from "../models/word.js";
 import type { DisplayMode, NoteMode } from "../models/settings.js";
 import type { RenderWordSessionOptions } from "./wordRenderer.js";
+import { getTerminalColumns, getTerminalWidth, truncateTerminalText } from "./terminalText.js";
 
 export function renderBackendLogTheme(options: RenderWordSessionOptions) {
   const timestamp = new Date().toISOString();
@@ -45,13 +46,22 @@ function formatCacheEntry(
   const value = JSON.stringify(getDisplayValue(word, displayMode));
 
   const prefix = isSelected ? "> " : "";
-  const note = noteMode === "hidden" || !word.note ? "" : ` memo=${JSON.stringify(word.note)}`;
+  const note = noteMode === "hidden" || !word.note
+    ? ""
+    : ` memo=${JSON.stringify(truncateTerminalText(word.note, 24))}`;
+  const linePrefix = `${prefix}${timestamp} DEBUG cache hit key=${key} value=`;
 
   if (displayMode === "both") {
-    return `${prefix}${timestamp} DEBUG cache hit key=${key} value=${value} note=${JSON.stringify(word.chinese)}${note}`;
+    return truncateTerminalText(
+      `${linePrefix}${value} note=${JSON.stringify(word.chinese)}${note}`,
+      getTerminalColumns()
+    );
   }
 
-  return `${prefix}${timestamp} DEBUG cache hit key=${key} value=${value} ttl=300s${note}`;
+  const suffix = ` ttl=300s${note}`;
+  const availableValueWidth = Math.max(8, getTerminalColumns() - getTerminalWidth(linePrefix) - getTerminalWidth(suffix));
+
+  return `${linePrefix}${truncateTerminalText(value, availableValueWidth)}${suffix}`;
 }
 
 function getDisplayValue(word: Word, displayMode: DisplayMode): string {

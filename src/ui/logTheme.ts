@@ -6,6 +6,7 @@ import type {
   NoteMode,
   StudyOrder,
 } from "../models/settings.js";
+import { getTerminalColumns, getTerminalWidth, truncateTerminalText } from "./terminalText.js";
 
 interface RenderLogThemeOptions {
   words: Word[];
@@ -285,16 +286,23 @@ function formatModuleLine(
 ): string {
   const modulePath = `  cache/${id}.ts`;
   const moduleSize = `${640 + Number(id)} bytes`;
-  const cacheValue = value.padEnd(13, " ");
-
   const prefix = isSelected ? ">" : "";
-  const note = noteMode === "hidden" || !word.note ? "" : ` // note: ${word.note}`;
+  const note = noteMode === "hidden" || !word.note
+    ? ""
+    : ` // note: ${truncateTerminalText(word.note, 24)}`;
+  const linePrefix = `${prefix}${modulePath.padEnd(16, " ")} `;
 
   if (displayMode === "both") {
-    return `${prefix}${modulePath.padEnd(16, " ")} ${cacheValue} // ${word.chinese}${note ? ` |${note.slice(3)}` : ""}`;
+    return truncateTerminalText(
+      `${linePrefix}${value} // ${word.chinese}${note ? ` |${note.slice(3)}` : ""}`,
+      getTerminalColumns()
+    );
   }
 
-  return `${prefix}${modulePath.padEnd(16, " ")} ${cacheValue} [built] ${moduleSize}${note}`;
+  const suffix = ` [built] ${moduleSize}${note}`;
+  const availableValueWidth = Math.max(8, getTerminalColumns() - getTerminalWidth(linePrefix) - getTerminalWidth(suffix));
+
+  return `${linePrefix}${truncateTerminalText(value, availableValueWidth)}${suffix}`;
 }
 
 export function renderLogQuitMessage() {
