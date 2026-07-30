@@ -285,7 +285,6 @@ function formatModuleLine(
   isSelected: boolean
 ): string {
   const modulePath = `  cache/${id}.ts`;
-  const moduleSize = `${640 + Number(id)} bytes`;
   const prefix = isSelected ? ">" : "";
   const note = noteMode === "hidden" || !word.note
     ? ""
@@ -299,7 +298,7 @@ function formatModuleLine(
     );
   }
 
-  const suffix = ` [built] ${moduleSize}${note}`;
+  const suffix = note;
   const availableValueWidth = Math.max(8, getTerminalColumns() - getTerminalWidth(linePrefix) - getTerminalWidth(suffix));
 
   return `${linePrefix}${truncateTerminalText(value, availableValueWidth)}${suffix}`;
