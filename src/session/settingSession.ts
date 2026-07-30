@@ -1,4 +1,4 @@
-import type { InterfaceLanguage, KeyBindings, Settings, ThemeName } from "../models/settings.js";
+import type { InterfaceLanguage, KeyBindings, NoteMode, Settings, ThemeName } from "../models/settings.js";
 import { reshuffleRandomOrder } from "../services/randomOrder.js";
 import { loadSettings, saveSettings } from "../services/settingsLoader.js";
 import { listVocabularyBooks } from "../services/vocabularyLoader.js";
@@ -11,6 +11,7 @@ const STUDY_GROUP_SIZES = [10, 20, 30];
 const STUDY_ORDERS: Array<Settings["studyOrder"]> = ["sequential", "random"];
 const AVAILABLE_THEMES: readonly ThemeName[] = ["build-log", "backend-log", "git"];
 const INTERFACE_LANGUAGES: readonly InterfaceLanguage[] = ["english", "chinese"];
+const NOTE_MODES: readonly NoteMode[] = ["hidden", "visible", "editable"];
 type NumericOption = number | "custom";
 type StudyOrderOption = Settings["studyOrder"] | "reshuffle";
 type BindingSlot = 0 | 1;
@@ -312,6 +313,13 @@ function changeCurrentValue(direction: -1 | 1) {
     settingItems = createSettingItems(draftSettings.interfaceLanguage);
   }
 
+  if (item.key === "noteMode") {
+    draftSettings = {
+      ...draftSettings,
+      noteMode: getNextValue(draftSettings.noteMode, NOTE_MODES, direction),
+    };
+  }
+
   if (item.key === "studyOrder") {
     const nextOption = getNextValue(selectedStudyOrderOption ?? draftSettings.studyOrder, STUDY_ORDER_OPTIONS, direction);
     selectedStudyOrderOption = nextOption;
@@ -537,6 +545,7 @@ function createSettingItems(language: InterfaceLanguage = settings.interfaceLang
     { kind: "setting", key: "dailyWordCount", label: labels.groupSize, options: STUDY_GROUP_SIZES, acceptsNumber: true },
     { kind: "setting", key: "navigationLoop", label: labels.navigationLoop, options: [false, true] },
     { kind: "setting", key: "interfaceLanguage", label: labels.interfaceLanguage, options: INTERFACE_LANGUAGES },
+    { kind: "setting", key: "noteMode", label: labels.notes, options: NOTE_MODES },
     { kind: "setting", key: "studyOrder", label: labels.studyOrder, options: STUDY_ORDERS },
     { kind: "setting", key: "activeVocabularyBook", label: labels.vocabularyBook, options: vocabularyBookIds },
     { kind: "action", id: "download-vocabulary", label: labels.downloadVocabulary },
@@ -548,6 +557,7 @@ function createSettingItems(language: InterfaceLanguage = settings.interfaceLang
     { kind: "binding", key: "repeat", label: labels.repeatNavigation },
     { kind: "binding", key: "switchDisplayMode", label: labels.switchDisplay },
     { kind: "binding", key: "startQuiz", label: labels.startQuiz },
+    { kind: "binding", key: "editNote", label: labels.editNote },
     { kind: "binding", key: "toggleHelp", label: labels.toggleHelp },
   ];
 }
@@ -560,6 +570,7 @@ function getSettingLabels(language: InterfaceLanguage) {
       groupSize: "分组大小",
       navigationLoop: "翻页循环",
       interfaceLanguage: "界面语言",
+      notes: "备注",
       studyOrder: "学习顺序",
       vocabularyBook: "当前词书",
       downloadVocabulary: "下载或导入词书",
@@ -571,6 +582,7 @@ function getSettingLabels(language: InterfaceLanguage) {
       repeatNavigation: "重复翻页",
       switchDisplay: "切换单词显示",
       startQuiz: "开始组内测试",
+      editNote: "编辑备注",
       toggleHelp: "打开帮助",
     };
   }
@@ -581,6 +593,7 @@ function getSettingLabels(language: InterfaceLanguage) {
     groupSize: "Group Size",
     navigationLoop: "Navigation Loop",
     interfaceLanguage: "Interface Language",
+    notes: "Notes",
     studyOrder: "Study Order",
     vocabularyBook: "Vocabulary Book",
     downloadVocabulary: "Download Vocabulary",
@@ -592,6 +605,7 @@ function getSettingLabels(language: InterfaceLanguage) {
     repeatNavigation: "Repeat Navigation",
     switchDisplay: "Switch Display",
     startQuiz: "Start Group Quiz",
+    editNote: "Edit Notes",
     toggleHelp: "Toggle Help",
   };
 }

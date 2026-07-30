@@ -64,7 +64,7 @@ assets/vocabulary/ielts.example.json
 - `note`
 - `tags`
 
-这些字段是词书可以携带的附加数据；当前 Word Session 只显示 `english` 和 `chinese`，其余字段可以留空。
+这些字段是词书可以携带的附加数据。`note` 可以在 Settings 中设为隐藏、显示或可编辑；其余字段可以留空。
 
 说明：
 
@@ -80,8 +80,9 @@ assets/vocabulary/ielts.example.json
 - 重复的词书 `id`、损坏 JSON 或缺少必填字段会阻止启动，并显示具体文件和原因
 - 当前词书由 `activeVocabularyBook` 决定；可在 Settings 的 `Vocabulary Book` 项中切换，返回 Word Session 后立即生效
 - 每本词书分别保存顺序位置、随机位置、随机顺序和显示模式
-- Word Workspace 当前只使用 `english` 和 `chinese`
-- 音标、例句、笔记和标签会随 JSON 词书保留，但当前不在 Settings 中配置，也不会显示
+- Word Workspace 始终使用 `english` 和 `chinese`；`note` 可由 Settings 控制隐藏、显示或编辑
+- 用户编辑的备注保存在 `assets/notes/<book-id>.json`，不会修改原词书文件，并且会被 Git 忽略
+- 音标、例句和标签会随 JSON 词书保留，但当前不显示
 - 空字符串和空数组是合法占位
 ## Import File Formats / 导入文件格式
 

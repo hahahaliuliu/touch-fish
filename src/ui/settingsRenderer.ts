@@ -300,6 +300,9 @@ function formatOptionValue(value: string, language: InterfaceLanguage): string {
     sequential: "顺序",
     random: "随机",
     reshuffle: "重新随机",
+    hidden: "关闭",
+    visible: "显示",
+    editable: "可编辑",
     english: "英文",
     chinese: "中文",
   };

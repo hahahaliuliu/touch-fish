@@ -17,9 +17,16 @@ test("old settings gain newly added defaults", () => {
   assert.equal(settings.workspaceSize, 5);
   assert.equal(settings.displayMode, "both");
   assert.equal(settings.interfaceLanguage, "english");
+  assert.equal(settings.noteMode, "hidden");
   assert.equal(settings.theme, "build-log");
   assert.deepEqual(settings.keyBindings, DEFAULT_SETTINGS.keyBindings);
   assert.equal("visibleFields" in settings, false);
+});
+
+test("settings accept supported note modes", () => {
+  const settings = parseSettings({ ...DEFAULT_SETTINGS, noteMode: "editable" });
+
+  assert.equal(settings.noteMode, "editable");
 });
 
 test("settings reject an unsupported interface language", () => {

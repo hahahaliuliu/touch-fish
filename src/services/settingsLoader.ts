@@ -7,6 +7,7 @@ import type {
   InterfaceLanguage,
   BindingSlots,
   KeyBindings,
+  NoteMode,
   Settings,
   StudyOrder,
   ThemeName,
@@ -122,6 +123,10 @@ function validateSettings(value: unknown): string[] {
     errors.push("displayMode must be both, english, or chinese");
   }
 
+  if (!isNoteMode(value.noteMode)) {
+    errors.push("noteMode must be hidden, visible, or editable");
+  }
+
   if (!isInterfaceLanguage(value.interfaceLanguage)) {
     errors.push("interfaceLanguage must be english or chinese");
   }
@@ -149,6 +154,7 @@ function validateKeyBindings(value: unknown, errors: string[]) {
     "repeat",
     "switchDisplayMode",
     "startQuiz",
+    "editNote",
     "toggleHelp",
     "quit",
   ];
@@ -214,6 +220,10 @@ function isStudyOrder(value: unknown): value is StudyOrder {
 
 function isDisplayMode(value: unknown): value is DisplayMode {
   return value === "both" || value === "english" || value === "chinese";
+}
+
+function isNoteMode(value: unknown): value is NoteMode {
+  return value === "hidden" || value === "visible" || value === "editable";
 }
 
 function isInterfaceLanguage(value: unknown): value is InterfaceLanguage {

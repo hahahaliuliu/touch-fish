@@ -1,5 +1,5 @@
 import type { Word } from "../models/word.js";
-import type { DisplayMode } from "../models/settings.js";
+import type { DisplayMode, NoteMode } from "../models/settings.js";
 import type { RenderWordSessionOptions } from "./wordRenderer.js";
 
 export function renderGitTheme(options: RenderWordSessionOptions) {
@@ -14,7 +14,8 @@ export function renderGitTheme(options: RenderWordSessionOptions) {
 
   options.words.forEach((word, index) => {
     const id = String(options.current + index).padStart(3, "0");
-    console.log(`        modified:   src/workspace/tokens/${id}-${toFileNameSegment(word.english)}.ts`);
+    const mark = options.noteSelectionIndex === index ? ">" : "";
+    console.log(`${mark}       modified:   src/workspace/tokens/${id}-${toFileNameSegment(word.english)}.ts`);
   });
 
   console.log("");
@@ -26,7 +27,7 @@ export function renderGitTheme(options: RenderWordSessionOptions) {
 
   options.words.forEach((word, index) => {
     const id = String(options.current + index).padStart(3, "0");
-    console.log(formatDiffLine(id, word, options.displayMode));
+    console.log(formatDiffLine(id, word, options.displayMode, options.noteMode));
   });
 
   console.log(" ];");
@@ -35,18 +36,19 @@ export function renderGitTheme(options: RenderWordSessionOptions) {
   console.log("workspace@local:~$");
 }
 
-function formatDiffLine(id: string, word: Word, displayMode: DisplayMode): string {
+function formatDiffLine(id: string, word: Word, displayMode: DisplayMode, noteMode: NoteMode): string {
   const identifier = `token_${id}`;
+  const note = noteMode === "hidden" || !word.note ? "" : ` // note: ${word.note}`;
 
   if (displayMode === "chinese") {
-    return `+  export const ${identifier} = \"${word.chinese}\";`;
+    return `+  export const ${identifier} = \"${word.chinese}\";${note}`;
   }
 
   if (displayMode === "both") {
-    return `+  export const ${identifier} = \"${word.english}\"; // ${word.chinese}`;
+    return `+  export const ${identifier} = \"${word.english}\"; // ${word.chinese}${note ? ` |${note.slice(3)}` : ""}`;
   }
 
-  return `+  export const ${identifier} = \"${word.english}\";`;
+  return `+  export const ${identifier} = \"${word.english}\";${note}`;
 }
 
 function toFileNameSegment(word: string): string {

@@ -6,6 +6,7 @@
   "studyOrder": "sequential",
   "activeVocabularyBook": "ielts-luran",
   "displayMode": "english",
+  "noteMode": "hidden",
   "interfaceLanguage": "english",
   "theme": "build-log",
   "keyBindings": {
@@ -15,6 +16,8 @@
     "nextGroup": ["]", "arrow-down"],
     "repeat": ["space", ""],
     "switchDisplayMode": ["tab", ""],
+    "startQuiz": ["t", ""],
+    "editNote": ["e", ""],
     "toggleHelp": ["?", ""],
     "quit": ["q", ""]
   }

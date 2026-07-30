@@ -1,5 +1,5 @@
 import type { Word } from "../models/word.js";
-import type { DisplayMode } from "../models/settings.js";
+import type { DisplayMode, NoteMode } from "../models/settings.js";
 import type { RenderWordSessionOptions } from "./wordRenderer.js";
 
 export function renderBackendLogTheme(options: RenderWordSessionOptions) {
@@ -14,7 +14,16 @@ export function renderBackendLogTheme(options: RenderWordSessionOptions) {
 
   options.words.forEach((word, index) => {
     const id = String(options.current + index).padStart(3, "0");
-    console.log(formatCacheEntry(timestamp, id, word, options.displayMode));
+    console.log(
+      formatCacheEntry(
+        timestamp,
+        id,
+        word,
+        options.displayMode,
+        options.noteMode,
+        options.noteSelectionIndex === index
+      )
+    );
   });
 
   console.log("");
@@ -28,16 +37,21 @@ function formatCacheEntry(
   timestamp: string,
   id: string,
   word: Word,
-  displayMode: DisplayMode
+  displayMode: DisplayMode,
+  noteMode: NoteMode,
+  isSelected: boolean
 ): string {
   const key = `vocabulary.token.${id}`;
   const value = JSON.stringify(getDisplayValue(word, displayMode));
 
+  const prefix = isSelected ? "> " : "";
+  const note = noteMode === "hidden" || !word.note ? "" : ` memo=${JSON.stringify(word.note)}`;
+
   if (displayMode === "both") {
-    return `${timestamp} DEBUG cache hit key=${key} value=${value} note=${JSON.stringify(word.chinese)}`;
+    return `${prefix}${timestamp} DEBUG cache hit key=${key} value=${value} note=${JSON.stringify(word.chinese)}${note}`;
   }
 
-  return `${timestamp} DEBUG cache hit key=${key} value=${value} ttl=300s`;
+  return `${prefix}${timestamp} DEBUG cache hit key=${key} value=${value} ttl=300s${note}`;
 }
 
 function getDisplayValue(word: Word, displayMode: DisplayMode): string {

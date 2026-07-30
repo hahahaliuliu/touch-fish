@@ -30,6 +30,9 @@ HANDOVER.md
 # Local learning progress
 assets/progress/*.json
 
+# Local vocabulary notes
+assets/notes/*.json
+
 # Local settings
 assets/settings.json
 

@@ -4,6 +4,8 @@ export type InterfaceLanguage = "english" | "chinese";
 
 export type StudyOrder = "sequential" | "random";
 
+export type NoteMode = "hidden" | "visible" | "editable";
+
 export type ThemeName =
   | "build-log"
   | "backend-log"
@@ -22,6 +24,7 @@ export interface KeyBindings {
   repeat: BindingSlots;
   switchDisplayMode: BindingSlots;
   startQuiz: BindingSlots;
+  editNote: BindingSlots;
   toggleHelp: BindingSlots;
   quit: BindingSlots;
 }
@@ -36,6 +39,7 @@ export interface Settings {
   studyOrder: StudyOrder;
   activeVocabularyBook: string;
   displayMode: DisplayMode;
+  noteMode: NoteMode;
   interfaceLanguage: InterfaceLanguage;
   theme: ThemeName;
   keyBindings: KeyBindings;

@@ -4,6 +4,7 @@ import {
   loadWordProgress,
   saveWordProgress,
 } from "../storage/progress.js";
+import { loadWordNotes, saveWordNote } from "../storage/notes.js";
 import { createRandomOrder } from "./randomOrder.js";
 import { loadSettings } from "./settingsLoader.js";
 import { loadVocabularyBook } from "./vocabularyLoader.js";
@@ -12,6 +13,7 @@ import { getNextPageIndex, getPreviousPageIndex } from "./workspaceNavigation.js
 let settings = loadSettings();
 let vocabularyBook = loadVocabularyBook(settings.activeVocabularyBook);
 let words: Word[] = vocabularyBook.words;
+let wordNotes = loadWordNotes(vocabularyBook.id, words);
 let sequentialOrder = words.map((_, index) => index);
 
 let workspaceSize = settings.workspaceSize;
@@ -27,15 +29,34 @@ let currentIndex = alignToPageStart(getSavedIndex());
 export function getCurrentWords(): Word[] {
   return wordOrder
     .slice(currentIndex, Math.min(currentIndex + workspaceSize, getCurrentGroupEnd()))
-    .map((wordIndex) => words[wordIndex])
+    .map(getWordWithNote)
     .filter((word): word is Word => word !== undefined);
 }
 
 export function getCurrentStudyGroupWords(): Word[] {
   return wordOrder
     .slice(getCurrentGroupStart(), getCurrentGroupEnd())
-    .map((wordIndex) => words[wordIndex])
+    .map(getWordWithNote)
     .filter((word): word is Word => word !== undefined);
+}
+
+export function saveCurrentWordNote(pageWordIndex: number, note: string): Word | undefined {
+  const wordIndex = wordOrder[currentIndex + pageWordIndex];
+  const word = wordIndex === undefined ? undefined : words[wordIndex];
+
+  if (word === undefined || wordIndex === undefined) {
+    return undefined;
+  }
+
+  saveWordNote(vocabularyBook.id, wordIndex, word.english, note);
+
+  if (note.trim()) {
+    wordNotes.set(wordIndex, note.trim());
+  } else {
+    wordNotes.delete(wordIndex);
+  }
+
+  return getWordWithNote(wordIndex);
 }
 
 export function nextWordGroup(): Word[] {
@@ -132,6 +153,7 @@ export function reloadWordSettings() {
   settings = updatedSettings;
   vocabularyBook = loadVocabularyBook(settings.activeVocabularyBook);
   words = vocabularyBook.words;
+  wordNotes = loadWordNotes(vocabularyBook.id, words);
   sequentialOrder = words.map((_, index) => index);
   progress = loadWordProgress(vocabularyBook.id);
   workspaceSize = updatedSettings.workspaceSize;
@@ -158,6 +180,18 @@ function getWordOrder(): number[] {
   }
 
   return progress.randomOrder;
+}
+
+function getWordWithNote(wordIndex: number): Word | undefined {
+  const word = words[wordIndex];
+
+  if (!word) {
+    return undefined;
+  }
+
+  const localNote = wordNotes.get(wordIndex);
+
+  return localNote === undefined ? word : { ...word, note: localNote };
 }
 
 function getSavedIndex(): number {

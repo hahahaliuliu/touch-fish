@@ -78,6 +78,24 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 - 它不等于单词显示模式
 - 单词显示模式仍由 Word Session 中的 `Tab` 切换：英文、中文、英文 + 中文，并且会按词书保存
 
+### Notes / 备注
+
+控制 Word Session 中词书备注的显示方式。
+
+- `hidden`：不显示备注，保持默认的低调终端输出
+- `visible`：显示词书自带或本地保存的备注，但不能修改
+- `editable`：显示备注；按 `E` 后选择当前页单词，再按 `Enter` 输入或修改备注
+
+编辑操作：
+
+- `E`：进入当前页单词选择
+- `W` / `S` 或上下方向键：选择要编辑的单词
+- `Enter`：进入输入，或保存输入
+- `Esc`：取消选择或放弃本次输入
+- `Ctrl+C`：无论是否编辑都立即退出
+
+用户编辑的内容保存到 `assets/notes/<book-id>.json`，不会改写下载或导入的原词书。这样同一本词书可以保留原始备注，同时保存个人补充。
+
 ### Navigation Loop / 头尾循环
 
 选择到达词库开头或结尾时，继续导航是否循环。
@@ -165,11 +183,12 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 - `]` / `↓`: 下一学习组
 - `Space`: 重复上一次导航
 - `Tab`: 切换显示模式
+- `E`: 编辑当前页备注（仅备注模式为 `editable` 时）
 - `Ctrl+O`: 打开 Settings 或返回 Word
 - `?`: 切换 Help 视图
 - `Q`: 退出
 
-当前可修改上一页、下一页、上一组、下一组、重复导航、切换显示和 Help 的按键。退出与返回操作暂时保持固定，避免用户误操作后无法离开界面。
+当前可修改上一页、下一页、上一组、下一组、重复导航、切换显示、组内测试、编辑备注和 Help 的按键。退出与返回操作暂时保持固定，避免用户误操作后无法离开界面。
 
 ### Word Test / 单词测试
 
@@ -204,7 +223,7 @@ Settings 应该让 Touch Fish 适应用户自己的学习习惯，同时保持�
 
 词书可以保留 `phonetic`、`example`、`note` 和 `tags` 等附加数据，方便导入时不丢失原始信息。
 
-当前版本不在 Settings 中配置这些字段，也不会在 Word Session 或测试界面显示它们。
+当前版本支持控制和编辑 `note`；音标、例句和标签仍不在 Word Session 或测试界面显示。
 
 ### Terminal Theme / 终端主题
 
@@ -257,6 +276,7 @@ assets/settings.example.json
   "studyOrder": "sequential",
   "activeVocabularyBook": "ielts-luran",
   "displayMode": "english",
+  "noteMode": "hidden",
   "interfaceLanguage": "english",
   "theme": "build-log",
   "keyBindings": {
@@ -266,6 +286,8 @@ assets/settings.example.json
     "nextGroup": ["]", "arrow-down"],
     "repeat": ["space", ""],
     "switchDisplayMode": ["tab", ""],
+    "startQuiz": ["t", ""],
+    "editNote": ["e", ""],
     "toggleHelp": ["?", ""],
     "quit": ["q", ""]
   }

@@ -3,6 +3,7 @@ import type {
   DisplayMode,
   InterfaceLanguage,
   KeyBindings,
+  NoteMode,
   StudyOrder,
   ThemeName,
 } from "../models/settings.js";
@@ -30,6 +31,9 @@ export interface RenderWordSessionOptions {
   theme: ThemeName;
   keyBindings: KeyBindings;
   displayMode: DisplayMode;
+  noteMode: NoteMode;
+  noteSelectionIndex?: number | undefined;
+  noteInput?: string | undefined;
   interfaceLanguage: InterfaceLanguage;
   showHelp: boolean;
 }
@@ -42,15 +46,35 @@ export function renderWordSession(options: RenderWordSessionOptions) {
 
   if (options.theme === "backend-log") {
     renderBackendLogTheme(options);
-    return;
-  }
-
-  if (options.theme === "git") {
+  } else if (options.theme === "git") {
     renderGitTheme(options);
+  } else {
+    renderLogTheme(options);
+  }
+
+  if (options.noteInput !== undefined && options.noteSelectionIndex !== undefined) {
+    renderNoteEditor(options);
+  }
+}
+
+function renderNoteEditor(options: RenderWordSessionOptions) {
+  const selectedIndex = options.noteSelectionIndex;
+
+  if (selectedIndex === undefined) {
     return;
   }
 
-  renderLogTheme(options);
+  const word = options.words[selectedIndex];
+
+  if (!word) {
+    return;
+  }
+
+  const chinese = options.interfaceLanguage === "chinese";
+  console.log("");
+  console.log(chinese ? `[备注] ${word.english}` : `[NOTE] ${word.english}`);
+  console.log(`${chinese ? "输入" : "input"}> ${options.noteInput}\u001b[5m_\u001b[0m`);
+  console.log(chinese ? "Enter 保存 | Esc 取消 | Ctrl+C 退出" : "Enter save | Esc cancel | Ctrl+C quit");
 }
 
 export function renderQuitMessage(theme: ThemeName) {

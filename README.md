@@ -133,6 +133,7 @@ assets/vocabulary/ielts.example.json
 - 调整每页单词数量和学习组大小
 - 切换顺序或随机学习
 - 切换终端伪装主题
+- 控制备注的隐藏、显示和编辑
 - 自定义快捷键
 - 下载、切换或卸载词书
 - 导入 JSON、TXT、CSV 或带可复制文本的 PDF 词书
@@ -150,6 +151,7 @@ assets/vocabulary/ielts.example.json
 | `Space` | 重复上一次导航 |
 | `Tab` | 切换单词显示模式 |
 | `T` | 开始当前学习组测试 |
+| `E` | 在“备注：可编辑”时选择并编辑本页单词备注 |
 | `Ctrl+O` | 打开 Settings；在 Settings 中返回 Word |
 | `?` | 打开或关闭 Help |
 | `Esc` | 从 Help 返回；在 Settings 中取消编辑或返回 Word |
@@ -169,6 +171,7 @@ assets/vocabulary/ielts.example.json
 - 当前学习组测试，支持双向测试
 - Build Log、Backend Log 和 Git 终端主题
 - Settings、Help 和词书管理界面的中英文切换
+- 单词备注的隐藏、显示和本地编辑
 - 本地学习进度和用户设置保存
 - 词书自动发现、下载、卸载和本地导入
 

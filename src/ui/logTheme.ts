@@ -3,6 +3,7 @@ import type {
   DisplayMode,
   InterfaceLanguage,
   KeyBindings,
+  NoteMode,
   StudyOrder,
 } from "../models/settings.js";
 
@@ -20,6 +21,8 @@ interface RenderLogThemeOptions {
   studyOrder: StudyOrder;
   keyBindings: KeyBindings;
   displayMode: DisplayMode;
+  noteMode: NoteMode;
+  noteSelectionIndex?: number | undefined;
   interfaceLanguage: InterfaceLanguage;
   showHelp: boolean;
 }
@@ -39,6 +42,8 @@ export function renderLogTheme(options: RenderLogThemeOptions) {
     studyOrder,
     keyBindings,
     displayMode,
+    noteMode,
+    noteSelectionIndex,
     interfaceLanguage,
     showHelp,
   } = options;
@@ -59,6 +64,7 @@ export function renderLogTheme(options: RenderLogThemeOptions) {
       navigationLoop,
       studyOrder,
       keyBindings,
+      noteMode,
       interfaceLanguage,
     });
     return;
@@ -86,7 +92,7 @@ export function renderLogTheme(options: RenderLogThemeOptions) {
     const token = `token_${id}`;
     const value = `"${getDisplayValue(word, displayMode)}"`;
 
-    console.log(formatModuleLine(id, token, value, word, displayMode));
+    console.log(formatModuleLine(id, token, value, word, displayMode, noteMode, noteSelectionIndex === index));
   });
 
   console.log("");
@@ -110,6 +116,7 @@ interface RenderLogHelpOptions {
   navigationLoop: boolean;
   studyOrder: StudyOrder;
   keyBindings: KeyBindings;
+  noteMode: NoteMode;
   interfaceLanguage: InterfaceLanguage;
 }
 
@@ -127,6 +134,7 @@ function renderLogHelp(options: RenderLogHelpOptions) {
     navigationLoop,
     studyOrder,
     keyBindings,
+    noteMode,
     interfaceLanguage,
   } = options;
 
@@ -144,6 +152,9 @@ function renderLogHelp(options: RenderLogHelpOptions) {
   console.log(text.actions);
   console.log(`  ${formatBindings(keyBindings.switchDisplayMode, interfaceLanguage).padEnd(21, " ")}${text.switchDisplay}`);
   console.log(`  ${formatBindings(keyBindings.startQuiz, interfaceLanguage).padEnd(21, " ")}${text.startQuiz}`);
+  if (noteMode === "editable") {
+    console.log(`  ${formatBindings(keyBindings.editNote, interfaceLanguage).padEnd(21, " ")}${text.editNote}`);
+  }
   console.log(`  ${"Ctrl+O".padEnd(21, " ")}${text.openSettings}`);
   console.log(`  ${formatBindings(keyBindings.toggleHelp, interfaceLanguage).padEnd(21, " ")}${text.closeHelp}`);
   console.log(`  ${"Esc".padEnd(21, " ")}${text.returnToWord}`);
@@ -173,6 +184,7 @@ function getHelpText(language: InterfaceLanguage) {
       actions: "操作",
       switchDisplay: "切换单词显示",
       startQuiz: "开始组内测试",
+      editNote: "编辑当前页备注",
       openSettings: "打开设置",
       closeHelp: "关闭帮助",
       returnToWord: "返回背词",
@@ -204,6 +216,7 @@ function getHelpText(language: InterfaceLanguage) {
     actions: "Display",
     switchDisplay: "switch display mode",
     startQuiz: "start group quiz",
+    editNote: "edit a note on this page",
     openSettings: "open settings",
     closeHelp: "close help",
     returnToWord: "return to word",
@@ -266,17 +279,22 @@ function formatModuleLine(
   token: string,
   value: string,
   word: Word,
-  displayMode: DisplayMode
+  displayMode: DisplayMode,
+  noteMode: NoteMode,
+  isSelected: boolean
 ): string {
   const modulePath = `  cache/${id}.ts`;
   const moduleSize = `${640 + Number(id)} bytes`;
   const cacheValue = value.padEnd(13, " ");
 
+  const prefix = isSelected ? ">" : "";
+  const note = noteMode === "hidden" || !word.note ? "" : ` // note: ${word.note}`;
+
   if (displayMode === "both") {
-    return `${modulePath.padEnd(16, " ")} ${cacheValue} // ${word.chinese}`;
+    return `${prefix}${modulePath.padEnd(16, " ")} ${cacheValue} // ${word.chinese}${note ? ` |${note.slice(3)}` : ""}`;
   }
 
-  return `${modulePath.padEnd(16, " ")} ${cacheValue} [built] ${moduleSize}`;
+  return `${prefix}${modulePath.padEnd(16, " ")} ${cacheValue} [built] ${moduleSize}${note}`;
 }
 
 export function renderLogQuitMessage() {

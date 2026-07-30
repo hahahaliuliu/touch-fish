@@ -8,6 +8,7 @@ export const DEFAULT_SETTINGS: Settings = {
   studyOrder: "sequential",
   activeVocabularyBook: "ielts-luran",
   displayMode: "english",
+  noteMode: "hidden",
   interfaceLanguage: "english",
   theme: "build-log",
   keyBindings: {
@@ -18,6 +19,7 @@ export const DEFAULT_SETTINGS: Settings = {
     repeat: ["space", ""],
     switchDisplayMode: ["tab", ""],
     startQuiz: ["t", ""],
+    editNote: ["e", ""],
     toggleHelp: ["?", ""],
     quit: ["q", ""],
   },
