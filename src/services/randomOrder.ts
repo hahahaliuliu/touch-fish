@@ -18,7 +18,7 @@ export function createRandomOrder(wordCount: number): number[] {
 export function reshuffleRandomOrder() {
   const settings = loadSettings();
   const vocabularyBook = loadVocabularyBook(settings.activeVocabularyBook);
-  const progress = loadWordProgress(vocabularyBook.id);
+  const progress = loadWordProgress(vocabularyBook.id, vocabularyBook.words.length);
 
   saveWordProgress(vocabularyBook.id, {
     ...progress,

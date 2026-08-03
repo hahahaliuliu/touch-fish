@@ -13,7 +13,7 @@ export interface WordProgress {
   displayMode?: DisplayMode;
 }
 
-export function loadWordProgress(bookId: string): WordProgress {
+export function loadWordProgress(bookId: string, wordCount?: number): WordProgress {
   const progressPath = getProgressPath(bookId);
 
   if (!fs.existsSync(progressPath)) {
@@ -43,9 +43,9 @@ export function loadWordProgress(bookId: string): WordProgress {
 
   return {
     // currentIndex is the format used before separate order progress existed.
-    sequentialIndex: readIndex(data.sequentialIndex ?? data.currentIndex),
-    randomIndex: readIndex(data.randomIndex),
-    randomOrder: readRandomOrder(data.randomOrder),
+    sequentialIndex: readIndex(data.sequentialIndex ?? data.currentIndex, wordCount),
+    randomIndex: readIndex(data.randomIndex, wordCount),
+    randomOrder: readRandomOrder(data.randomOrder, wordCount),
     ...(displayMode ? { displayMode } : {}),
   };
 }
@@ -58,18 +58,27 @@ export function saveWordProgress(bookId: string, progress: WordProgress) {
     fs.mkdirSync(dir, { recursive: true });
   }
 
-  fs.writeFileSync(
-    progressPath,
-    JSON.stringify(
-      {
-        ...progress,
-        updatedAt: new Date().toISOString(),
-      },
-      null,
-      2
-    ),
-    "utf-8"
-  );
+  const temporaryPath = `${progressPath}.tmp`;
+
+  try {
+    fs.writeFileSync(
+      temporaryPath,
+      JSON.stringify(
+        {
+          ...progress,
+          updatedAt: new Date().toISOString(),
+        },
+        null,
+        2
+      ),
+      "utf-8"
+    );
+    fs.renameSync(temporaryPath, progressPath);
+  } finally {
+    if (fs.existsSync(temporaryPath)) {
+      fs.unlinkSync(temporaryPath);
+    }
+  }
 }
 
 export function deleteWordProgress(bookId: string) {
@@ -106,12 +115,27 @@ function createEmptyProgress(): WordProgress {
   };
 }
 
-function readIndex(value: unknown): number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : 0;
+function readIndex(value: unknown, wordCount?: number): number {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    return 0;
+  }
+
+  if (wordCount === undefined) {
+    return value;
+  }
+
+  return Math.min(value, Math.max(wordCount - 1, 0));
 }
 
-function readRandomOrder(value: unknown): number[] {
-  if (!Array.isArray(value) || !value.every((item) => Number.isInteger(item))) {
+function readRandomOrder(value: unknown, wordCount?: number): number[] {
+  if (
+    !Array.isArray(value) ||
+    !value.every(
+      (item) =>
+        Number.isInteger(item) &&
+        (wordCount === undefined || (item >= 0 && item < wordCount))
+    )
+  ) {
     return [];
   }
 

@@ -22,7 +22,7 @@ let studyGroupEnabled = settings.studyGroupEnabled;
 let navigationLoop = settings.navigationLoop;
 let studyOrder = settings.studyOrder;
 let theme = settings.theme;
-let progress = loadWordProgress(vocabularyBook.id);
+let progress = loadWordProgress(vocabularyBook.id, words.length);
 let wordOrder = getWordOrder();
 let currentIndex = alignToPageStart(getSavedIndex());
 
@@ -155,7 +155,7 @@ export function reloadWordSettings() {
   words = vocabularyBook.words;
   wordNotes = loadWordNotes(vocabularyBook.id, words);
   sequentialOrder = words.map((_, index) => index);
-  progress = loadWordProgress(vocabularyBook.id);
+  progress = loadWordProgress(vocabularyBook.id, words.length);
   workspaceSize = updatedSettings.workspaceSize;
   studyGroupSize = updatedSettings.dailyWordCount;
   studyGroupEnabled = updatedSettings.studyGroupEnabled;
