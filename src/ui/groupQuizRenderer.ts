@@ -5,6 +5,7 @@ import type { QuizDirection } from "../services/groupQuiz.js";
 export interface QuizWrongAnswer {
   word: Word;
   answer: string;
+  direction: QuizDirection;
 }
 
 interface RenderGroupQuizOptions {
@@ -63,14 +64,15 @@ function renderSummary(options: RenderGroupQuizOptions, text: QuizText) {
   if (options.wrongAnswers.length > 0) {
     console.log("");
     console.log(text.wrongWords);
-    options.wrongAnswers.forEach(({ word, answer }) => {
-      console.log(`  ${word.english}  ->  ${word.chinese}`);
+    options.wrongAnswers.forEach(({ word, answer, direction }) => {
+      console.log(`  ${text.prompt} ${getPrompt(word, direction)}`);
       console.log(`    ${text.yourAnswer} ${answer || text.emptyAnswer}`);
+      console.log(`    ${text.expectedAnswer} ${getExpectedAnswer(word, direction)}`);
     });
   }
 
   console.log("");
-  console.log(text.returnToWord);
+  console.log(options.wrongAnswers.length > 0 ? text.summaryControlsWithRetry : text.returnToWord);
 }
 
 function getPrompt(word: Word, direction: QuizDirection): string {
@@ -101,9 +103,12 @@ interface QuizText {
   incorrectCount: string;
   accuracy: string;
   wrongWords: string;
+  prompt: string;
   yourAnswer: string;
+  expectedAnswer: string;
   emptyAnswer: string;
   returnToWord: string;
+  summaryControlsWithRetry: string;
 }
 
 function getQuizText(language: InterfaceLanguage): QuizText {
@@ -124,9 +129,12 @@ function getQuizText(language: InterfaceLanguage): QuizText {
       incorrectCount: "错误：",
       accuracy: "正确率：",
       wrongWords: "错误单词",
+      prompt: "题目：",
       yourAnswer: "你的答案：",
+      expectedAnswer: "正确答案：",
       emptyAnswer: "（未填写）",
       returnToWord: "按 Enter 或 Esc 返回背词",
+      summaryControlsWithRetry: "按 R 重新测试错误单词，或按 Enter/Esc 返回背词",
     };
   }
 
@@ -146,8 +154,11 @@ function getQuizText(language: InterfaceLanguage): QuizText {
     incorrectCount: "Incorrect:",
     accuracy: "Accuracy:",
     wrongWords: "Incorrect Words",
+    prompt: "Prompt:",
     yourAnswer: "Your answer:",
+    expectedAnswer: "Expected answer:",
     emptyAnswer: "(empty)",
     returnToWord: "Press Enter or Esc to return to word",
+    summaryControlsWithRetry: "Press R to retry incorrect words, or Enter/Esc to return to word",
   };
 }

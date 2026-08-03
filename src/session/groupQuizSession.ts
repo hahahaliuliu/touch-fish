@@ -12,6 +12,7 @@ interface StartGroupQuizSessionOptions {
 
 let onReturnToWord: (() => void) | undefined;
 let words: Word[] = [];
+let questionDirections: QuizDirection[] = [];
 let interfaceLanguage: InterfaceLanguage = "english";
 let questionIndex = 0;
 let direction: QuizDirection = "english-to-chinese";
@@ -23,6 +24,7 @@ let wrongAnswers: QuizWrongAnswer[] = [];
 export function startGroupQuizSession(options: StartGroupQuizSessionOptions) {
   onReturnToWord = options.onReturn;
   words = createRandomOrder(options.words.length).map((index) => options.words[index]!);
+  questionDirections = words.map(() => "english-to-chinese");
   interfaceLanguage = options.interfaceLanguage;
   questionIndex = 0;
   direction = "english-to-chinese";
@@ -83,6 +85,11 @@ function handleInput(input: string): boolean {
   }
 
   if (isComplete()) {
+    if ((input === "r" || input === "R") && wrongAnswers.length > 0) {
+      retryWrongAnswers();
+      return true;
+    }
+
     if (input === "\r" || input === "\n") {
       returnToWord();
       return false;
@@ -99,6 +106,7 @@ function handleInput(input: string): boolean {
 
   if (input === "\t") {
     direction = direction === "english-to-chinese" ? "chinese-to-english" : "english-to-chinese";
+    questionDirections[questionIndex] = direction;
     answer = "";
     render();
     return true;
@@ -133,15 +141,28 @@ function submitAnswer() {
   lastAnswerCorrect = isGroupQuizAnswerCorrect(word, direction, answer);
 
   if (!lastAnswerCorrect) {
-    wrongAnswers.push({ word, answer });
+    wrongAnswers.push({ word, answer, direction });
   }
 
   isShowingResult = true;
   render();
 }
 
+function retryWrongAnswers() {
+  words = wrongAnswers.map(({ word }) => word);
+  questionDirections = wrongAnswers.map(({ direction }) => direction);
+  questionIndex = 0;
+  direction = questionDirections[0] ?? "english-to-chinese";
+  answer = "";
+  isShowingResult = false;
+  lastAnswerCorrect = undefined;
+  wrongAnswers = [];
+  render();
+}
+
 function moveToNextQuestion() {
   questionIndex += 1;
+  direction = questionDirections[questionIndex] ?? "english-to-chinese";
   answer = "";
   isShowingResult = false;
   lastAnswerCorrect = undefined;
