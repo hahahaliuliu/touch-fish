@@ -1,6 +1,6 @@
 # Touch Fish Design / 设计文档
 
-> Version: v0.3-dev
+> Version: v0.2 Product Experience
 
 Learn in the gaps. Stay in the terminal.
 
@@ -210,25 +210,9 @@ assets/vocabulary/ielts-luran.json
 
 ## 10. Future Stages / 后续阶段
 
-### v0.3 Customization
+### v0.3 Read Mode & Daily Use
 
-- Settings file
-- Workspace size
-- Theme selection
-- Default display mode
-- Study order
-- Active vocabulary book
-- Key bindings
-
-### v0.4 Content
-
-- 大词库管理
-- 多词库
-- 导入支持
 - Read Mode
-
-### v0.5 Daily Use
-
 - 收藏
 - 错题
 - Review

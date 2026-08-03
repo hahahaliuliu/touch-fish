@@ -1,6 +1,6 @@
 # Touch Fish - Project State / 项目状态
 
-> Last updated: 2026-07-08
+> Last updated: 2026-08-03
 
 ## Product Position / 产品定位
 
@@ -32,9 +32,9 @@ v0.2 Product Experience
 2. 优化 Word Workspace 的伪装效果。
 3. 主界面尽量保持低调，不像传统学习软件。
 4. 保持 Renderer 和 Theme 的职责分离。
-5. Settings、多词库、Read Mode 放到后续版本。
+5. Settings、多词库、词书导入和词书管理已完成，Read Mode 放到后续版本。
 6. 核心设置、随机顺序和词书导入应保持自动测试覆盖。
-7. 当前学习组测试已支持双向答题和错误单词结果页；错题保存与 Review 后续再做。
+7. 当前学习组测试已支持双向答题、错题详情和错题重新测试；历史记录与 Review 后续再做。
 
 ## Current Architecture / 当前架构
 
@@ -126,6 +126,9 @@ npm link
 - [x] 从项目根目录解析进度文件路径
 - [x] 每本词书分别保存顺序、随机和显示模式进度
 - [x] 兼容迁移旧版唯一进度文件
+- [x] 损坏进度 JSON 回退为空进度
+- [x] 进度写入使用临时文件后替换
+- [x] 进度索引按当前词书长度限制范围
 
 ### Settings / 设置
 
@@ -168,6 +171,14 @@ npm link
 - [x] 主界面像缓存构建输出
 - [x] Help 视图覆盖主界面，而不是追加在下面
 - [x] Help 视图清楚显示快捷键和当前 Workspace 状态
+- [x] 学习组测试结果显示用户答案和标准答案
+- [x] 学习组测试支持重新测试错误单词
+
+### Testing / 测试
+
+- [x] 核心服务和渲染逻辑自动测试
+- [x] Word、Settings 和词书管理 CLI Session 集成测试
+- [x] 空词书、损坏进度和快捷键交互测试
 
 ## Current Vocabulary Format / 当前词库格式
 
@@ -244,8 +255,8 @@ Touch Fish 始终运行在终端里。
 
 推荐顺序：
 
-1. 继续保持 Settings 小步开发。
-2. Settings、Help 和词书管理已支持 English / 中文界面切换；单词显示模式继续由 `Tab` 在 Word Session 中切换并保存。
+1. 手动检查 538 词书中跨行释义和替换词的终端排版。
+2. 继续根据实际使用反馈优化 Word Workspace 和测试结果页。
 3. 后续实现 Read Mode。
 
 ## Development Principles / 开发原则

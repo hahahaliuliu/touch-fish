@@ -7,7 +7,7 @@ const program = new Command();
 program
   .name("touchfish")
   .description("A stealth terminal learning tool.")
-  .version("0.1.0");
+  .version("0.2.0");
 
 program
   .command("word")

@@ -169,6 +169,7 @@ assets/vocabulary/ielts.example.json
 - 顺序和随机学习模式，并分别保存进度
 - 英文、中文、英文 + 中文显示模式
 - 当前学习组测试，支持双向测试
+- 测试结果页显示用户答案、标准答案，并支持重新测试错题
 - Build Log、Backend Log 和 Git 终端主题
 - Settings、Help 和词书管理界面的中英文切换
 - 单词备注的隐藏、显示和本地编辑
@@ -182,6 +183,8 @@ assets/vocabulary/ielts.example.json
 ```shell
 npm test
 ```
+
+当前自动测试共 27 项，覆盖核心逻辑、渲染、进度存储和 CLI Session 交互。
 
 不使用全局链接时打开 Settings：
 
