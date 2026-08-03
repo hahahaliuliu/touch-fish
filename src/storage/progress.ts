@@ -24,8 +24,20 @@ export function loadWordProgress(bookId: string): WordProgress {
     return createEmptyProgress();
   }
 
-  const content = fs.readFileSync(progressPath, "utf-8");
-  const data = JSON.parse(content) as Record<string, unknown>;
+  let data: Record<string, unknown>;
+
+  try {
+    const content = fs.readFileSync(progressPath, "utf-8");
+    const parsed = JSON.parse(content) as unknown;
+
+    if (!isRecord(parsed)) {
+      return createEmptyProgress();
+    }
+
+    data = parsed;
+  } catch {
+    return createEmptyProgress();
+  }
 
   const displayMode = readDisplayMode(data.displayMode);
 
@@ -110,4 +122,8 @@ function readDisplayMode(value: unknown): DisplayMode | undefined {
   return value === "both" || value === "english" || value === "chinese"
     ? value
     : undefined;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

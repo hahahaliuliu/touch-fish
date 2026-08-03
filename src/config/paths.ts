@@ -6,6 +6,10 @@ const projectRoot = path.resolve(
   "../.."
 );
 
+const assetRoot = process.env.TOUCHFISH_ASSET_DIR
+  ? path.resolve(process.env.TOUCHFISH_ASSET_DIR)
+  : path.join(projectRoot, "assets");
+
 export function resolveAssetPath(...segments: string[]) {
-  return path.join(projectRoot, "assets", ...segments);
+  return path.join(assetRoot, ...segments);
 }
