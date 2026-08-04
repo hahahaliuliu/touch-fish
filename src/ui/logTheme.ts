@@ -6,7 +6,7 @@ import type {
   NoteMode,
   StudyOrder,
 } from "../models/settings.js";
-import { getTerminalColumns, getTerminalWidth, truncateTerminalText } from "./terminalText.js";
+import { getTerminalColumns, getTerminalWidth, truncateTerminalText, wrapTerminalText } from "./terminalText.js";
 
 interface RenderLogThemeOptions {
   words: Word[];
@@ -93,7 +93,8 @@ export function renderLogTheme(options: RenderLogThemeOptions) {
     const token = `token_${id}`;
     const value = `"${getDisplayValue(word, displayMode)}"`;
 
-    console.log(formatModuleLine(id, token, value, word, displayMode, noteMode, noteSelectionIndex === index));
+    formatModuleLines(id, token, value, word, displayMode, noteMode, noteSelectionIndex === index)
+      .forEach((line) => console.log(line));
   });
 
   console.log("");
@@ -275,7 +276,7 @@ function getDisplayValue(word: Word, displayMode: DisplayMode): string {
   return word.english;
 }
 
-function formatModuleLine(
+function formatModuleLines(
   id: string,
   token: string,
   value: string,
@@ -283,23 +284,61 @@ function formatModuleLine(
   displayMode: DisplayMode,
   noteMode: NoteMode,
   isSelected: boolean
-): string {
+): string[] {
   const modulePath = `  cache/${id}.ts`;
   const prefix = isSelected ? ">" : "";
-  const note = noteMode === "hidden" || !word.note
-    ? ""
-    : ` // note: ${truncateTerminalText(word.note, 24)}`;
+  const rawNote = noteMode === "hidden" || !word.note ? "" : word.note;
   const linePrefix = `${prefix}${modulePath.padEnd(16, " ")} `;
 
-  if (displayMode === "both") {
-    return truncateTerminalText(
-      `${linePrefix}${value} // ${word.chinese}${note ? ` |${note.slice(3)}` : ""}`,
-      getTerminalColumns()
-    );
+  if (!rawNote) {
+    return [formatModuleLine(linePrefix, value, word, displayMode, "")];
   }
 
-  const suffix = note;
-  const availableValueWidth = Math.max(8, getTerminalColumns() - getTerminalWidth(linePrefix) - getTerminalWidth(suffix));
+  if (displayMode === "both") {
+    const inlineLine = `${linePrefix}${value} // ${word.chinese} | note: ${rawNote}`;
+
+    if (getTerminalWidth(inlineLine) <= getTerminalColumns()) {
+      return [inlineLine];
+    }
+  } else {
+    const rawInlineLine = `${linePrefix}${value} // note: ${rawNote}`;
+
+    if (getTerminalWidth(rawInlineLine) <= getTerminalColumns()) {
+      return [rawInlineLine];
+    }
+  }
+
+  const baseLine = formatModuleLine(linePrefix, value, word, displayMode, "");
+  const notePrefix = "    note: ";
+  const noteContinuationPrefix = "             ";
+  const noteContentWidth = Math.max(1, getTerminalColumns() - getTerminalWidth(notePrefix));
+  const noteContentLines = wrapTerminalText(rawNote, noteContentWidth);
+
+  return [
+    baseLine,
+    `${notePrefix}${noteContentLines[0] ?? ""}`,
+    ...noteContentLines.slice(1).map((line) => `${noteContinuationPrefix}${line}`),
+  ];
+}
+
+function formatModuleLine(
+  linePrefix: string,
+  value: string,
+  word: Word,
+  displayMode: DisplayMode,
+  suffix: string
+): string {
+  if (displayMode === "both") {
+    const content = `${value} // ${word.chinese}${suffix ? ` |${suffix.slice(3)}` : ""}`;
+    const availableWidth = Math.max(1, getTerminalColumns() - getTerminalWidth(linePrefix));
+
+    return `${linePrefix}${truncateTerminalText(content, availableWidth)}`;
+  }
+
+  const availableValueWidth = Math.max(
+    8,
+    getTerminalColumns() - getTerminalWidth(linePrefix) - getTerminalWidth(suffix)
+  );
 
   return `${linePrefix}${truncateTerminalText(value, availableValueWidth)}${suffix}`;
 }

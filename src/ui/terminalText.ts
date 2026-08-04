@@ -34,6 +34,37 @@ export function truncateTerminalText(value: string, maxWidth: number): string {
   return `${characters.join("")}...`;
 }
 
+export function wrapTerminalText(value: string, maxWidth: number): string[] {
+  const normalized = value.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+
+  if (!normalized || maxWidth <= 0) {
+    return normalized ? [normalized] : [];
+  }
+
+  const lines: string[] = [];
+  let line = "";
+  let width = 0;
+
+  for (const character of normalized) {
+    const characterWidth = getCharacterWidth(character);
+
+    if (line && width + characterWidth > maxWidth) {
+      lines.push(line);
+      line = "";
+      width = 0;
+    }
+
+    line += character;
+    width += characterWidth;
+  }
+
+  if (line) {
+    lines.push(line);
+  }
+
+  return lines;
+}
+
 export function getTerminalWidth(value: string): number {
   return [...value].reduce((width, character) => width + getCharacterWidth(character), 0);
 }

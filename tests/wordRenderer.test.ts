@@ -54,3 +54,37 @@ test("word renderer hides or displays notes according to note mode", () => {
     console.clear = originalClear;
   }
 });
+
+test("long visible notes move to a complete continuation line", () => {
+  const lines: string[] = [];
+  const originalLog = console.log;
+  const originalClear = console.clear;
+
+  console.log = (...values: unknown[]) => lines.push(values.join(" "));
+  console.clear = () => undefined;
+
+  try {
+    const longNote = "perceive, acknowledge, realize, appreciate, admit, identify, comprehend, ".repeat(3).trim();
+
+    renderWordSession({
+      ...baseOptions,
+      words: [{
+        english: "recognize",
+        chinese: "认出，识别",
+        note: longNote,
+      }],
+      displayMode: "both",
+      noteMode: "visible",
+    });
+
+    const noteLineIndex = lines.findIndex((line) => line.trimStart().startsWith("note: "));
+    assert.ok(noteLineIndex > 0);
+    assert.equal(lines[noteLineIndex - 1]?.includes("recognize"), true);
+    assert.equal(lines.slice(noteLineIndex, noteLineIndex + 5).some((line) => line.includes("comprehend")), true);
+    const noteLines = lines.slice(noteLineIndex).filter((line) => line.includes("note:") || line.startsWith("         "));
+    assert.equal(noteLines.every((line) => line.startsWith("    note: ") || line.startsWith("             ")), true);
+  } finally {
+    console.log = originalLog;
+    console.clear = originalClear;
+  }
+});
