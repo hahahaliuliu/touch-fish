@@ -33,6 +33,7 @@ export interface RenderWordSessionOptions {
   displayMode: DisplayMode;
   noteMode: NoteMode;
   noteSelectionIndex?: number | undefined;
+  selectionIndex?: number | undefined;
   noteInput?: string | undefined;
   interfaceLanguage: InterfaceLanguage;
   showHelp: boolean;

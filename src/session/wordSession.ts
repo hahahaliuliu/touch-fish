@@ -17,6 +17,7 @@ import {
   saveCurrentWordProgress,
   saveDisplayMode,
   saveCurrentWordNote,
+  toggleCurrentWordFavorite,
 } from "../services/wordService.js";
 import { loadSettings } from "../services/settingsLoader.js";
 import type { NoteMode } from "../models/settings.js";
@@ -154,7 +155,7 @@ function handleInput(input: string): boolean {
     return false;
   }
 
-  if (noteMode === "editable" && matchesBinding(binding, "editNote")) {
+  if (matchesBinding(binding, "editNote")) {
     startNoteSelection();
     return true;
   }
@@ -238,6 +239,12 @@ function handleNoteInput(input: string): boolean {
       return true;
     }
 
+    if (input.toLowerCase() === "f") {
+      toggleCurrentWordFavorite(noteState.selectedIndex);
+      renderSession();
+      return true;
+    }
+
     if (input === "w" || input === "W" || input === "\u001b[A") {
       moveNoteSelection(-1);
       return true;
@@ -248,7 +255,7 @@ function handleNoteInput(input: string): boolean {
       return true;
     }
 
-    if (input === "\r" || input === "\n") {
+    if ((input === "\r" || input === "\n") && noteMode === "editable") {
       const word = getCurrentWords()[noteState.selectedIndex];
       noteState = {
         kind: "editing",
@@ -293,16 +300,26 @@ function moveNoteSelection(direction: -1 | 1) {
     return;
   }
 
-  const wordCount = getCurrentWords().length;
+  const pageWords = getCurrentWords();
+  const wordCount = pageWords.length;
 
   if (wordCount === 0) {
     return;
   }
 
-  noteState = {
-    kind: "selecting",
-    selectedIndex: (noteState.selectedIndex + direction + wordCount) % wordCount,
-  };
+  if (direction === -1 && noteState.selectedIndex === 0) {
+    const before = getWordProgress().current;
+    previousWord();
+    const moved = getWordProgress().current !== before;
+    noteState = { kind: "selecting", selectedIndex: moved ? getCurrentWords().length - 1 : 0 };
+  } else if (direction === 1 && noteState.selectedIndex === wordCount - 1) {
+    const before = getWordProgress().current;
+    nextWord();
+    const moved = getWordProgress().current !== before;
+    noteState = { kind: "selecting", selectedIndex: moved ? 0 : wordCount - 1 };
+  } else {
+    noteState = { kind: "selecting", selectedIndex: noteState.selectedIndex + direction };
+  }
   renderSession();
 }
 

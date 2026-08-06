@@ -15,7 +15,10 @@ export function renderGitTheme(options: RenderWordSessionOptions) {
 
   options.words.forEach((word, index) => {
     const id = String(options.current + index).padStart(3, "0");
-    const mark = options.noteSelectionIndex === index ? ">" : "";
+    const isSelected = options.selectionIndex === index || options.noteSelectionIndex === index;
+    const mark = isSelected
+      ? word.favorite ? ">★ " : ">  "
+      : word.favorite ? " ★ " : "   ";
     console.log(
       truncateTerminalText(
         `${mark}       modified:   src/workspace/tokens/${id}-${toFileNameSegment(word.english)}.ts`,

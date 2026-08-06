@@ -33,6 +33,9 @@ assets/progress/*.json
 # Local vocabulary notes
 assets/notes/*.json
 
+# Local favorite words
+assets/favorites.json
+
 # Local settings
 assets/settings.json
 

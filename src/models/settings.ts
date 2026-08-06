@@ -2,7 +2,7 @@ export type DisplayMode = "both" | "english" | "chinese";
 
 export type InterfaceLanguage = "english" | "chinese";
 
-export type StudyOrder = "sequential" | "random";
+export type StudyOrder = "sequential" | "reverse" | "random";
 
 export type NoteMode = "hidden" | "visible" | "editable";
 

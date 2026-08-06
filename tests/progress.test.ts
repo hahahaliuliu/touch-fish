@@ -16,6 +16,7 @@ test("damaged progress falls back to empty progress", () => {
 
     assert.deepEqual(loadWordProgress(testBookId, 5), {
       sequentialIndex: 0,
+      reverseIndex: 0,
       randomIndex: 0,
       randomOrder: [],
     });
@@ -28,12 +29,14 @@ test("progress indexes are clamped to the vocabulary range", () => {
   try {
     saveWordProgress(testBookId, {
       sequentialIndex: 99,
+      reverseIndex: 88,
       randomIndex: 42,
       randomOrder: [0, 1, 99],
     });
 
     assert.deepEqual(loadWordProgress(testBookId, 3), {
       sequentialIndex: 2,
+      reverseIndex: 2,
       randomIndex: 2,
       randomOrder: [],
     });
@@ -46,6 +49,7 @@ test("progress writes replace the file through a temporary file", () => {
   try {
     saveWordProgress(testBookId, {
       sequentialIndex: 1,
+      reverseIndex: 0,
       randomIndex: 0,
       randomOrder: [1, 0],
     });

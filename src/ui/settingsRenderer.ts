@@ -1,4 +1,5 @@
 import type { InterfaceLanguage, KeyBindings, Settings } from "../models/settings.js";
+import { getTerminalColumns } from "./terminalText.js";
 
 interface ConfigItem {
   kind: "setting";
@@ -16,7 +17,7 @@ interface BindingItem {
 
 interface ActionItem {
   kind: "action";
-  id: "download-vocabulary";
+  id: "download-vocabulary" | "view-favorites";
   label: string;
 }
 
@@ -71,6 +72,7 @@ export function renderSettingSession(options: RenderSettingSessionOptions) {
     if (item.kind === "binding") {
       if (!hasRenderedBindings) {
         hasRenderedBindings = true;
+        console.log("");
         console.log(text.keyBindings);
       }
 
@@ -155,7 +157,57 @@ function renderConfigItem(
   );
   const editMark = selected && isEditing ? "*" : selected ? ">" : " ";
 
+  if (item.key === "activeVocabularyBook" && item.options) {
+    renderVocabularyBookItem(item, value, editMark, selected && isEditing ? settings : undefined, language);
+    return;
+  }
+
   console.log(`${editMark} ${padTerminal(item.label, 20)} ${formatSettingCell(value, isNumericCursor)} ${optionText}`);
+}
+
+function renderVocabularyBookItem(
+  item: ConfigItem,
+  value: string,
+  editMark: string,
+  editingSettings: Settings | undefined,
+  language: InterfaceLanguage
+) {
+  const valuePrefix = `${editMark} ${padTerminal(item.label, 20)} `;
+  const continuationPrefix = " ".repeat(getTerminalWidth(valuePrefix));
+  const availableWidth = Math.max(1, getTerminalColumns() - getTerminalWidth(continuationPrefix));
+  const selectedValue = editingSettings?.activeVocabularyBook;
+  const options = (item.options ?? []).map((option) => {
+    const optionValue = String(option);
+    return formatOption(formatOptionValue(optionValue, language), optionValue === selectedValue);
+  });
+
+  console.log(`${valuePrefix}${value}`);
+  wrapCompleteOptions(options, availableWidth)
+    .forEach((line) => console.log(`${continuationPrefix}${line}`));
+}
+
+function wrapCompleteOptions(options: string[], availableWidth: number): string[] {
+  if (options.length === 0) {
+    return ["[]"];
+  }
+
+  const lines: string[] = [];
+  let current = `[${options[0]}`;
+
+  options.slice(1).forEach((option) => {
+    const candidate = `${current} / ${option}`;
+
+    if (getTerminalWidth(`${candidate}]`) <= availableWidth) {
+      current = candidate;
+      return;
+    }
+
+    lines.push(`${current} /`);
+    current = option;
+  });
+
+  lines.push(`${current}]`);
+  return lines;
 }
 
 function renderBindingItem(
@@ -298,6 +350,7 @@ function formatOptionValue(value: string, language: InterfaceLanguage): string {
     locked: "暂未开放",
     custom: "自定义",
     sequential: "顺序",
+    reverse: "倒序",
     random: "随机",
     reshuffle: "重新随机",
     hidden: "关闭",

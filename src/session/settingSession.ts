@@ -8,7 +8,7 @@ import { startVocabularyDownloadSession } from "./vocabularyDownloadSession.js";
 const RETURN_TO_WORD_KEY = "\u000f";
 const WORKSPACE_SIZES = [1, 3, 5];
 const STUDY_GROUP_SIZES = [10, 20, 30];
-const STUDY_ORDERS: Array<Settings["studyOrder"]> = ["sequential", "random"];
+const STUDY_ORDERS: Array<Settings["studyOrder"]> = ["sequential", "reverse", "random"];
 const AVAILABLE_THEMES: readonly ThemeName[] = ["build-log", "backend-log", "git"];
 const INTERFACE_LANGUAGES: readonly InterfaceLanguage[] = ["english", "chinese"];
 const NOTE_MODES: readonly NoteMode[] = ["hidden", "visible", "editable"];
@@ -19,6 +19,7 @@ const STUDY_ORDER_OPTIONS: readonly StudyOrderOption[] = [...STUDY_ORDERS, "resh
 
 interface StartSettingSessionOptions {
   onReturn?: () => void;
+  selectedIndex?: number;
 }
 
 interface ConfigItem {
@@ -37,7 +38,7 @@ interface BindingItem {
 
 interface ActionItem {
   kind: "action";
-  id: "download-vocabulary";
+  id: "download-vocabulary" | "view-favorites";
   label: string;
 }
 
@@ -61,7 +62,10 @@ export function startSettingSession(options: StartSettingSessionOptions = {}) {
   onReturnToPreviousSession = options.onReturn;
   settings = loadSettings();
   settingItems = createSettingItems();
-  selectedIndex = 0;
+  selectedIndex = Math.min(
+    Math.max(options.selectedIndex ?? 0, 0),
+    Math.max(settingItems.length - 1, 0)
+  );
   selectedBindingSlot = 0;
   isEditing = false;
   draftSettings = settings;
@@ -193,7 +197,11 @@ function confirmOrStartEdit() {
   const item = getSelectedItem();
 
   if (isActionItem(item)) {
-    openVocabularyDownloadSession();
+    if (item.id === "view-favorites") {
+      openFavoriteSession();
+    } else {
+      openVocabularyDownloadSession();
+    }
     return;
   }
 
@@ -548,6 +556,7 @@ function createSettingItems(language: InterfaceLanguage = settings.interfaceLang
     { kind: "setting", key: "noteMode", label: labels.notes, options: NOTE_MODES },
     { kind: "setting", key: "studyOrder", label: labels.studyOrder, options: STUDY_ORDERS },
     { kind: "setting", key: "activeVocabularyBook", label: labels.vocabularyBook, options: vocabularyBookIds },
+    { kind: "action", id: "view-favorites", label: language === "chinese" ? "查看收藏" : "View Favorites" },
     { kind: "action", id: "download-vocabulary", label: labels.downloadVocabulary },
     { kind: "setting", key: "theme", label: labels.theme, options: AVAILABLE_THEMES },
     { kind: "binding", key: "previous", label: labels.previousPage },
@@ -611,13 +620,28 @@ function getSettingLabels(language: InterfaceLanguage) {
 }
 
 function openVocabularyDownloadSession() {
+  const returnSelectedIndex = selectedIndex;
   process.stdin.off("data", handleKeyPress);
   void startVocabularyDownloadSession({
     onReturn: () => {
-      startSettingSession(
-        onReturnToPreviousSession ? { onReturn: onReturnToPreviousSession } : {}
-      );
+      startSettingSession({
+        ...(onReturnToPreviousSession ? { onReturn: onReturnToPreviousSession } : {}),
+        selectedIndex: returnSelectedIndex,
+      });
     },
+  });
+}
+
+function openFavoriteSession() {
+  const returnSelectedIndex = selectedIndex;
+  process.stdin.off("data", handleKeyPress);
+  void import("./favoriteSession.js").then(({ startFavoriteSession }) => {
+    startFavoriteSession({
+      onReturn: () => startSettingSession({
+        ...(onReturnToPreviousSession ? { onReturn: onReturnToPreviousSession } : {}),
+        selectedIndex: returnSelectedIndex,
+      }),
+    });
   });
 }
 

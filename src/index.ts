@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { startSettingCommand } from "./commands/setting.js";
 import { startWordCommand } from "./commands/word.js";
+import { startFavoriteCommand } from "./commands/favorite.js";
 
 const program = new Command();
 
@@ -20,6 +21,11 @@ program
   .action(() => {
     startSettingCommand();
   });
+
+program
+  .command("favorite")
+  .description("Browse favorite words")
+  .action(() => startFavoriteCommand());
 
 if (process.argv.length <= 2) {
   program.outputHelp();

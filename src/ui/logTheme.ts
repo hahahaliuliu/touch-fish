@@ -24,6 +24,7 @@ interface RenderLogThemeOptions {
   displayMode: DisplayMode;
   noteMode: NoteMode;
   noteSelectionIndex?: number | undefined;
+  selectionIndex?: number | undefined;
   interfaceLanguage: InterfaceLanguage;
   showHelp: boolean;
 }
@@ -45,6 +46,7 @@ export function renderLogTheme(options: RenderLogThemeOptions) {
     displayMode,
     noteMode,
     noteSelectionIndex,
+    selectionIndex,
     interfaceLanguage,
     showHelp,
   } = options;
@@ -93,7 +95,7 @@ export function renderLogTheme(options: RenderLogThemeOptions) {
     const token = `token_${id}`;
     const value = `"${getDisplayValue(word, displayMode)}"`;
 
-    formatModuleLines(id, token, value, word, displayMode, noteMode, noteSelectionIndex === index)
+    formatModuleLines(id, token, value, word, displayMode, noteMode, selectionIndex === index || noteSelectionIndex === index)
       .forEach((line) => console.log(line));
   });
 
@@ -154,9 +156,8 @@ function renderLogHelp(options: RenderLogHelpOptions) {
   console.log(text.actions);
   console.log(`  ${formatBindings(keyBindings.switchDisplayMode, interfaceLanguage).padEnd(21, " ")}${text.switchDisplay}`);
   console.log(`  ${formatBindings(keyBindings.startQuiz, interfaceLanguage).padEnd(21, " ")}${text.startQuiz}`);
-  if (noteMode === "editable") {
-    console.log(`  ${formatBindings(keyBindings.editNote, interfaceLanguage).padEnd(21, " ")}${text.editNote}`);
-  }
+  console.log(`  ${formatBindings(keyBindings.editNote, interfaceLanguage).padEnd(21, " ")}${text.editNote}`);
+  console.log(`  ${"F".padEnd(21, " ")}${interfaceLanguage === "chinese" ? "收藏或取消收藏" : "toggle favorite in selection mode"}`);
   console.log(`  ${"Ctrl+O".padEnd(21, " ")}${text.openSettings}`);
   console.log(`  ${formatBindings(keyBindings.toggleHelp, interfaceLanguage).padEnd(21, " ")}${text.closeHelp}`);
   console.log(`  ${"Esc".padEnd(21, " ")}${text.returnToWord}`);
@@ -170,7 +171,12 @@ function renderLogHelp(options: RenderLogHelpOptions) {
   console.log(`  ${text.group.padEnd(21, " ")}${studyGroupCurrent} / ${studyGroupTotal}`);
   console.log(`  ${text.groupRange.padEnd(21, " ")}${studyGroupStart}-${studyGroupEnd}`);
   console.log(`  ${text.navigationLoop.padEnd(21, " ")}${navigationLoop ? text.enabled : text.disabled}`);
-  console.log(`  ${text.studyOrder.padEnd(21, " ")}${studyOrder === "sequential" ? text.sequential : text.random}`);
+  const studyOrderLabel = studyOrder === "sequential"
+    ? text.sequential
+    : studyOrder === "reverse"
+      ? text.reverse
+      : text.random;
+  console.log(`  ${text.studyOrder.padEnd(21, " ")}${studyOrderLabel}`);
 }
 
 function getHelpText(language: InterfaceLanguage) {
@@ -203,6 +209,7 @@ function getHelpText(language: InterfaceLanguage) {
       enabled: "开启",
       disabled: "关闭",
       sequential: "顺序",
+      reverse: "倒序",
       random: "随机",
     };
   }
@@ -218,7 +225,7 @@ function getHelpText(language: InterfaceLanguage) {
     actions: "Display",
     switchDisplay: "switch display mode",
     startQuiz: "start group quiz",
-    editNote: "edit a note on this page",
+    editNote: "select a word / edit its note",
     openSettings: "open settings",
     closeHelp: "close help",
     returnToWord: "return to word",
@@ -232,10 +239,11 @@ function getHelpText(language: InterfaceLanguage) {
     groupRange: "group range",
     navigationLoop: "navigation loop",
     studyOrder: "study order",
-    enabled: "enabled",
-    disabled: "disabled",
-    sequential: "sequential",
-    random: "random",
+      enabled: "enabled",
+      disabled: "disabled",
+      sequential: "sequential",
+      reverse: "reverse",
+      random: "random",
   };
 }
 
@@ -285,10 +293,13 @@ function formatModuleLines(
   noteMode: NoteMode,
   isSelected: boolean
 ): string[] {
-  const modulePath = `  cache/${id}.ts`;
-  const prefix = isSelected ? ">" : "";
+  const modulePath = `cache/${id}.ts`;
+  const marker = isSelected
+    ? word.favorite ? ">★ " : ">  "
+    : word.favorite ? " ★ " : "   ";
+  const prefix = isSelected ? ">" : word.favorite ? "★" : "";
   const rawNote = noteMode === "hidden" || !word.note ? "" : word.note;
-  const linePrefix = `${prefix}${modulePath.padEnd(16, " ")} `;
+  const linePrefix = `${marker}${modulePath.padEnd(16, " ")} `;
 
   if (!rawNote) {
     return [formatModuleLine(linePrefix, value, word, displayMode, "")];

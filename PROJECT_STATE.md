@@ -86,6 +86,7 @@ npm link
 
 - [x] `npm run dev -- word`
 - [x] `touchfish word`
+- [x] `touchfish favorite` 浏览跨词书收藏
 - [x] 无参数时显示帮助信息
 
 ### Word Session
@@ -124,7 +125,7 @@ npm link
 - [x] 保存当前单词位置
 - [x] 恢复当前单词位置
 - [x] 从项目根目录解析进度文件路径
-- [x] 每本词书分别保存顺序、随机和显示模式进度
+- [x] 每本词书分别保存顺序、倒序、随机和显示模式进度
 - [x] 兼容迁移旧版唯一进度文件
 - [x] 损坏进度 JSON 回退为空进度
 - [x] 进度写入使用临时文件后替换
@@ -146,7 +147,7 @@ npm link
 - [x] `touchfish setting` 支持编辑学习组大小 `dailyWordCount`
 - [x] `touchfish setting` 支持自定义学习组大小
 - [x] `touchfish setting` 支持 `navigationLoop`
-- [x] `touchfish setting` 支持 `studyOrder`：顺序 / 随机
+- [x] `touchfish setting` 支持 `studyOrder`：顺序 / 倒序 / 随机
 - [x] `touchfish setting` 支持选择 `activeVocabularyBook`
 
 ### Workspace
@@ -160,7 +161,8 @@ npm link
 - [x] `A` / `D` 或 `←` / `→` 在当前范围内翻页
 - [x] 可关闭分组，连续浏览整本词书
 - [x] 分组内或整本词书循环导航
-- [x] 顺序与随机模式分别保存进度
+- [x] 顺序、倒序与随机模式分别保存进度
+- [x] 倒序模式从当前词书最后一个单词开始学习
 - [x] 随机模式保存稳定的整本词书随机顺序
 - [x] 英文 / 中文 / 英文 + 中文显示模式
 - [x] 默认英文显示，增强伪装效果

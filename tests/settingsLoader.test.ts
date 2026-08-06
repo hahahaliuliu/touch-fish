@@ -29,6 +29,12 @@ test("settings accept supported note modes", () => {
   assert.equal(settings.noteMode, "editable");
 });
 
+test("settings accept reverse study order", () => {
+  const settings = parseSettings({ ...DEFAULT_SETTINGS, studyOrder: "reverse" });
+
+  assert.equal(settings.studyOrder, "reverse");
+});
+
 test("settings reject an unsupported interface language", () => {
   assert.throws(
     () => parseSettings({ ...DEFAULT_SETTINGS, interfaceLanguage: "french" }),

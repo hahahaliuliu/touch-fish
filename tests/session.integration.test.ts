@@ -13,6 +13,7 @@ interface Fixture {
   root: string;
   settingsPath: string;
   progressPath: (bookId: string) => string;
+  favoritesPath: string;
 }
 
 interface SessionResult {
@@ -88,7 +89,7 @@ test("custom next-page shortcut works in Word", async () => {
   try {
     const result = await runSession(fixture, [
       "\u000f",
-      ...Array.from({ length: 11 }, () => "s"),
+      ...Array.from({ length: 12 }, () => "s"),
       "\r",
       "x",
       "\u001b",
@@ -114,6 +115,19 @@ test("note selection keeps its arrow after save and ignores E/Q while editing", 
     assert.match(result.output, /\[NOTE\] alpha-1/);
     assert.match(result.output, /note: qe/);
     assert.match(result.output, /progress saved/);
+  } finally {
+    removeFixture(fixture);
+  }
+});
+
+test("reverse study order starts from the last vocabulary word", async () => {
+  const fixture = createFixture({ workspaceSize: 1, studyOrder: "reverse" });
+
+  try {
+    const result = await runSession(fixture, ["q"]);
+
+    assert.equal(result.code, 0);
+    assert.match(result.output, /alpha-5/);
   } finally {
     removeFixture(fixture);
   }
@@ -146,11 +160,70 @@ test("a damaged progress file falls back to the beginning", async () => {
   }
 });
 
+test("Word selection can favorite a word with E and F", async () => {
+  const fixture = createFixture({ workspaceSize: 1 });
+
+  try {
+    const result = await runSession(fixture, ["e", "f", "e", "q"]);
+
+    assert.equal(result.code, 0);
+    assert.match(fs.readFileSync(fixture.favoritesPath, "utf8"), /alpha-1/);
+  } finally {
+    removeFixture(fixture);
+  }
+});
+
+test("favorite preview keeps a canceled word until selection mode exits", async () => {
+  const fixture = createFixture({ workspaceSize: 1, favorites: ["alpha-1"] });
+
+  try {
+    const result = await runSession(fixture, ["e", "f", "e", "q"], "favorite");
+
+    assert.equal(result.code, 0);
+    assert.match(result.output, /alpha-1/);
+    assert.doesNotMatch(fs.readFileSync(fixture.favoritesPath, "utf8"), /alpha-1/);
+  } finally {
+    removeFixture(fixture);
+  }
+});
+
+test("favorite preview supports the configured Tab display shortcut", async () => {
+  const fixture = createFixture({ workspaceSize: 1, favorites: ["alpha-1"] });
+
+  try {
+    const result = await runSession(fixture, ["\t", "q"], "favorite");
+
+    assert.equal(result.code, 0);
+    assert.match(result.output, /alpha-1.*alpha meaning 1/s);
+  } finally {
+    removeFixture(fixture);
+  }
+});
+
+test("Esc returns from favorite preview to Settings", async () => {
+  const fixture = createFixture({ workspaceSize: 1, favorites: ["alpha-1"] });
+
+  try {
+    const result = await runSession(
+      fixture,
+      ["\u000f", ...Array.from({ length: 8 }, () => "s"), "\r", "\u001b", "q"],
+    );
+
+    assert.equal(result.code, 0);
+    assert.match(result.output, /Touch Fish Settings/);
+    assert.ok([...result.output.matchAll(/> View Favorites\s+\[open\]/g)].length >= 2);
+  } finally {
+    removeFixture(fixture);
+  }
+});
+
 function createFixture(options: {
   workspaceSize?: number;
   noteMode?: Settings["noteMode"];
+  studyOrder?: Settings["studyOrder"];
   activeVocabularyBook?: string;
   progress?: Record<string, { sequentialIndex: number }>;
+  favorites?: string[];
   empty?: boolean;
 } = {}): Fixture {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-session-"));
@@ -167,7 +240,7 @@ function createFixture(options: {
     workspaceSize: options.workspaceSize ?? 3,
     studyGroupEnabled: false,
     navigationLoop: false,
-    studyOrder: "sequential",
+    studyOrder: options.studyOrder ?? "sequential",
     activeVocabularyBook: options.activeVocabularyBook ?? "alpha",
     displayMode: "english",
     noteMode: options.noteMode ?? "hidden",
@@ -202,10 +275,15 @@ function createFixture(options: {
     );
   });
 
+  if (options.favorites) {
+    fs.writeFileSync(path.join(root, "favorites.json"), JSON.stringify({ version: 1, words: options.favorites }), "utf8");
+  }
+
   return {
     root,
     settingsPath: path.join(root, "settings.json"),
     progressPath: (bookId) => path.join(progressDirectory, `${encodeURIComponent(bookId)}.json`),
+    favoritesPath: path.join(root, "favorites.json"),
   };
 }
 
@@ -239,8 +317,8 @@ function removeFixture(fixture: Fixture) {
   fs.rmSync(fixture.root, { recursive: true, force: true });
 }
 
-async function runSession(fixture: Fixture, inputs: string[]): Promise<SessionResult> {
-  const child = spawn(process.execPath, ["--import", "tsx", "src/index.ts", "word"], {
+async function runSession(fixture: Fixture, inputs: string[], command = "word"): Promise<SessionResult> {
+  const child = spawn(process.execPath, ["--import", "tsx", "src/index.ts", command], {
     cwd: projectRoot,
     env: { ...process.env, TOUCHFISH_ASSET_DIR: fixture.root },
     stdio: ["pipe", "pipe", "pipe"],

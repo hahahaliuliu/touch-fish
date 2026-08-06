@@ -215,7 +215,7 @@ function isPositiveNumber(value: unknown): value is number {
 }
 
 function isStudyOrder(value: unknown): value is StudyOrder {
-  return value === "sequential" || value === "random";
+  return value === "sequential" || value === "reverse" || value === "random";
 }
 
 function isDisplayMode(value: unknown): value is DisplayMode {

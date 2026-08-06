@@ -4,6 +4,7 @@ export interface Word {
   phonetic?: string;
   example?: string;
   note?: string;
+  favorite?: boolean;
   tags?: string[];
 }
 

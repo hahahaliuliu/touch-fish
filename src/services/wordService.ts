@@ -5,6 +5,7 @@ import {
   saveWordProgress,
 } from "../storage/progress.js";
 import { loadWordNotes, saveWordNote } from "../storage/notes.js";
+import { isFavorite, toggleFavorite } from "../storage/favorites.js";
 import { createRandomOrder } from "./randomOrder.js";
 import { loadSettings } from "./settingsLoader.js";
 import { loadVocabularyBook } from "./vocabularyLoader.js";
@@ -15,6 +16,7 @@ let vocabularyBook = loadVocabularyBook(settings.activeVocabularyBook);
 let words: Word[] = vocabularyBook.words;
 let wordNotes = loadWordNotes(vocabularyBook.id, words);
 let sequentialOrder = words.map((_, index) => index);
+let reverseOrder = [...sequentialOrder].reverse();
 
 let workspaceSize = settings.workspaceSize;
 let studyGroupSize = settings.dailyWordCount;
@@ -56,6 +58,18 @@ export function saveCurrentWordNote(pageWordIndex: number, note: string): Word |
     wordNotes.delete(wordIndex);
   }
 
+  return getWordWithNote(wordIndex);
+}
+
+export function toggleCurrentWordFavorite(pageWordIndex: number): Word | undefined {
+  const wordIndex = wordOrder[currentIndex + pageWordIndex];
+  const word = wordIndex === undefined ? undefined : words[wordIndex];
+
+  if (word === undefined || wordIndex === undefined) {
+    return undefined;
+  }
+
+  toggleFavorite(word.english);
   return getWordWithNote(wordIndex);
 }
 
@@ -155,6 +169,7 @@ export function reloadWordSettings() {
   words = vocabularyBook.words;
   wordNotes = loadWordNotes(vocabularyBook.id, words);
   sequentialOrder = words.map((_, index) => index);
+  reverseOrder = [...sequentialOrder].reverse();
   progress = loadWordProgress(vocabularyBook.id, words.length);
   workspaceSize = updatedSettings.workspaceSize;
   studyGroupSize = updatedSettings.dailyWordCount;
@@ -169,6 +184,10 @@ export function reloadWordSettings() {
 function getWordOrder(): number[] {
   if (studyOrder === "sequential") {
     return sequentialOrder;
+  }
+
+  if (studyOrder === "reverse") {
+    return reverseOrder;
   }
 
   if (!isValidRandomOrder(progress.randomOrder)) {
@@ -191,20 +210,32 @@ function getWordWithNote(wordIndex: number): Word | undefined {
 
   const localNote = wordNotes.get(wordIndex);
 
-  return localNote === undefined ? word : { ...word, note: localNote };
+  return {
+    ...(localNote === undefined ? word : { ...word, note: localNote }),
+    favorite: isFavorite(word.english),
+  };
 }
 
 function getSavedIndex(): number {
-  return studyOrder === "random" ? progress.randomIndex : progress.sequentialIndex;
+  if (studyOrder === "random") {
+    return progress.randomIndex;
+  }
+
+  if (studyOrder === "reverse") {
+    return progress.reverseIndex;
+  }
+
+  return progress.sequentialIndex;
 }
 
 function updateSavedIndex() {
-  progress = {
-    ...progress,
-    ...(studyOrder === "random"
-      ? { randomIndex: currentIndex }
-      : { sequentialIndex: currentIndex }),
-  };
+  if (studyOrder === "random") {
+    progress = { ...progress, randomIndex: currentIndex };
+  } else if (studyOrder === "reverse") {
+    progress = { ...progress, reverseIndex: currentIndex };
+  } else {
+    progress = { ...progress, sequentialIndex: currentIndex };
+  }
 }
 
 function alignToPageStart(index: number) {

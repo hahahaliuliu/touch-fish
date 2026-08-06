@@ -8,6 +8,7 @@ const legacyProgressPath = resolveAssetPath("progress", "word-progress.json");
 
 export interface WordProgress {
   sequentialIndex: number;
+  reverseIndex: number;
   randomIndex: number;
   randomOrder: number[];
   displayMode?: DisplayMode;
@@ -44,6 +45,7 @@ export function loadWordProgress(bookId: string, wordCount?: number): WordProgre
   return {
     // currentIndex is the format used before separate order progress existed.
     sequentialIndex: readIndex(data.sequentialIndex ?? data.currentIndex, wordCount),
+    reverseIndex: readIndex(data.reverseIndex, wordCount),
     randomIndex: readIndex(data.randomIndex, wordCount),
     randomOrder: readRandomOrder(data.randomOrder, wordCount),
     ...(displayMode ? { displayMode } : {}),
@@ -110,6 +112,7 @@ function migrateLegacyProgress(progressPath: string) {
 function createEmptyProgress(): WordProgress {
   return {
     sequentialIndex: 0,
+    reverseIndex: 0,
     randomIndex: 0,
     randomOrder: [],
   };

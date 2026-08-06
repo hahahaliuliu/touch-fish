@@ -22,7 +22,7 @@ export function renderBackendLogTheme(options: RenderWordSessionOptions) {
         word,
         options.displayMode,
         options.noteMode,
-        options.noteSelectionIndex === index
+        options.selectionIndex === index || options.noteSelectionIndex === index
       )
     );
   });
@@ -44,12 +44,15 @@ function formatCacheEntry(
 ): string {
   const key = `vocabulary.token.${id}`;
   const value = JSON.stringify(getDisplayValue(word, displayMode));
+  const marker = isSelected
+    ? word.favorite ? ">★ " : ">  "
+    : word.favorite ? " ★ " : "   ";
 
-  const prefix = isSelected ? "> " : "";
+  const prefix = isSelected ? "> " : word.favorite ? "★ " : "";
   const note = noteMode === "hidden" || !word.note
     ? ""
     : ` memo=${JSON.stringify(truncateTerminalText(word.note, 24))}`;
-  const linePrefix = `${prefix}${timestamp} DEBUG cache hit key=${key} value=`;
+  const linePrefix = `${marker}${timestamp} DEBUG cache hit key=${key} value=`;
 
   if (displayMode === "both") {
     return truncateTerminalText(

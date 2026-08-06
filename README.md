@@ -110,6 +110,14 @@ npm link
 touchfish word
 ```
 
+浏览收藏单词：
+
+```shell
+touchfish favorite
+```
+
+也可以在 Settings 中选择 `View Favorites` / `查看收藏`。
+
 打开独立 Settings：
 
 ```shell
@@ -131,7 +139,7 @@ assets/vocabulary/ielts.example.json
 在 Word Session 中按 `Ctrl+O` 可以打开 Settings。Settings 支持：
 
 - 调整每页单词数量和学习组大小
-- 切换顺序或随机学习
+- 切换顺序、倒序或随机学习
 - 切换终端伪装主题
 - 控制备注的隐藏、显示和编辑
 - 自定义快捷键
@@ -152,21 +160,24 @@ assets/vocabulary/ielts.example.json
 | `Tab` | 切换单词显示模式 |
 | `T` | 开始当前学习组测试 |
 | `E` | 在“备注：可编辑”时选择并编辑本页单词备注 |
+| `F` | 在选择模式中收藏或取消收藏 |
 | `Ctrl+O` | 打开 Settings；在 Settings 中返回 Word |
 | `?` | 打开或关闭 Help |
 | `Esc` | 从 Help 返回；在 Settings 中取消编辑或返回 Word |
 | `Q` | 保存进度并退出 |
 
+选择模式中，`E` 进入、`Esc` 退出；上下键移动光标，`F` 收藏或取消收藏，`Enter` 在备注可编辑时进入备注编辑。
+
 快捷键可以在 Settings 中修改。
 
 ## 当前功能
 
-- CLI 入口：`touchfish word`、`touchfish setting`
+- CLI 入口：`touchfish word`、`touchfish favorite`、`touchfish setting`
 - 终端 Word Session 和键盘交互
 - 自定义每页单词数量
 - 可选学习分组和自定义组大小
 - 分组内循环与整本词书连续浏览
-- 顺序和随机学习模式，并分别保存进度
+- 顺序、倒序和随机学习模式，并分别保存进度
 - 英文、中文、英文 + 中文显示模式
 - 当前学习组测试，支持双向测试
 - 测试结果页显示用户答案、标准答案，并支持重新测试错题
@@ -184,7 +195,7 @@ assets/vocabulary/ielts.example.json
 npm test
 ```
 
-当前自动测试共 27 项，覆盖核心逻辑、渲染、进度存储和 CLI Session 交互。
+当前自动测试共 39 项，覆盖核心逻辑、渲染、进度存储、收藏和 CLI Session 交互。
 
 不使用全局链接时打开 Settings：
 
