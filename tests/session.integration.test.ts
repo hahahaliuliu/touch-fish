@@ -104,6 +104,21 @@ test("custom next-page shortcut works in Word", async () => {
   }
 });
 
+test("note selection keeps its arrow after save and ignores E/Q while editing", async () => {
+  const fixture = createFixture({ workspaceSize: 1, noteMode: "editable" });
+
+  try {
+    const result = await runSession(fixture, ["e", "\r", "q", "e", "\r", "\u001b", "q"]);
+
+    assert.equal(result.code, 0);
+    assert.match(result.output, /\[NOTE\] alpha-1/);
+    assert.match(result.output, /note: qe/);
+    assert.match(result.output, /progress saved/);
+  } finally {
+    removeFixture(fixture);
+  }
+});
+
 test("an empty vocabulary opens Settings instead of crashing", async () => {
   const fixture = createFixture({ empty: true });
 
@@ -133,6 +148,7 @@ test("a damaged progress file falls back to the beginning", async () => {
 
 function createFixture(options: {
   workspaceSize?: number;
+  noteMode?: Settings["noteMode"];
   activeVocabularyBook?: string;
   progress?: Record<string, { sequentialIndex: number }>;
   empty?: boolean;
@@ -154,7 +170,7 @@ function createFixture(options: {
     studyOrder: "sequential",
     activeVocabularyBook: options.activeVocabularyBook ?? "alpha",
     displayMode: "english",
-    noteMode: "hidden",
+    noteMode: options.noteMode ?? "hidden",
     interfaceLanguage: "english",
     theme: "build-log",
     keyBindings: {

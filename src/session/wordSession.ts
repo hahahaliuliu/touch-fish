@@ -224,12 +224,20 @@ function startNoteSelection() {
 
 function handleNoteInput(input: string): boolean {
   if (input === "\u001b") {
-    noteState = { kind: "idle" };
+    noteState = noteState.kind === "editing"
+      ? { kind: "selecting", selectedIndex: noteState.selectedIndex }
+      : { kind: "idle" };
     renderSession();
     return true;
   }
 
   if (noteState.kind === "selecting") {
+    if (input.toLowerCase() === "e") {
+      noteState = { kind: "idle" };
+      renderSession();
+      return true;
+    }
+
     if (input === "w" || input === "W" || input === "\u001b[A") {
       moveNoteSelection(-1);
       return true;
@@ -261,7 +269,7 @@ function handleNoteInput(input: string): boolean {
 
   if (input === "\r" || input === "\n") {
     saveCurrentWordNote(editingState.selectedIndex, editingState.input);
-    noteState = { kind: "idle" };
+    noteState = { kind: "selecting", selectedIndex: editingState.selectedIndex };
     renderSession();
     return true;
   }
