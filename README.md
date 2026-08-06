@@ -1,5 +1,19 @@
 # Touch Fish
 
+<p align="center">
+  <strong>Learn in the gaps. Stay in the terminal.</strong><br>
+  A stealth terminal vocabulary learning tool disguised as development logs.
+</p>
+
+<p align="center">
+  <a href="https://github.com/hahahaliuliu/touch-fish/actions/workflows/ci.yml"><img alt="Node.js CI" src="https://github.com/hahahaliuliu/touch-fish/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="Version v0.2.0" src="https://img.shields.io/badge/version-v0.2.0-3b82f6">
+  <img alt="Node.js 22.12 or newer" src="https://img.shields.io/badge/node-%3E%3D22.12-43853d">
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-8b5cf6"></a>
+</p>
+
+![Touch Fish terminal preview](docs/images/touch-fish-preview.svg)
+
 Touch Fish 是一个适合开发间隙使用的终端学习工具。
 
 它把背单词内容呈现成开发日志、构建输出等终端内容，让用户在等待构建、工具响应或上下文切换时，顺手学习几个单词。

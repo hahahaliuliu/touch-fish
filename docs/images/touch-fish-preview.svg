@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title description">
+  <title id="title">Touch Fish terminal word learning preview</title>
+  <desc id="description">English and Chinese vocabulary disguised as a terminal build log, including favorites and notes.</desc>
+  <defs>
+    <linearGradient id="terminalBackground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#12161c"/>
+      <stop offset="1" stop-color="#090c10"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="620" rx="28" fill="#f3f5f7"/>
+  <g filter="url(#shadow)">
+    <rect x="42" y="38" width="1116" height="540" rx="16" fill="url(#terminalBackground)"/>
+    <path d="M42 54a16 16 0 0 1 16-16h1084a16 16 0 0 1 16 16v40H42z" fill="#1d232b"/>
+    <circle cx="75" cy="66" r="7" fill="#ff5f57"/>
+    <circle cx="99" cy="66" r="7" fill="#febc2e"/>
+    <circle cx="123" cy="66" r="7" fill="#28c840"/>
+    <text x="600" y="72" text-anchor="middle" fill="#9ca8b7" font-family="Consolas, 'Cascadia Mono', monospace" font-size="16">touchfish word — build-log</text>
+  </g>
+
+  <g fill="#d7dde5" font-family="Consolas, 'Cascadia Mono', 'Microsoft YaHei UI', monospace" font-size="20" xml:space="preserve">
+    <text x="72" y="128" fill="#78dce8">[INFO]</text><text x="150" y="128"> compiling workspace...</text>
+    <text x="72" y="158" fill="#78dce8">[INFO]</text><text x="150" y="158"> resolving dependency graph...</text>
+    <text x="72" y="188" fill="#78dce8">[INFO]</text><text x="150" y="188"> modules transformed: 42</text>
+
+    <text x="72" y="238" fill="#f8f8f2">cache entries by path ./src/cache/</text>
+
+    <text x="72" y="276" fill="#ffd866"> ★ </text>
+    <text x="108" y="276">cache/151.ts    "commute"      // v. 通勤；用……交换</text>
+    <text x="108" y="310">cache/152.ts    "compare"      // v. 与……相比</text>
+    <text x="108" y="344">cache/153.ts    "conceal"      // v. 隐藏；隐瞒</text>
+    <text x="72" y="378" fill="#a9dc76">&gt;★ </text>
+    <text x="108" y="378">cache/154.ts    "concentrate"  // v. 专心于；集中</text>
+    <text x="108" y="412">cache/155.ts    "concur"       // v. 同意</text>
+    <text x="108" y="446" fill="#9ca8b7">note: agree, coincide, be of the same opinion</text>
+
+    <text x="72" y="500" fill="#78dce8">[INFO]</text><text x="150" y="500"> build completed successfully in 42ms</text>
+    <text x="72" y="532" fill="#78dce8">[INFO]</text><text x="150" y="532"> watching for file changes...</text>
+    <text x="72" y="562" fill="#a9dc76">runtime: idle  ›</text>
+  </g>
+</svg>
