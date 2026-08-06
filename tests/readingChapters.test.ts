@@ -28,6 +28,10 @@ test("reading chapters recognize Chinese and English chapter headings", () => {
   ]);
 });
 
+test("reading chapters do not mistake regular prose for a chapter heading", () => {
+  assert.deepEqual(detectReadingChapters("第一章第一段\n普通正文"), [{ title: "正文", startOffset: 0 }]);
+});
+
 test("reading chapters use one body chapter when no heading is present", () => {
   assert.deepEqual(detectReadingChapters("没有章节标题的正文"), [{ title: "正文", startOffset: 0 }]);
 });

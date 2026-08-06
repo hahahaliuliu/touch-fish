@@ -1,6 +1,6 @@
 import type { ReadingChapter } from "../models/reading.js";
 
-const CHINESE_CHAPTER_PATTERN = /^第[〇零一二三四五六七八九十百千万\d]+[章节回卷].*$/;
+const CHINESE_CHAPTER_PATTERN = /^第[〇零一二三四五六七八九十百千万\d]+[章节回卷](?:\s|[：:、—-]|$).*$/;
 const ENGLISH_CHAPTER_PATTERN = /^chapter\s+\d+\b.*$/i;
 const ARTICLE_TITLE_PATTERN = /^《[^》]+》$/;
 

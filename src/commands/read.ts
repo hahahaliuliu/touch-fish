@@ -1,5 +1,6 @@
 import { loadReadingBook, listReadingBooks } from "../services/readingLoader.js";
 import { loadReadState, saveReadState } from "../storage/readProgress.js";
+import { startReadSession } from "../session/readSession.js";
 
 export function startReadCommand() {
   const books = listReadingBooks();
@@ -13,9 +14,7 @@ export function startReadCommand() {
   const state = loadReadState();
   const book = loadReadingBook(state.activeBookId);
   saveReadState({ activeBookId: book.id });
-
-  console.log(`[INFO] loaded novel: ${book.title}`);
-  console.log(`[INFO] ${book.characterCount} characters and ${book.chapters.length} chapters ready for pagination`);
+  startReadSession(book);
 }
 
 export function startReadSettingsCommand() {

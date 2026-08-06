@@ -10,7 +10,8 @@ interface ReadingLine {
 export function paginateReadingText(
   content: string,
   maxWidth: number,
-  maxLines: number
+  maxLines: number,
+  pageBreakOffsets: readonly number[] = []
 ): ReadingPage[] {
   if (!content) {
     return [];
@@ -19,17 +20,24 @@ export function paginateReadingText(
   const lines = createReadingLines(content, Math.max(2, Math.floor(maxWidth)));
   const pageLineCount = Math.max(1, Math.floor(maxLines));
   const pages: ReadingPage[] = [];
+  const forcedBreakOffsets = new Set(pageBreakOffsets);
+  let pageLines: ReadingLine[] = [];
 
-  for (let index = 0; index < lines.length; index += pageLineCount) {
-    const pageLines = lines.slice(index, index + pageLineCount);
-    const firstLine = pageLines[0]!;
-    const lastLine = pageLines.at(-1)!;
+  lines.forEach((line) => {
+    const shouldBreakBeforeLine =
+      pageLines.length > 0 &&
+      (pageLines.length >= pageLineCount || forcedBreakOffsets.has(line.startOffset));
 
-    pages.push({
-      startOffset: firstLine.startOffset,
-      endOffset: lastLine.endOffset,
-      lines: pageLines.map((line) => line.text),
-    });
+    if (shouldBreakBeforeLine) {
+      pages.push(createReadingPage(pageLines));
+      pageLines = [];
+    }
+
+    pageLines.push(line);
+  });
+
+  if (pageLines.length > 0) {
+    pages.push(createReadingPage(pageLines));
   }
 
   return pages;
@@ -103,4 +111,15 @@ function createReadingLines(content: string, maxWidth: number): ReadingLine[] {
   });
 
   return lines;
+}
+
+function createReadingPage(lines: ReadingLine[]): ReadingPage {
+  const firstLine = lines[0]!;
+  const lastLine = lines.at(-1)!;
+
+  return {
+    startOffset: firstLine.startOffset,
+    endOffset: lastLine.endOffset,
+    lines: lines.map((line) => line.text),
+  };
 }

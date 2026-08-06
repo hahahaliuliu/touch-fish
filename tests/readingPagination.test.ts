@@ -37,6 +37,15 @@ test("reading pages retain character offsets for navigation and resuming", () =>
   assert.equal(findReadingPageIndex(pages, 99), 1);
 });
 
+test("reading pagination starts a fresh page at a chapter offset", () => {
+  const content = "第一段\n第二段\n第三段";
+  const chapterTwoOffset = [..."第一段\n"].length;
+  const pages = paginateReadingText(content, 20, 10, [0, chapterTwoOffset]);
+
+  assert.deepEqual(pages.map((page) => page.lines), [["第一段"], ["第二段", "第三段"]]);
+  assert.equal(pages[1]?.startOffset, chapterTwoOffset);
+});
+
 test("reading page navigation stops at the first and last pages", () => {
   const pages = paginateReadingText("abcdefghij", 3, 2);
 
