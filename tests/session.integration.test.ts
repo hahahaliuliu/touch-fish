@@ -342,10 +342,15 @@ async function runSession(fixture: Fixture, inputs: string[], command = "word"):
     });
   });
 
-  await wait(500);
+  await waitUntil(() => output.length > 0 || child.exitCode !== null, 5000);
+
   for (const input of inputs) {
+    const previousOutputLength = output.length;
     child.stdin.write(input);
-    await wait(250);
+    await waitUntil(
+      () => output.length > previousOutputLength || child.exitCode !== null,
+      3000
+    );
   }
 
   const code = await exitPromise;
@@ -355,4 +360,16 @@ async function runSession(fixture: Fixture, inputs: string[], command = "word"):
 
 function wait(milliseconds: number) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function waitUntil(condition: () => boolean, timeoutMilliseconds: number) {
+  const deadline = Date.now() + timeoutMilliseconds;
+
+  while (!condition()) {
+    if (Date.now() >= deadline) {
+      throw new Error("Timed out waiting for session output");
+    }
+
+    await wait(10);
+  }
 }
