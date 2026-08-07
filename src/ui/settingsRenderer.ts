@@ -1,5 +1,9 @@
 import type { InterfaceLanguage, KeyBindings, Settings } from "../models/settings.js";
-import { formatSettingColumns } from "./settingColumns.js";
+import {
+  BINDING_SETTING_COLUMNS,
+  formatSettingColumns,
+  STANDARD_SETTING_COLUMNS,
+} from "./settingColumns.js";
 
 interface ConfigItem {
   kind: "setting";
@@ -61,9 +65,9 @@ export function renderSettingSession(options: RenderSettingSessionOptions) {
   let hasRenderedBindings = false;
 
   console.clear();
-  console.log(text.title);
-  console.log("");
   console.log(text.ready);
+  console.log("");
+  console.log(text.title);
   console.log("");
 
   items.forEach((item, index) => {
@@ -126,10 +130,8 @@ export function renderSettingSession(options: RenderSettingSessionOptions) {
 
 function renderActionItem(item: ActionItem, selected: boolean) {
   const mark = selected ? ">" : " ";
-  formatSettingColumns(mark, item.label, "[open]", "", {
-    desiredLabelWidth: 20,
-    desiredValueWidth: 10,
-  }).forEach((line) => console.log(line));
+  formatSettingColumns(mark, item.label, "[open]", "", STANDARD_SETTING_COLUMNS)
+    .forEach((line) => console.log(line));
 }
 
 function renderConfigItem(
@@ -165,10 +167,13 @@ function renderConfigItem(
     return;
   }
 
-  formatSettingColumns(editMark, item.label, formatSettingCell(value, isNumericCursor).trimEnd(), optionText, {
-    desiredLabelWidth: 20,
-    desiredValueWidth: 10,
-  }).forEach((line) => console.log(line));
+  formatSettingColumns(
+    editMark,
+    item.label,
+    formatSettingCell(value, isNumericCursor).trimEnd(),
+    optionText,
+    STANDARD_SETTING_COLUMNS
+  ).forEach((line) => console.log(line));
 }
 
 function renderVocabularyBookItem(
@@ -186,10 +191,8 @@ function renderVocabularyBookItem(
 
   const optionText = options.length > 0 ? `[${options.join(" / ")}]` : "[]";
 
-  formatSettingColumns(editMark, item.label, value, optionText, {
-    desiredLabelWidth: 20,
-    desiredValueWidth: 10,
-  }).forEach((line) => console.log(line));
+  formatSettingColumns(editMark, item.label, value, optionText, STANDARD_SETTING_COLUMNS)
+    .forEach((line) => console.log(line));
 }
 
 function renderBindingItem(
@@ -205,10 +208,8 @@ function renderBindingItem(
   const second = formatBindingSlot(bindings[1], selected && selectedSlot === 1, isCapturing && selectedSlot === 1, language);
   const mark = selected && isCapturing ? "*" : selected ? ">" : " ";
 
-  formatSettingColumns(mark, item.label, first, second, {
-    desiredLabelWidth: 20,
-    desiredValueWidth: 17,
-  }).forEach((line) => console.log(line));
+  formatSettingColumns(mark, item.label, first, second, BINDING_SETTING_COLUMNS)
+    .forEach((line) => console.log(line));
 }
 
 function formatBindingSlot(

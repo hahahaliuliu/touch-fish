@@ -5,6 +5,16 @@ interface SettingColumnOptions {
   desiredValueWidth: number;
 }
 
+export const STANDARD_SETTING_COLUMNS: SettingColumnOptions = {
+  desiredLabelWidth: 20,
+  desiredValueWidth: 16,
+};
+
+export const BINDING_SETTING_COLUMNS: SettingColumnOptions = {
+  desiredLabelWidth: 20,
+  desiredValueWidth: 17,
+};
+
 export function formatSettingColumns(
   marker: string,
   label: string,

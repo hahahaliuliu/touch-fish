@@ -4,6 +4,40 @@ import { DEFAULT_SETTINGS } from "../src/config/defaultSettings.js";
 import { renderSettingSession } from "../src/ui/settingsRenderer.js";
 import { getTerminalWidth } from "../src/ui/terminalText.js";
 
+test("Word settings place the ready message before the title like Read settings", () => {
+  const lines: string[] = [];
+  const originalLog = console.log;
+  const originalClear = console.clear;
+
+  console.log = (...values: unknown[]) => lines.push(values.join(" "));
+  console.clear = () => undefined;
+
+  try {
+    renderSettingSession({
+      settings: DEFAULT_SETTINGS,
+      draftSettings: DEFAULT_SETTINGS,
+      items: [],
+      selectedIndex: 0,
+      selectedBindingSlot: 0,
+      isEditing: false,
+      isBindingCapture: false,
+      isNumericCursor: false,
+      editError: "",
+      isReshuffleArmed: false,
+    });
+
+    assert.deepEqual(lines.slice(0, 4), [
+      "[INFO] configuration ready",
+      "",
+      "Touch Fish Settings",
+      "",
+    ]);
+  } finally {
+    console.log = originalLog;
+    console.clear = originalClear;
+  }
+});
+
 test("vocabulary book options wrap at complete names with an indented continuation", () => {
   const lines: string[] = [];
   const originalLog = console.log;

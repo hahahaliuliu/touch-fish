@@ -1,6 +1,10 @@
 import type { ReadBindingAction, ReadingBookSummary, ReadSettings } from "../models/reading.js";
 import type { InterfaceLanguage, ThemeName } from "../models/settings.js";
-import { formatSettingColumns } from "./settingColumns.js";
+import {
+  BINDING_SETTING_COLUMNS,
+  formatSettingColumns,
+  STANDARD_SETTING_COLUMNS,
+} from "./settingColumns.js";
 
 export interface RenderReadSettingsOptions {
   books: ReadingBookSummary[];
@@ -166,10 +170,8 @@ function renderConfigItem(
   optionText: string
 ) {
   const marker = index === selectedIndex ? (isEditing ? "*" : ">") : " ";
-  formatSettingColumns(marker, label, value, optionText, {
-    desiredLabelWidth: 20,
-    desiredValueWidth: 16,
-  }).forEach((line) => console.log(line));
+  formatSettingColumns(marker, label, value, optionText, STANDARD_SETTING_COLUMNS)
+    .forEach((line) => console.log(line));
 }
 
 function renderBindingItem(
@@ -184,10 +186,8 @@ function renderBindingItem(
   const second = formatBindingSlot(bindings[1], selected && selectedSlot === 1, isCapturing && selectedSlot === 1, language);
   const marker = selected && isCapturing ? "*" : selected ? ">" : " ";
 
-  formatSettingColumns(marker, label, first, second, {
-    desiredLabelWidth: 20,
-    desiredValueWidth: 17,
-  }).forEach((line) => console.log(line));
+  formatSettingColumns(marker, label, first, second, BINDING_SETTING_COLUMNS)
+    .forEach((line) => console.log(line));
 }
 
 function formatBindingSlot(binding: string, selected: boolean, isCapturing: boolean, language: InterfaceLanguage): string {
