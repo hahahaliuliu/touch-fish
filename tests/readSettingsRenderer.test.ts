@@ -93,6 +93,26 @@ test("Read settings rename chapter bindings when section navigation is enabled",
   assert.equal(lines.some((line) => line.includes("上一章")), false);
 });
 
+test("Read setting option continuations stay aligned with the option column", () => {
+  const originalColumns = process.stdout.columns;
+  Object.defineProperty(process.stdout, "columns", { value: 70, configurable: true });
+
+  try {
+    const lines = captureRender({
+      selectedIndex: 2,
+      settings: { ...settings, chapterSectionCount: 3 },
+    });
+    const sectionLineIndex = lines.findIndex((line) => line.includes("章节切分"));
+    const continuationLine = lines[sectionLineIndex + 1] ?? "";
+
+    assert.equal(sectionLineIndex >= 0, true);
+    assert.equal(continuationLine.startsWith(" ".repeat(40)), true);
+    assert.equal(continuationLine.includes("自定义]"), true);
+  } finally {
+    Object.defineProperty(process.stdout, "columns", { value: originalColumns, configurable: true });
+  }
+});
+
 function captureRender(overrides: Partial<Parameters<typeof renderReadSettings>[0]>): string[] {
   const lines: string[] = [];
   const originalLog = console.log;

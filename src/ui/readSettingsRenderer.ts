@@ -1,6 +1,6 @@
 import type { ReadBindingAction, ReadingBookSummary, ReadSettings } from "../models/reading.js";
 import type { InterfaceLanguage, ThemeName } from "../models/settings.js";
-import { getTerminalWidth } from "./terminalText.js";
+import { getTerminalColumns, getTerminalWidth } from "./terminalText.js";
 
 export interface RenderReadSettingsOptions {
   books: ReadingBookSummary[];
@@ -166,7 +166,42 @@ function renderConfigItem(
   optionText: string
 ) {
   const marker = index === selectedIndex ? (isEditing ? "*" : ">") : " ";
-  console.log(`${marker} ${padTerminal(label, 20)} ${padTerminal(value, 16)} ${optionText}`);
+  const prefix = `${marker} ${padTerminal(label, 20)} ${padTerminal(value, 16)} `;
+  const continuationPrefix = " ".repeat(getTerminalWidth(stripAnsi(prefix)));
+  const availableWidth = Math.max(1, getTerminalColumns() - getTerminalWidth(stripAnsi(prefix)));
+  const optionLines = wrapOptionText(optionText, availableWidth);
+
+  console.log(`${prefix}${optionLines[0] ?? ""}`);
+  optionLines.slice(1).forEach((line) => console.log(`${continuationPrefix}${line}`));
+}
+
+function wrapOptionText(optionText: string, availableWidth: number): string[] {
+  if (!optionText || getTerminalWidth(stripAnsi(optionText)) <= availableWidth) {
+    return [optionText];
+  }
+
+  if (!optionText.startsWith("[") || !optionText.endsWith("]")) {
+    return [optionText];
+  }
+
+  const options = optionText.slice(1, -1).split(" / ");
+  const lines: string[] = [];
+  let current = `[${options[0] ?? ""}`;
+
+  options.slice(1).forEach((option) => {
+    const candidate = `${current} / ${option}`;
+
+    if (getTerminalWidth(stripAnsi(`${candidate}]`)) <= availableWidth) {
+      current = candidate;
+      return;
+    }
+
+    lines.push(`${current} /`);
+    current = option;
+  });
+
+  lines.push(`${current}]`);
+  return lines;
 }
 
 function renderBindingItem(

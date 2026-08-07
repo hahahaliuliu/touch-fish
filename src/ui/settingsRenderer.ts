@@ -162,7 +162,25 @@ function renderConfigItem(
     return;
   }
 
-  console.log(`${editMark} ${padTerminal(item.label, 20)} ${formatSettingCell(value, isNumericCursor)} ${optionText}`);
+  const prefix = `${editMark} ${padTerminal(item.label, 20)} ${formatSettingCell(value, isNumericCursor)} `;
+  const continuationPrefix = " ".repeat(getTerminalWidth(prefix));
+  const availableWidth = Math.max(1, getTerminalColumns() - getTerminalWidth(prefix));
+  const optionLines = wrapOptionText(optionText, availableWidth);
+
+  console.log(`${prefix}${optionLines[0] ?? ""}`);
+  optionLines.slice(1).forEach((line) => console.log(`${continuationPrefix}${line}`));
+}
+
+function wrapOptionText(optionText: string, availableWidth: number): string[] {
+  if (!optionText || getTerminalWidth(optionText) <= availableWidth) {
+    return [optionText];
+  }
+
+  if (!optionText.startsWith("[") || !optionText.endsWith("]")) {
+    return [optionText];
+  }
+
+  return wrapCompleteOptions(optionText.slice(1, -1).split(" / "), availableWidth);
 }
 
 function renderVocabularyBookItem(
