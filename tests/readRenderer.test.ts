@@ -115,3 +115,58 @@ test("read help displays the configured key bindings", () => {
     console.clear = originalClear;
   }
 });
+
+test("read help and disguise themes display section navigation when enabled", () => {
+  for (const [theme, expectedStatus] of [
+    ["build-log", "section 2 / 3"],
+    ["backend-log", "section=2/3"],
+    ["git", "section 2/3"],
+  ] as const) {
+    const lines = captureReadRender({
+      theme,
+      sectionNavigationEnabled: true,
+      sectionIndex: 1,
+      sectionTotal: 3,
+    });
+    assert.equal(lines.some((line) => line.includes(expectedStatus)), true);
+  }
+
+  const helpLines = captureReadRender({
+    showHelp: true,
+    sectionNavigationEnabled: true,
+    sectionIndex: 0,
+    sectionTotal: 3,
+  });
+  assert.equal(helpLines.some((line) => line.includes("Previous section")), true);
+  assert.equal(helpLines.some((line) => line.includes("Next section")), true);
+  assert.equal(helpLines.some((line) => line.includes("Previous chapter")), false);
+});
+
+function captureReadRender(overrides: Partial<Parameters<typeof renderReadSession>[0]>): string[] {
+  const lines: string[] = [];
+  const originalLog = console.log;
+  const originalClear = console.clear;
+
+  console.log = (...values: unknown[]) => lines.push(values.join(" "));
+  console.clear = () => undefined;
+
+  try {
+    renderReadSession({
+      book,
+      page,
+      pageIndex: 0,
+      pageTotal: 1,
+      chapterIndex: 0,
+      theme: "build-log",
+      interfaceLanguage: "english",
+      keyBindings,
+      showHelp: false,
+      ...overrides,
+    });
+  } finally {
+    console.log = originalLog;
+    console.clear = originalClear;
+  }
+
+  return lines;
+}

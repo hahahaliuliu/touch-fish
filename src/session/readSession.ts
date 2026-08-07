@@ -1,4 +1,4 @@
-import type { ReadingBook } from "../models/reading.js";
+import type { ReadingBook, ReadingSection } from "../models/reading.js";
 import { loadReadingBook } from "../services/readingLoader.js";
 import {
   findReadingChapterIndex,
@@ -11,6 +11,12 @@ import {
   getPreviousReadingPageIndex,
   paginateReadingText,
 } from "../services/readingPagination.js";
+import {
+  createReadingSections,
+  findReadingSectionIndex,
+  getNextReadingSectionIndex,
+  getPreviousReadingSectionIndex,
+} from "../services/readingSections.js";
 import { loadReadProgress, saveReadProgress } from "../storage/readProgress.js";
 import { loadReadSettings } from "../storage/readSettings.js";
 import type { InterfaceLanguage, ThemeName } from "../models/settings.js";
@@ -25,11 +31,13 @@ import { startReadSettingSession } from "./readSettingSession.js";
 
 let book: ReadingBook;
 let pages = paginateReadingText("", 20, 1);
+let sections: ReadingSection[] = [];
 let currentPageIndex = 0;
 let theme: ThemeName = "build-log";
 let interfaceLanguage: InterfaceLanguage = "english";
 let showHelp = false;
 let keyBindings: ReadKeyBindings;
+let sectionNavigationEnabled = false;
 type LastNavigation = "previous-page" | "next-page" | "previous-chapter" | "next-chapter";
 let lastNavigation: LastNavigation = "next-page";
 
@@ -39,12 +47,18 @@ export function startReadSession(nextBook: ReadingBook) {
   theme = readSettings.theme;
   interfaceLanguage = readSettings.interfaceLanguage;
   keyBindings = readSettings.keyBindings;
+  sectionNavigationEnabled = readSettings.chapterSectionCount > 0;
   showHelp = false;
+  sections = createReadingSections(
+    book.content,
+    book.chapters,
+    sectionNavigationEnabled ? readSettings.chapterSectionCount : 1
+  );
   pages = paginateReadingText(
     book.content,
     getReadContentWidth(theme, readSettings.contentWidth),
     getReadPageLineCount(readSettings.pageLineCount),
-    book.chapters.map((chapter) => chapter.startOffset)
+    sections.map((section) => section.startOffset)
   );
   const progress = loadReadProgress(book.id, book.characterCount);
   currentPageIndex = findReadingPageIndex(pages, progress.characterOffset);
@@ -190,6 +204,23 @@ function moveChapter(direction: -1 | 1) {
     return;
   }
 
+  if (sectionNavigationEnabled) {
+    const currentSectionIndex = findReadingSectionIndex(sections, currentPage.startOffset);
+    const nextSectionIndex = direction === 1
+      ? getNextReadingSectionIndex(sections, currentSectionIndex)
+      : getPreviousReadingSectionIndex(sections, currentSectionIndex);
+    const nextSection = sections[nextSectionIndex];
+
+    if (!nextSection) {
+      return;
+    }
+
+    currentPageIndex = findReadingPageIndex(pages, nextSection.startOffset);
+    lastNavigation = direction === 1 ? "next-chapter" : "previous-chapter";
+    saveAndRender();
+    return;
+  }
+
   const currentChapterIndex = findReadingChapterIndex(book.chapters, currentPage.startOffset);
   const nextChapterIndex = direction === 1
     ? getNextReadingChapterIndex(book.chapters, currentChapterIndex)
@@ -237,12 +268,19 @@ function renderSession() {
     return;
   }
 
+  const currentSection = sectionNavigationEnabled
+    ? sections[findReadingSectionIndex(sections, page.startOffset)]
+    : undefined;
+
   renderReadSession({
     book,
     page,
     pageIndex: currentPageIndex,
     pageTotal: pages.length,
     chapterIndex: findReadingChapterIndex(book.chapters, page.startOffset),
+    sectionIndex: currentSection?.indexInChapter,
+    sectionTotal: currentSection?.countInChapter,
+    sectionNavigationEnabled,
     theme,
     interfaceLanguage,
     keyBindings,

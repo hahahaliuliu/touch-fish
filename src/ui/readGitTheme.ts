@@ -4,6 +4,9 @@ import { getTerminalColumns, truncateTerminalText } from "./terminalText.js";
 export function renderGitReadSession(options: RenderReadSessionOptions) {
   const { book, page, pageIndex, pageTotal, chapterIndex } = options;
   const chapter = book.chapters[chapterIndex] ?? book.chapters[0]!;
+  const sectionStatus = options.sectionNavigationEnabled && options.sectionIndex !== undefined && options.sectionTotal !== undefined
+    ? `, section ${options.sectionIndex + 1}/${options.sectionTotal}`
+    : "";
 
   console.clear();
   console.log("On branch feature/reading-workspace");
@@ -18,7 +21,7 @@ export function renderGitReadSession(options: RenderReadSessionOptions) {
   console.log("index 2c0b11a..6f4d982 100644");
   console.log(`--- a/assets/reading/${book.id}.txt`);
   console.log(`+++ b/assets/reading/${book.id}.txt`);
-  console.log(`@@ page ${pageIndex + 1}/${pageTotal}, chapter ${chapterIndex + 1}/${book.chapters.length}: ${chapter.title} @@`);
+  console.log(`@@ page ${pageIndex + 1}/${pageTotal}, chapter ${chapterIndex + 1}/${book.chapters.length}${sectionStatus}: ${chapter.title} @@`);
 
   page.lines.forEach((line) => {
     console.log(truncateTerminalText(`+  src/reading/page-${String(pageIndex + 1).padStart(3, "0")}.txt: ${line}`, getTerminalColumns()));

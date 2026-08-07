@@ -9,6 +9,7 @@ import { startReadingImportSession } from "./readingImportSession.js";
 
 const WIDTH_OPTIONS: Array<number | "custom"> = [0, 30, 50, "custom"];
 const LINE_OPTIONS: Array<number | "custom"> = [5, 10, 15, "custom"];
+const SECTION_OPTIONS: Array<number | "custom"> = [0, 2, 3, 5, "custom"];
 const INTERFACE_LANGUAGES: readonly InterfaceLanguage[] = ["english", "chinese"];
 const THEMES: readonly ThemeName[] = ["build-log", "backend-log", "git"];
 const BINDING_ACTIONS: ReadBindingAction[] = [
@@ -21,11 +22,12 @@ const BINDING_ACTIONS: ReadBindingAction[] = [
 ];
 const WIDTH_ITEM_INDEX = 0;
 const LINE_ITEM_INDEX = 1;
-const LANGUAGE_ITEM_INDEX = 2;
-const CURRENT_BOOK_ITEM_INDEX = 3;
-const IMPORT_ITEM_INDEX = 4;
-const THEME_ITEM_INDEX = 5;
-const BINDING_START_INDEX = 6;
+const SECTION_ITEM_INDEX = 2;
+const LANGUAGE_ITEM_INDEX = 3;
+const CURRENT_BOOK_ITEM_INDEX = 4;
+const IMPORT_ITEM_INDEX = 5;
+const THEME_ITEM_INDEX = 6;
+const BINDING_START_INDEX = 7;
 const ITEM_COUNT = BINDING_START_INDEX + BINDING_ACTIONS.length;
 type BindingSlot = 0 | 1;
 
@@ -181,9 +183,9 @@ function confirmOrStartEdit() {
     isEditing = true;
     editError = "";
 
-    if (selectedIndex === WIDTH_ITEM_INDEX || selectedIndex === LINE_ITEM_INDEX) {
-      const options = selectedIndex === WIDTH_ITEM_INDEX ? WIDTH_OPTIONS : LINE_OPTIONS;
-      const currentValue = selectedIndex === WIDTH_ITEM_INDEX ? settings.contentWidth : settings.pageLineCount;
+    if (isNumericSettingSelected()) {
+      const options = getSelectedNumericOptions();
+      const currentValue = getSelectedNumericValue();
       selectedNumericOption = options.includes(currentValue) ? currentValue : "custom";
       customInput = String(currentValue);
       numericInputTouched = false;
@@ -234,8 +236,8 @@ function changeCurrentValue(direction: -1 | 1) {
 }
 
 function changeNumericValue(direction: -1 | 1) {
-  const options = selectedIndex === WIDTH_ITEM_INDEX ? WIDTH_OPTIONS : LINE_OPTIONS;
-  const currentValue = selectedIndex === WIDTH_ITEM_INDEX ? settings.contentWidth : settings.pageLineCount;
+  const options = getSelectedNumericOptions();
+  const currentValue = getSelectedNumericValue();
   const currentOption = selectedNumericOption ?? (options.includes(currentValue) ? currentValue : "custom");
   const currentIndex = options.indexOf(currentOption);
   const nextIndex = (currentIndex + direction + options.length) % options.length;
@@ -246,9 +248,7 @@ function changeNumericValue(direction: -1 | 1) {
   if (typeof nextValue === "number") {
     customInput = String(nextValue);
     numericInputTouched = false;
-    settings = selectedIndex === WIDTH_ITEM_INDEX
-      ? { ...settings, contentWidth: nextValue }
-      : { ...settings, pageLineCount: nextValue };
+    settings = applySelectedNumericValue(nextValue);
   } else {
     customInput = "";
     numericInputTouched = true;
@@ -263,18 +263,13 @@ function saveEdit() {
     }
   } else if (selectedNumericOption === "custom") {
     const numericValue = Number(customInput);
-    const isWidth = selectedIndex === WIDTH_ITEM_INDEX;
-    const isOutsideRange = numericValue < (isWidth ? 20 : 1) || (!isWidth && numericValue > 100);
-    if (!Number.isInteger(numericValue) || isOutsideRange) {
-      editError = isWidth
-        ? localize("Content width must be a whole number of at least 20", "正文宽度必须是大于等于 20 的整数")
-        : localize("Page lines must be a whole number from 1 to 100", "每页行数必须是 1 到 100 的整数");
+    const validationError = getNumericValidationError(numericValue);
+    if (validationError) {
+      editError = validationError;
       render();
       return;
     }
-    settings = isWidth
-      ? { ...settings, contentWidth: numericValue }
-      : { ...settings, pageLineCount: numericValue };
+    settings = applySelectedNumericValue(numericValue);
     saveReadSettings(settings);
   } else {
     saveReadSettings(settings);
@@ -282,6 +277,60 @@ function saveEdit() {
 
   resetEditState();
   render();
+}
+
+function isNumericSettingSelected(): boolean {
+  return selectedIndex === WIDTH_ITEM_INDEX
+    || selectedIndex === LINE_ITEM_INDEX
+    || selectedIndex === SECTION_ITEM_INDEX;
+}
+
+function getSelectedNumericOptions(): Array<number | "custom"> {
+  if (selectedIndex === WIDTH_ITEM_INDEX) {
+    return WIDTH_OPTIONS;
+  }
+  if (selectedIndex === SECTION_ITEM_INDEX) {
+    return SECTION_OPTIONS;
+  }
+  return LINE_OPTIONS;
+}
+
+function getSelectedNumericValue(): number {
+  if (selectedIndex === WIDTH_ITEM_INDEX) {
+    return settings.contentWidth;
+  }
+  if (selectedIndex === SECTION_ITEM_INDEX) {
+    return settings.chapterSectionCount;
+  }
+  return settings.pageLineCount;
+}
+
+function applySelectedNumericValue(value: number): ReadSettings {
+  if (selectedIndex === WIDTH_ITEM_INDEX) {
+    return { ...settings, contentWidth: value };
+  }
+  if (selectedIndex === SECTION_ITEM_INDEX) {
+    return { ...settings, chapterSectionCount: value };
+  }
+  return { ...settings, pageLineCount: value };
+}
+
+function getNumericValidationError(value: number): string {
+  if (selectedIndex === WIDTH_ITEM_INDEX) {
+    return Number.isInteger(value) && value >= 20
+      ? ""
+      : localize("Content width must be a whole number of at least 20", "正文宽度必须是大于等于 20 的整数");
+  }
+
+  if (selectedIndex === SECTION_ITEM_INDEX) {
+    return Number.isInteger(value) && value >= 2 && value <= 20
+      ? ""
+      : localize("Chapter sections must be a whole number from 2 to 20", "章节切分必须是 2 到 20 的整数");
+  }
+
+  return Number.isInteger(value) && value >= 1 && value <= 100
+    ? ""
+    : localize("Page lines must be a whole number from 1 to 100", "每页行数必须是 1 到 100 的整数");
 }
 
 function cancelEdit() {

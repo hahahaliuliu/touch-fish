@@ -11,6 +11,7 @@ const books: ReadingBookSummary[] = [
 const settings: ReadSettings = {
   contentWidth: 0,
   pageLineCount: 10,
+  chapterSectionCount: 0,
   interfaceLanguage: "chinese",
   theme: "build-log",
   keyBindings: {
@@ -25,7 +26,7 @@ const settings: ReadSettings = {
 
 test("Read settings order mirrors the corresponding Word settings", () => {
   const lines = captureRender({});
-  const indexes = ["正文宽度", "每页行数", "界面语言", "当前小说", "导入 TXT 小说", "伪装主题"]
+  const indexes = ["正文宽度", "每页行数", "章节切分", "界面语言", "当前小说", "导入 TXT 小说", "伪装主题"]
     .map((label) => lines.findIndex((line) => line.includes(label)));
 
   assert.equal(indexes.every((index) => index >= 0), true);
@@ -45,7 +46,7 @@ test("Read settings highlights the active automatic width option while editing",
 
 test("Read settings highlights the selected novel while editing", () => {
   const lines = captureRender({
-    selectedIndex: 3,
+    selectedIndex: 4,
     isEditing: true,
   });
 
@@ -60,7 +61,7 @@ test("Read settings shows cursors for custom numeric input and key capture", () 
     selectedNumericOption: "custom",
   });
   const bindingLines = captureRender({
-    selectedIndex: 6,
+    selectedIndex: 7,
     isEditing: false,
     isBindingCapture: true,
   });
@@ -73,13 +74,23 @@ test("Read settings shows cursors for custom numeric input and key capture", () 
 
 test("Read settings highlights one binding slot without hiding the other", () => {
   const lines = captureRender({
-    selectedIndex: 6,
+    selectedIndex: 7,
     selectedBindingSlot: 1,
   });
   const bindingLine = lines.find((line) => line.includes("上一页")) ?? "";
 
   assert.equal(bindingLine.includes("A"), true);
   assert.equal(bindingLine.includes("\u001b[7m左方向键"), true);
+});
+
+test("Read settings rename chapter bindings when section navigation is enabled", () => {
+  const lines = captureRender({
+    settings: { ...settings, chapterSectionCount: 3 },
+  });
+
+  assert.equal(lines.some((line) => line.includes("上一小节")), true);
+  assert.equal(lines.some((line) => line.includes("下一小节")), true);
+  assert.equal(lines.some((line) => line.includes("上一章")), false);
 });
 
 function captureRender(overrides: Partial<Parameters<typeof renderReadSettings>[0]>): string[] {

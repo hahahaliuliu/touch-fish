@@ -18,6 +18,7 @@ export interface RenderReadSettingsOptions {
 
 const WIDTH_OPTIONS: Array<number | "custom"> = [0, 30, 50, "custom"];
 const LINE_OPTIONS: Array<number | "custom"> = [5, 10, 15, "custom"];
+const SECTION_OPTIONS: Array<number | "custom"> = [0, 2, 3, 5, "custom"];
 const INTERFACE_LANGUAGES: readonly InterfaceLanguage[] = ["english", "chinese"];
 const THEMES: readonly ThemeName[] = ["build-log", "backend-log", "git"];
 const BINDING_ACTIONS: ReadBindingAction[] = [
@@ -30,11 +31,12 @@ const BINDING_ACTIONS: ReadBindingAction[] = [
 ];
 const WIDTH_ITEM_INDEX = 0;
 const LINE_ITEM_INDEX = 1;
-const LANGUAGE_ITEM_INDEX = 2;
-const CURRENT_BOOK_ITEM_INDEX = 3;
-const IMPORT_ITEM_INDEX = 4;
-const THEME_ITEM_INDEX = 5;
-const BINDING_START_INDEX = 6;
+const SECTION_ITEM_INDEX = 2;
+const LANGUAGE_ITEM_INDEX = 3;
+const CURRENT_BOOK_ITEM_INDEX = 4;
+const IMPORT_ITEM_INDEX = 5;
+const THEME_ITEM_INDEX = 6;
+const BINDING_START_INDEX = 7;
 
 export function renderReadSettings(options: RenderReadSettingsOptions) {
   const {
@@ -76,6 +78,14 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
     formatNumericOptions(LINE_OPTIONS, selectedNumericOption, selectedIndex === LINE_ITEM_INDEX && isEditing, false, language)
   );
   renderConfigItem(
+    SECTION_ITEM_INDEX,
+    selectedIndex,
+    isEditing,
+    text.chapterSections,
+    formatSectionValue(settings.chapterSectionCount, customInput, selectedIndex === SECTION_ITEM_INDEX && isEditing, selectedNumericOption, language),
+    formatSectionOptions(SECTION_OPTIONS, selectedNumericOption, selectedIndex === SECTION_ITEM_INDEX && isEditing, language)
+  );
+  renderConfigItem(
     LANGUAGE_ITEM_INDEX,
     selectedIndex,
     isEditing,
@@ -113,7 +123,7 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
   BINDING_ACTIONS.forEach((action, index) => {
     const itemIndex = index + BINDING_START_INDEX;
     renderBindingItem(
-      text.bindingLabels[action],
+      getBindingLabel(text, action, settings.chapterSectionCount > 0),
       settings.keyBindings[action],
       itemIndex === selectedIndex,
       selectedBindingSlot,
@@ -132,6 +142,8 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
     console.log(text.widthHint);
   } else if (isEditing && selectedIndex === LINE_ITEM_INDEX) {
     console.log(text.lineHint);
+  } else if (isEditing && selectedIndex === SECTION_ITEM_INDEX) {
+    console.log(text.sectionHint);
   } else if (isEditing) {
     console.log(text.editHint);
   }
@@ -244,6 +256,54 @@ function formatNumericOptions(
   }).join(" / ")}]`;
 }
 
+function formatSectionValue(
+  value: number,
+  customInput: string,
+  editing: boolean,
+  selectedOption: number | "custom" | undefined,
+  language: InterfaceLanguage
+): string {
+  if (editing && selectedOption === "custom") {
+    return `${customInput}${blinkingCursor()}`;
+  }
+
+  if (value === 0) {
+    return language === "chinese" ? "关闭" : "off";
+  }
+
+  return language === "chinese" ? `${value} 份` : `${value} parts`;
+}
+
+function formatSectionOptions(
+  options: Array<number | "custom">,
+  selectedOption: number | "custom" | undefined,
+  editing: boolean,
+  language: InterfaceLanguage
+): string {
+  return `[${options.map((option) => {
+    const label = option === "custom"
+      ? language === "chinese" ? "自定义" : "custom"
+      : option === 0
+        ? language === "chinese" ? "关闭" : "off"
+        : language === "chinese" ? `${option} 份` : `${option} parts`;
+    return formatOption(label, editing && option === selectedOption);
+  }).join(" / ")}]`;
+}
+
+function getBindingLabel(
+  text: ReturnType<typeof getText>,
+  action: ReadBindingAction,
+  sectionNavigationEnabled: boolean
+): string {
+  if (sectionNavigationEnabled && action === "previousChapter") {
+    return text.previousSection;
+  }
+  if (sectionNavigationEnabled && action === "nextChapter") {
+    return text.nextSection;
+  }
+  return text.bindingLabels[action];
+}
+
 function formatValueOptions<T>(
   options: readonly T[],
   currentValue: T,
@@ -291,6 +351,7 @@ function getText(language: InterfaceLanguage) {
       noBooks: "暂无本地小说",
       contentWidth: "正文宽度",
       pageLines: "每页行数",
+      chapterSections: "章节切分",
       interfaceLanguage: "界面语言",
       theme: "伪装主题",
       keyBindings: "按键绑定",
@@ -302,11 +363,14 @@ function getText(language: InterfaceLanguage) {
         repeat: "重复操作",
         toggleHelp: "打开帮助",
       } satisfies Record<ReadBindingAction, string>,
+      previousSection: "上一小节",
+      nextSection: "下一小节",
       controlsFirstLine: "操作  W/S 移动 | A/D 修改设置或切换键位 | Enter 编辑 | Backspace 清空",
       controlsSecondLine: "      Esc 取消编辑 / 返回阅读 | Ctrl+O 返回阅读 | Q 退出",
       bindingHint: "[绑定] 请按英文键、符号、空格、Tab 或方向键；已占用的键会自动清空原位置",
       widthHint: "[编辑] A/D 移动选项光标；自动适配会按终端宽度和当前主题计算正文宽度",
       lineHint: "[自定义] 输入 1 到 100 的整数后按 Enter 保存；A/D 可切换预设和自定义",
+      sectionHint: "[编辑] 关闭时 W/S 跳章节；开启后按自然段分为阅读小节，输入 2 到 20 的整数可自定义份数",
       editHint: "[编辑] 修改后按 Enter 保存",
       warningPrefix: "[警告] ",
     };
@@ -321,6 +385,7 @@ function getText(language: InterfaceLanguage) {
     noBooks: "No local novels",
     contentWidth: "Content Width",
     pageLines: "Page Lines",
+    chapterSections: "Chapter Sections",
     interfaceLanguage: "Interface Language",
     theme: "Disguise Theme",
     keyBindings: "Key Bindings",
@@ -332,11 +397,14 @@ function getText(language: InterfaceLanguage) {
       repeat: "Repeat Action",
       toggleHelp: "Toggle Help",
     } satisfies Record<ReadBindingAction, string>,
+    previousSection: "Previous Section",
+    nextSection: "Next Section",
     controlsFirstLine: "Controls  W/S move | A/D setting or slot | Enter edit | Backspace clear",
     controlsSecondLine: "          Esc cancel edit / return to read | Ctrl+O return to read | Q quit",
     bindingHint: "[BIND] English key, symbol, Space, Tab, or arrow key; occupied keys clear their previous slot",
     widthHint: "[EDIT] A/D moves the option cursor; auto uses the terminal width and current theme",
     lineHint: "[CUSTOM] enter a whole number from 1 to 100, then Enter; A/D cycles presets and custom",
+    sectionHint: "[EDIT] off makes W/S jump chapters; enabled splits at paragraphs, with 2 to 20 custom parts",
     editHint: "[EDIT] change the value, then press Enter to save",
     warningPrefix: "[WARN] ",
   };

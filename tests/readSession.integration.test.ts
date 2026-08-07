@@ -148,7 +148,7 @@ test("Read returns from settings with the newly selected novel", async () => {
   fs.writeFileSync(path.join(readingDirectory, "bravo.txt"), "第二本。", "utf-8");
 
   try {
-    const result = await runReadSession(root, ["\u000f", "s", "s", "s", "\r", "d", "\r", "\u000f", "q"]);
+    const result = await runReadSession(root, ["\u000f", "s", "s", "s", "s", "\r", "d", "\r", "\u000f", "q"]);
 
     assert.equal(result.code, 0, result.output);
     assert.equal(result.output.includes("source loaded: bravo.txt"), true, result.output);
@@ -172,7 +172,7 @@ test("Read settings select a novel and save the page layout", async () => {
   fs.writeFileSync(path.join(readingDirectory, "bravo.txt"), "第二本。", "utf-8");
 
   try {
-    const result = await runReadSession(root, ["\r", "d", "\r", "s", "\r", "d", "\r", "s", "s", "\r", "d", "\r", "\u000f", "q"], ["read", "-s"]);
+    const result = await runReadSession(root, ["\r", "d", "\r", "s", "\r", "d", "\r", "s", "s", "s", "\r", "d", "\r", "\u000f", "q"], ["read", "-s"]);
 
     assert.equal(result.code, 0, result.output);
     assert.equal(result.output.includes("Read Settings"), true, result.output);
@@ -185,6 +185,41 @@ test("Read settings select a novel and save the page layout", async () => {
     };
     assert.equal(readSettings.contentWidth, 30);
     assert.equal(readSettings.pageLineCount, 15);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Read settings split chapters at paragraphs and W/S navigate sections", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-sections-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+  const content = "第一章 开始\n第一段正文。\n第二段正文。\n第三段正文。";
+  const secondSectionOffset = [..."第一章 开始\n第一段正文。\n"].length;
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "sections.txt"), content, "utf-8");
+
+  try {
+    const result = await runReadSession(
+      root,
+      ["s", "s", "\r", "d", "d", "\r", "\u000f", "s", "?", "\u001b", "q"],
+      ["read", "-s"]
+    );
+
+    assert.equal(result.code, 0, result.output);
+    assert.equal(result.output.includes("section 2 / 3"), true, result.output);
+    assert.equal(result.output.includes("第二段正文。"), true, result.output);
+    assert.equal(result.output.includes("Next section"), true, result.output);
+    const settings = JSON.parse(fs.readFileSync(path.join(root, "read-settings.json"), "utf-8")) as {
+      chapterSectionCount: number;
+    };
+    assert.equal(settings.chapterSectionCount, 3);
+    const progress = JSON.parse(
+      fs.readFileSync(path.join(root, "read-progress", "sections.json"), "utf-8")
+    ) as { characterOffset: number };
+    assert.equal(progress.characterOffset, secondSectionOffset);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -204,7 +239,7 @@ test("Read settings bind a custom next-page key", async () => {
   );
 
   try {
-    const result = await runReadSession(root, ["s", "s", "s", "s", "s", "s", "s", "\r", "f", "\u000f", "f", "q"], ["read", "-s"]);
+    const result = await runReadSession(root, ["s", "s", "s", "s", "s", "s", "s", "s", "\r", "f", "\u000f", "f", "q"], ["read", "-s"]);
 
     assert.equal(result.code, 0, result.output);
     assert.equal(result.output.includes("page 2 / 2"), true, result.output);
@@ -229,7 +264,7 @@ test("Read settings select and edit either key-binding slot", async () => {
   try {
     const result = await runReadSession(
       root,
-      ["s", "s", "s", "s", "s", "s", "s", "d", "\r", "f", "q"],
+      ["s", "s", "s", "s", "s", "s", "s", "s", "d", "\r", "f", "q"],
       ["read", "-s"]
     );
 
@@ -255,7 +290,7 @@ test("Read settings move occupied bindings and clear slots with Backspace", asyn
   try {
     const moved = await runReadSession(
       root,
-      ["s", "s", "s", "s", "s", "s", "\r", "d", "q"],
+      ["s", "s", "s", "s", "s", "s", "s", "\r", "d", "q"],
       ["read", "-s"]
     );
     assert.equal(moved.code, 0, moved.output);
@@ -268,7 +303,7 @@ test("Read settings move occupied bindings and clear slots with Backspace", asyn
 
     const cleared = await runReadSession(
       root,
-      ["s", "s", "s", "s", "s", "s", "d", "\r", "\u007f", "q"],
+      ["s", "s", "s", "s", "s", "s", "s", "d", "\r", "\u007f", "q"],
       ["read", "-s"]
     );
     assert.equal(cleared.code, 0, cleared.output);
@@ -294,7 +329,7 @@ test("Read settings save their own interface language and disguise theme", async
   try {
     const result = await runReadSession(
       root,
-      ["s", "s", "\r", "d", "\r", "s", "s", "s", "\r", "d", "\r", "\u000f", "q"],
+      ["s", "s", "s", "\r", "d", "\r", "s", "s", "s", "\r", "d", "\r", "\u000f", "q"],
       ["read", "-s"]
     );
 
@@ -326,7 +361,7 @@ test("Read settings import a UTF-8 TXT novel and make it active", async () => {
   try {
     const result = await runReadSession(
       root,
-      ["s", "s", "s", "s", "\r", "s", "\r", `"${sourcePath}"`, "\r", "\u000f", "\u000f", "q"],
+      ["s", "s", "s", "s", "s", "\r", "s", "\r", `"${sourcePath}"`, "\r", "\u000f", "\u000f", "q"],
       ["read", "-s"]
     );
 
@@ -357,7 +392,7 @@ test("Read import keeps both novels when a file name conflicts", async () => {
   try {
     const result = await runReadSession(
       root,
-      ["s", "s", "s", "s", "\r", "s", "\r", sourcePath, "\r", "d", "\r", "\u000f", "\u000f", "q"],
+      ["s", "s", "s", "s", "s", "\r", "s", "\r", sourcePath, "\r", "d", "\r", "\u000f", "\u000f", "q"],
       ["read", "-s"]
     );
 
@@ -386,7 +421,7 @@ test("Read import replaces a conflicting novel after confirmation", async () => 
   try {
     const result = await runReadSession(
       root,
-      ["s", "s", "s", "s", "\r", "s", "\r", sourcePath, "\r", "\r", "\u000f", "\u000f", "q"],
+      ["s", "s", "s", "s", "s", "\r", "s", "\r", sourcePath, "\r", "\r", "\u000f", "\u000f", "q"],
       ["read", "-s"]
     );
 
@@ -413,7 +448,7 @@ test("Read import rejects files that are not TXT", async () => {
   try {
     const result = await runReadSession(
       root,
-      ["s", "s", "s", "s", "\r", "s", "\r", sourcePath, "\r", "\u0003"],
+      ["s", "s", "s", "s", "s", "\r", "s", "\r", sourcePath, "\r", "\u0003"],
       ["read", "-s"]
     );
 
@@ -439,7 +474,7 @@ test("Read import rejects invalid UTF-8 files", async () => {
   try {
     const result = await runReadSession(
       root,
-      ["s", "s", "s", "s", "\r", "s", "\r", invalidPath, "\r", "\u0003"],
+      ["s", "s", "s", "s", "s", "\r", "s", "\r", invalidPath, "\r", "\u0003"],
       ["read", "-s"]
     );
 
@@ -471,7 +506,7 @@ test("Read import manager lists novels and deletes the selected novel with its p
   try {
     const result = await runReadSession(
       root,
-      ["s", "s", "s", "s", "\r", "\r", "y", "\u000f", "\u000f", "q"],
+      ["s", "s", "s", "s", "s", "\r", "\r", "y", "\u000f", "\u000f", "q"],
       ["read", "-s"]
     );
 
@@ -503,6 +538,30 @@ test("Read settings reject a custom page line count above 100", async () => {
     const result = await runReadSession(root, ["s", "\r", "d", "d", "101", "\r", "\u001b", "q"], ["read", "-s"]);
 
     assert.equal(result.code, 0, result.output);
+    assert.equal(fs.existsSync(path.join(root, "read-settings.json")), false);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Read settings reject a custom chapter section count above 20", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-section-limit-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "limit.txt"), "正文第一段。\n正文第二段。", "utf-8");
+
+  try {
+    const result = await runReadSession(
+      root,
+      ["s", "s", "\r", "d", "d", "d", "d", "21", "\r", "\u001b", "q"],
+      ["read", "-s"]
+    );
+
+    assert.equal(result.code, 0, result.output);
+    assert.equal(result.output.includes("Chapter sections must be a whole number from 2 to 20"), true, result.output);
     assert.equal(fs.existsSync(path.join(root, "read-settings.json")), false);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });

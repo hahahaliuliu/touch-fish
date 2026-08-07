@@ -26,6 +26,7 @@ export interface ReadState {
 export interface ReadSettings {
   contentWidth: number;
   pageLineCount: number;
+  chapterSectionCount: number;
   interfaceLanguage: InterfaceLanguage;
   theme: ThemeName;
   keyBindings: ReadKeyBindings;
@@ -49,5 +50,12 @@ export interface ReadingPage {
 
 export interface ReadingChapter {
   title: string;
+  startOffset: number;
+}
+
+export interface ReadingSection {
+  chapterIndex: number;
+  indexInChapter: number;
+  countInChapter: number;
   startOffset: number;
 }

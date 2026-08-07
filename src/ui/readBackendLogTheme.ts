@@ -5,6 +5,9 @@ export function renderBackendLogReadSession(options: RenderReadSessionOptions) {
   const { book, page, pageIndex, pageTotal, chapterIndex } = options;
   const chapter = book.chapters[chapterIndex] ?? book.chapters[0]!;
   const timestamp = new Date().toISOString();
+  const sectionStatus = options.sectionNavigationEnabled && options.sectionIndex !== undefined && options.sectionTotal !== undefined
+    ? ` section=${options.sectionIndex + 1}/${options.sectionTotal}`
+    : "";
 
   console.clear();
   console.log(`${timestamp} INFO  reader-api booting service=local-reading`);
@@ -25,7 +28,7 @@ export function renderBackendLogReadSession(options: RenderReadSessionOptions) {
   });
 
   console.log("");
-  console.log(`${timestamp} INFO  page served current=${pageIndex + 1}/${pageTotal} chapter=${chapterIndex + 1}/${book.chapters.length}`);
+  console.log(`${timestamp} INFO  page served current=${pageIndex + 1}/${pageTotal} chapter=${chapterIndex + 1}/${book.chapters.length}${sectionStatus}`);
   console.log(`${timestamp} INFO  checkpoint offset=${page.startOffset}`);
   console.log("service: ready");
   console.log(">");

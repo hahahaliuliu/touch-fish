@@ -16,6 +16,9 @@ export interface RenderReadSessionOptions {
   pageIndex: number;
   pageTotal: number;
   chapterIndex: number;
+  sectionIndex?: number | undefined;
+  sectionTotal?: number | undefined;
+  sectionNavigationEnabled?: boolean | undefined;
   theme: ThemeName;
   interfaceLanguage: InterfaceLanguage;
   keyBindings: ReadKeyBindings;
@@ -39,7 +42,7 @@ export function getReadPageLineCount(pageLineCount = DEFAULT_PAGE_LINE_COUNT): n
 
 export function renderReadSession(options: RenderReadSessionOptions) {
   if (options.showHelp) {
-    renderReadHelp(options.interfaceLanguage, options.keyBindings);
+    renderReadHelp(options.interfaceLanguage, options.keyBindings, options.sectionNavigationEnabled === true);
     return;
   }
 
@@ -61,6 +64,9 @@ export function renderReadSession(options: RenderReadSessionOptions) {
 function renderBuildLogReadSession(options: RenderReadSessionOptions) {
   const { book, page, pageIndex, pageTotal, chapterIndex } = options;
   const chapter = book.chapters[chapterIndex] ?? book.chapters[0]!;
+  const sectionStatus = options.sectionNavigationEnabled && options.sectionIndex !== undefined && options.sectionTotal !== undefined
+    ? ` | section ${options.sectionIndex + 1} / ${options.sectionTotal}`
+    : "";
 
   console.clear();
   console.log("[INFO] compiling reading workspace...");
@@ -93,7 +99,7 @@ function renderBuildLogReadSession(options: RenderReadSessionOptions) {
   });
 
   console.log("");
-  console.log(`[INFO] page ${pageIndex + 1} / ${pageTotal} | chapter ${chapterIndex + 1} / ${book.chapters.length}: ${chapter.title}`);
+  console.log(`[INFO] page ${pageIndex + 1} / ${pageTotal} | chapter ${chapterIndex + 1} / ${book.chapters.length}${sectionStatus}: ${chapter.title}`);
   console.log(`[INFO] saved offset ready: ${page.startOffset}`);
   console.log("[INFO] watching for page navigation...");
   console.log("runtime: idle");
@@ -117,7 +123,11 @@ export function renderReadQuitMessage(theme: ThemeName) {
   console.log("[INFO] reading workspace closed");
 }
 
-function renderReadHelp(language: InterfaceLanguage, keyBindings: ReadKeyBindings) {
+function renderReadHelp(
+  language: InterfaceLanguage,
+  keyBindings: ReadKeyBindings,
+  sectionNavigationEnabled: boolean
+) {
   const chinese = language === "chinese";
 
   console.clear();
@@ -126,8 +136,14 @@ function renderReadHelp(language: InterfaceLanguage, keyBindings: ReadKeyBinding
   console.log(chinese ? "阅读操作" : "Reading controls");
   renderHelpBinding(keyBindings.previousPage, chinese ? "上一页" : "Previous page");
   renderHelpBinding(keyBindings.nextPage, chinese ? "下一页" : "Next page");
-  renderHelpBinding(keyBindings.previousChapter, chinese ? "上一章" : "Previous chapter");
-  renderHelpBinding(keyBindings.nextChapter, chinese ? "下一章" : "Next chapter");
+  renderHelpBinding(
+    keyBindings.previousChapter,
+    sectionNavigationEnabled ? chinese ? "上一小节" : "Previous section" : chinese ? "上一章" : "Previous chapter"
+  );
+  renderHelpBinding(
+    keyBindings.nextChapter,
+    sectionNavigationEnabled ? chinese ? "下一小节" : "Next section" : chinese ? "下一章" : "Next chapter"
+  );
   renderHelpBinding(keyBindings.repeat, chinese ? "重复上次操作" : "Repeat last action");
   console.log(`  Ctrl+O    ${chinese ? "打开阅读设置" : "Open Read settings"}`);
   renderHelpBinding(keyBindings.toggleHelp, chinese ? "关闭帮助" : "Close help");

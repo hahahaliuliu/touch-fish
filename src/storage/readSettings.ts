@@ -30,6 +30,7 @@ function getDefaultReadSettings(): ReadSettings {
   return {
     contentWidth: 0,
     pageLineCount: 10,
+    chapterSectionCount: 0,
     interfaceLanguage,
     theme,
     keyBindings: cloneKeyBindings(DEFAULT_KEY_BINDINGS),
@@ -48,6 +49,7 @@ export function loadReadSettings(): ReadSettings {
     return {
       contentWidth: isValidWidth(value.contentWidth) ? value.contentWidth : defaults.contentWidth,
       pageLineCount: isValidLineCount(value.pageLineCount) ? value.pageLineCount : defaults.pageLineCount,
+      chapterSectionCount: isValidSectionCount(value.chapterSectionCount) ? value.chapterSectionCount : defaults.chapterSectionCount,
       interfaceLanguage: isInterfaceLanguage(value.interfaceLanguage) ? value.interfaceLanguage : defaults.interfaceLanguage,
       theme: isReadTheme(value.theme) ? value.theme : defaults.theme,
       keyBindings: readKeyBindings(value.keyBindings),
@@ -62,6 +64,7 @@ export function saveReadSettings(settings: ReadSettings) {
   const safeSettings: ReadSettings = {
     contentWidth: isValidWidth(settings.contentWidth) ? settings.contentWidth : defaults.contentWidth,
     pageLineCount: isValidLineCount(settings.pageLineCount) ? settings.pageLineCount : defaults.pageLineCount,
+    chapterSectionCount: isValidSectionCount(settings.chapterSectionCount) ? settings.chapterSectionCount : defaults.chapterSectionCount,
     interfaceLanguage: isInterfaceLanguage(settings.interfaceLanguage) ? settings.interfaceLanguage : defaults.interfaceLanguage,
     theme: isReadTheme(settings.theme) ? settings.theme : defaults.theme,
     keyBindings: readKeyBindings(settings.keyBindings),
@@ -85,6 +88,12 @@ function isValidWidth(value: unknown): value is number {
 
 function isValidLineCount(value: unknown): value is number {
   return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 100;
+}
+
+function isValidSectionCount(value: unknown): value is number {
+  return typeof value === "number"
+    && Number.isInteger(value)
+    && (value === 0 || (value >= 2 && value <= 20));
 }
 
 function readKeyBindings(value: unknown): ReadKeyBindings {
