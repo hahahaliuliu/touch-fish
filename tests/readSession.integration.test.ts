@@ -105,7 +105,7 @@ test("Read help returns to reading when Esc is pressed", async () => {
     const result = await runReadSession(root, ["?", "\u001b", "q"]);
 
     assert.equal(result.code, 0, result.output);
-    assert.equal(result.output.includes("Reading controls"), true, result.output);
+    assert.equal(result.output.includes("Current Reading Workspace"), true, result.output);
     assert.equal(result.output.includes("cache entries by path ./src/read/"), true, result.output);
     assert.equal(result.output.includes("read progress saved"), true, result.output);
   } finally {
@@ -211,7 +211,7 @@ test("Read settings split chapters at paragraphs and W/S navigate sections", asy
     assert.equal(result.code, 0, result.output);
     assert.equal(result.output.includes("section 2 / 3"), true, result.output);
     assert.equal(result.output.includes("第二段正文。"), true, result.output);
-    assert.equal(result.output.includes("Next section"), true, result.output);
+    assert.equal(result.output.includes("next section"), true, result.output);
     const settings = JSON.parse(fs.readFileSync(path.join(root, "read-settings.json"), "utf-8")) as {
       chapterSectionCount: number;
     };

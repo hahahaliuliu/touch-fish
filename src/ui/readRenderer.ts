@@ -42,7 +42,7 @@ export function getReadPageLineCount(pageLineCount = DEFAULT_PAGE_LINE_COUNT): n
 
 export function renderReadSession(options: RenderReadSessionOptions) {
   if (options.showHelp) {
-    renderReadHelp(options.interfaceLanguage, options.keyBindings, options.sectionNavigationEnabled === true);
+    renderReadHelp(options);
     return;
   }
 
@@ -123,40 +123,67 @@ export function renderReadQuitMessage(theme: ThemeName) {
   console.log("[INFO] reading workspace closed");
 }
 
-function renderReadHelp(
-  language: InterfaceLanguage,
-  keyBindings: ReadKeyBindings,
-  sectionNavigationEnabled: boolean
-) {
-  const chinese = language === "chinese";
+function renderReadHelp(options: RenderReadSessionOptions) {
+  const {
+    book,
+    page,
+    pageIndex,
+    pageTotal,
+    chapterIndex,
+    keyBindings,
+    interfaceLanguage,
+  } = options;
+  const sectionNavigationEnabled = options.sectionNavigationEnabled === true;
+  const chapter = book.chapters[chapterIndex] ?? book.chapters[0];
+  const text = getReadHelpText(interfaceLanguage);
 
   console.clear();
-  console.log(chinese ? "[INFO] 阅读工作区帮助已加载" : "[INFO] read workspace help loaded");
+  console.log(text.title);
   console.log("");
-  console.log(chinese ? "阅读操作" : "Reading controls");
-  renderHelpBinding(keyBindings.previousPage, chinese ? "上一页" : "Previous page");
-  renderHelpBinding(keyBindings.nextPage, chinese ? "下一页" : "Next page");
+  console.log(text.navigation);
+  renderHelpBinding(keyBindings.previousPage, text.previousPage);
+  renderHelpBinding(keyBindings.nextPage, text.nextPage);
   renderHelpBinding(
     keyBindings.previousChapter,
-    sectionNavigationEnabled ? chinese ? "上一小节" : "Previous section" : chinese ? "上一章" : "Previous chapter"
+    sectionNavigationEnabled ? text.previousSection : text.previousChapter
   );
   renderHelpBinding(
     keyBindings.nextChapter,
-    sectionNavigationEnabled ? chinese ? "下一小节" : "Next section" : chinese ? "下一章" : "Next chapter"
+    sectionNavigationEnabled ? text.nextSection : text.nextChapter
   );
-  renderHelpBinding(keyBindings.repeat, chinese ? "重复上次操作" : "Repeat last action");
-  console.log(`  Ctrl+O    ${chinese ? "打开阅读设置" : "Open Read settings"}`);
-  renderHelpBinding(keyBindings.toggleHelp, chinese ? "关闭帮助" : "Close help");
+  renderHelpBinding(keyBindings.repeat, text.repeat);
   console.log("");
-  console.log(chinese
-    ? "Esc 返回阅读 | Q / Ctrl+C 保存进度并退出"
-    : "Esc return to reading | Q / Ctrl+C save progress and quit");
-  console.log(">");
+  console.log(text.actions);
+  renderHelpRow("Ctrl+O", text.openSettings);
+  renderHelpBinding(keyBindings.toggleHelp, text.closeHelp);
+  renderHelpRow("Esc", text.returnToReading);
+  renderHelpRow("Q / Ctrl+C", text.quit);
+  console.log("");
+  console.log(text.currentWorkspace);
+  renderHelpRow(text.currentBook, book.title);
+  const readingPosition = Math.min(book.characterCount, page.startOffset + 1);
+  renderHelpRow(text.position, `${readingPosition} / ${book.characterCount}`);
+  renderHelpRow(text.page, `${pageIndex + 1} / ${pageTotal}`);
+  renderHelpRow(text.visibleLines, String(page.lines.length));
+  renderHelpRow(text.chapter, `${chapterIndex + 1} / ${book.chapters.length}`);
+  renderHelpRow(text.chapterTitle, chapter?.title ?? "-");
+  renderHelpRow(text.sectionNavigation, sectionNavigationEnabled ? text.enabled : text.disabled);
+  if (sectionNavigationEnabled) {
+    renderHelpRow(
+      text.section,
+      `${(options.sectionIndex ?? 0) + 1} / ${options.sectionTotal ?? 1}`
+    );
+  }
 }
 
 function renderHelpBinding(bindings: [string, string], label: string) {
   const names = bindings.filter(Boolean).map(formatHelpBinding).join(" / ");
-  console.log(`  ${names.padEnd(9)} ${label}`);
+  renderHelpRow(names, label);
+}
+
+function renderHelpRow(label: string, value: string) {
+  const labelWidth = 21;
+  console.log(`  ${label}${" ".repeat(Math.max(1, labelWidth - getTerminalWidth(label)))}${value}`);
 }
 
 function formatHelpBinding(binding: string): string {
@@ -169,4 +196,64 @@ function formatHelpBinding(binding: string): string {
   };
 
   return labels[binding] ?? binding.toUpperCase();
+}
+
+function getReadHelpText(language: InterfaceLanguage) {
+  if (language === "chinese") {
+    return {
+      title: "Touch Fish 帮助",
+      navigation: "导航",
+      previousPage: "上一页",
+      nextPage: "下一页",
+      previousChapter: "上一章",
+      nextChapter: "下一章",
+      previousSection: "上一小节",
+      nextSection: "下一小节",
+      repeat: "重复上次操作",
+      actions: "操作",
+      openSettings: "打开阅读设置",
+      closeHelp: "关闭帮助",
+      returnToReading: "返回阅读",
+      quit: "保存进度并退出",
+      currentWorkspace: "当前阅读区",
+      currentBook: "当前小说",
+      position: "当前进度",
+      page: "当前页面",
+      visibleLines: "当前显示",
+      chapter: "当前章节",
+      chapterTitle: "章节标题",
+      sectionNavigation: "章节切分",
+      section: "当前小节",
+      enabled: "开启",
+      disabled: "关闭",
+    };
+  }
+
+  return {
+    title: "Touch Fish Help",
+    navigation: "Navigation",
+    previousPage: "previous page",
+    nextPage: "next page",
+    previousChapter: "previous chapter",
+    nextChapter: "next chapter",
+    previousSection: "previous section",
+    nextSection: "next section",
+    repeat: "repeat last action",
+    actions: "Actions",
+    openSettings: "open Read settings",
+    closeHelp: "close help",
+    returnToReading: "return to reading",
+    quit: "save progress and quit",
+    currentWorkspace: "Current Reading Workspace",
+    currentBook: "current novel",
+    position: "reading position",
+    page: "page",
+    visibleLines: "visible lines",
+    chapter: "chapter",
+    chapterTitle: "chapter title",
+    sectionNavigation: "chapter sections",
+    section: "section",
+    enabled: "enabled",
+    disabled: "disabled",
+  };
 }

@@ -75,7 +75,13 @@ test("read renderer displays the help screen before the selected theme", () => {
       keyBindings,
       showHelp: true,
     });
-    assert.equal(lines.some((line) => line.includes("Reading controls")), true);
+    assert.equal(lines.some((line) => line.includes("Touch Fish Help")), true);
+    assert.equal(lines.some((line) => line.includes("Navigation")), true);
+    assert.equal(lines.some((line) => line.includes("Actions")), true);
+    assert.equal(lines.some((line) => line.includes("Current Reading Workspace")), true);
+    assert.equal(lines.some((line) => line.includes("current novel") && line.includes("Example")), true);
+    assert.equal(lines.some((line) => line.includes("reading position") && line.includes("1 / 22")), true);
+    assert.equal(lines.some((line) => line.includes("page") && line.includes("1 / 1")), true);
     assert.equal(lines.some((line) => line.includes("On branch feature/reading-workspace")), false);
   } finally {
     console.log = originalLog;
@@ -107,8 +113,8 @@ test("read help displays the configured key bindings", () => {
       },
       showHelp: true,
     });
-    assert.equal(lines.some((line) => line.includes("F / →") && line.includes("Next page")), true);
-    assert.equal(lines.some((line) => line.includes("H") && line.includes("Close help")), true);
+    assert.equal(lines.some((line) => line.includes("F / →") && line.includes("next page")), true);
+    assert.equal(lines.some((line) => line.includes("H") && line.includes("close help")), true);
     assert.equal(lines.some((line) => line.includes("D / →")), false);
   } finally {
     console.log = originalLog;
@@ -137,9 +143,26 @@ test("read help and disguise themes display section navigation when enabled", ()
     sectionIndex: 0,
     sectionTotal: 3,
   });
-  assert.equal(helpLines.some((line) => line.includes("Previous section")), true);
-  assert.equal(helpLines.some((line) => line.includes("Next section")), true);
-  assert.equal(helpLines.some((line) => line.includes("Previous chapter")), false);
+  assert.equal(helpLines.some((line) => line.includes("previous section")), true);
+  assert.equal(helpLines.some((line) => line.includes("next section")), true);
+  assert.equal(helpLines.some((line) => line.includes("previous chapter")), false);
+  assert.equal(helpLines.some((line) => line.includes("chapter sections") && line.includes("enabled")), true);
+  assert.equal(helpLines.some((line) => line.includes("section") && line.includes("1 / 3")), true);
+});
+
+test("Chinese Read help mirrors the Word help sections", () => {
+  const lines = captureReadRender({
+    showHelp: true,
+    interfaceLanguage: "chinese",
+  });
+
+  assert.equal(lines[0], "Touch Fish 帮助");
+  assert.equal(lines.includes("导航"), true);
+  assert.equal(lines.includes("操作"), true);
+  assert.equal(lines.includes("当前阅读区"), true);
+  assert.equal(lines.some((line) => line.includes("当前小说") && line.includes("Example")), true);
+  assert.equal(lines.some((line) => line.includes("Esc") && line.includes("返回阅读")), true);
+  assert.equal(lines.some((line) => line.includes("Q / Ctrl+C") && line.includes("保存进度并退出")), true);
 });
 
 function captureReadRender(overrides: Partial<Parameters<typeof renderReadSession>[0]>): string[] {
