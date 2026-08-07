@@ -12,6 +12,7 @@ import {
   renderReadingImport,
   type ReadingConflictChoice,
 } from "../ui/readingImportRenderer.js";
+import { clearTerminalForExit } from "../ui/terminalScreen.js";
 
 interface StartReadingImportSessionOptions {
   interfaceLanguage: InterfaceLanguage;
@@ -311,12 +312,10 @@ function detach() {
 
 function quit() {
   detach();
-  console.clear();
-  console.log(localize("[INFO] novel import closed", "[INFO] 小说导入已关闭"));
-
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(false);
   }
+  clearTerminalForExit();
   process.stdin.pause();
   process.exit(0);
 }

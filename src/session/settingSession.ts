@@ -3,6 +3,7 @@ import { reshuffleRandomOrder } from "../services/randomOrder.js";
 import { loadSettings, saveSettings } from "../services/settingsLoader.js";
 import { listVocabularyBooks } from "../services/vocabularyLoader.js";
 import { renderSettingSession } from "../ui/settingsRenderer.js";
+import { clearTerminalForExit } from "../ui/terminalScreen.js";
 import { startVocabularyDownloadSession } from "./vocabularyDownloadSession.js";
 
 const RETURN_TO_WORD_KEY = "\u000f";
@@ -684,12 +685,10 @@ function returnToPreviousSession() {
 
 function quitSettingSession() {
   process.stdout.off("resize", handleTerminalResize);
-  console.clear();
-  console.log("[INFO] configuration session closed");
-
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(false);
   }
+  clearTerminalForExit();
   process.stdin.pause();
   process.exit(0);
 }

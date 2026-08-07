@@ -4,6 +4,7 @@ import { listReadingBooks, loadReadingBook } from "../services/readingLoader.js"
 import { loadReadState, saveReadState } from "../storage/readProgress.js";
 import { loadReadSettings, saveReadSettings } from "../storage/readSettings.js";
 import { renderReadSettings } from "../ui/readSettingsRenderer.js";
+import { clearTerminalForExit } from "../ui/terminalScreen.js";
 import { startReadSession } from "./readSession.js";
 import { startReadingImportSession } from "./readingImportSession.js";
 
@@ -475,6 +476,7 @@ function quit() {
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(false);
   }
+  clearTerminalForExit();
   process.stdin.pause();
   process.exit(0);
 }
