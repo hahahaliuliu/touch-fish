@@ -112,6 +112,7 @@ touchfish setting
 ### 已完成（第一步）
 
 - `touchfish read -s / --settings` 已可用：可切换当前小说、设置正文宽度和每页行数。
+- Read Settings 已按 Word Settings 的交互规范统一选中、编辑、选项光标和双键位槽，并支持 Read 独立的界面语言与 Build Log、Backend Log、Git 伪装主题。
 
 ### 计划实现
 

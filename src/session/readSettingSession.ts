@@ -1,4 +1,5 @@
-import type { ReadBindingAction, ReadingBookSummary, ReadSettings } from "../models/reading.js";
+import type { ReadBindingAction, ReadingBookSummary, ReadKeyBindings, ReadSettings } from "../models/reading.js";
+import type { InterfaceLanguage, ThemeName } from "../models/settings.js";
 import { listReadingBooks, loadReadingBook } from "../services/readingLoader.js";
 import { loadReadState, saveReadState } from "../storage/readProgress.js";
 import { loadReadSettings, saveReadSettings } from "../storage/readSettings.js";
@@ -7,6 +8,8 @@ import { startReadSession } from "./readSession.js";
 
 const WIDTH_OPTIONS: Array<number | "custom"> = [0, 30, 50, "custom"];
 const LINE_OPTIONS: Array<number | "custom"> = [5, 10, 15, "custom"];
+const INTERFACE_LANGUAGES: readonly InterfaceLanguage[] = ["english", "chinese"];
+const THEMES: readonly ThemeName[] = ["build-log", "backend-log", "git"];
 const BINDING_ACTIONS: ReadBindingAction[] = [
   "previousPage",
   "nextPage",
@@ -15,11 +18,15 @@ const BINDING_ACTIONS: ReadBindingAction[] = [
   "repeat",
   "toggleHelp",
 ];
+const CONFIG_ITEM_COUNT = 5;
+const ITEM_COUNT = CONFIG_ITEM_COUNT + BINDING_ACTIONS.length;
+type BindingSlot = 0 | 1;
 
 let books: ReadingBookSummary[] = [];
 let activeBookId: string | undefined;
 let settings: ReadSettings;
 let selectedIndex = 0;
+let selectedBindingSlot: BindingSlot = 0;
 let isEditing = false;
 let customInput = "";
 let numericInputTouched = false;
@@ -34,12 +41,8 @@ export function startReadSettingSession(options: { onReturn?: (bookId: string) =
   activeBookId = loadReadState().activeBookId ?? books[0]?.id;
   settings = loadReadSettings();
   selectedIndex = 0;
-  isEditing = false;
-  customInput = "";
-  numericInputTouched = false;
-  selectedNumericOption = undefined;
-  isBindingCapture = false;
-  editError = "";
+  selectedBindingSlot = 0;
+  resetEditState();
   render();
 
   if (process.stdin.isTTY) {
@@ -64,19 +67,14 @@ function handleInput(input: string): boolean {
     return false;
   }
 
-  if (input === "\u000f" && !isEditing && activeBookId) {
+  if (input === "\u000f" && activeBookId) {
+    restoreSavedValues();
     returnToReading();
     return false;
   }
 
   if (input === "\u001b") {
-    if (isBindingCapture) {
-      isBindingCapture = false;
-      render();
-      return true;
-    }
-
-    if (isEditing) {
+    if (isEditing || isBindingCapture) {
       cancelEdit();
       return true;
     }
@@ -86,14 +84,8 @@ function handleInput(input: string): boolean {
   }
 
   if (input === "\r" || input === "\n") {
-    if (isBindingCapture) {
-      return true;
-    }
-
-    if (isEditing) {
-      saveEdit();
-    } else {
-      startEdit();
+    if (!isBindingCapture) {
+      confirmOrStartEdit();
     }
     return true;
   }
@@ -111,7 +103,7 @@ function handleInput(input: string): boolean {
     return true;
   }
 
-  if (isEditing && selectedNumericOption === "custom" && (input === "\b" || input === "\u007f")) {
+  if (isEditing && selectedNumericOption === "custom" && isBackspace(input)) {
     customInput = numericInputTouched ? customInput.slice(0, -1) : "";
     numericInputTouched = true;
     editError = "";
@@ -120,64 +112,80 @@ function handleInput(input: string): boolean {
   }
 
   if (input === "w" || input === "W" || input === "\u001b[A") {
-    selectedIndex = Math.max(0, selectedIndex - 1);
-    if (isEditing) {
-      cancelEdit();
-    } else {
-      render();
-    }
+    moveSelection(-1);
     return true;
   }
 
   if (input === "s" || input === "S" || input === "\u001b[B") {
-    selectedIndex = Math.min(2 + BINDING_ACTIONS.length, selectedIndex + 1);
-    if (isEditing) {
-      cancelEdit();
-    } else {
-      render();
-    }
+    moveSelection(1);
     return true;
   }
 
-  if (isEditing && (input === "a" || input === "A" || input === "\u001b[D")) {
-    changeValue(-1);
+  if (input === "a" || input === "A" || input === "\u001b[D") {
+    changeCurrentValue(-1);
     return true;
   }
 
-  if (isEditing && (input === "d" || input === "D" || input === "\u001b[C")) {
-    changeValue(1);
+  if (input === "d" || input === "D" || input === "\u001b[C") {
+    changeCurrentValue(1);
     return true;
   }
 
   return true;
 }
 
-function startEdit() {
-  if (selectedIndex >= 3) {
+function moveSelection(direction: -1 | 1) {
+  if (isEditing || isBindingCapture) {
+    return;
+  }
+
+  selectedIndex = (selectedIndex + direction + ITEM_COUNT) % ITEM_COUNT;
+  selectedBindingSlot = 0;
+  render();
+}
+
+function confirmOrStartEdit() {
+  if (isBindingItemSelected()) {
     isBindingCapture = true;
+    editError = "";
     render();
     return;
   }
 
-  if (selectedIndex === 0 && books.length === 0) {
+  if (!isEditing) {
+    if (selectedIndex === 0 && books.length === 0) {
+      return;
+    }
+
+    isEditing = true;
+    editError = "";
+
+    if (selectedIndex === 1 || selectedIndex === 2) {
+      const options = selectedIndex === 1 ? WIDTH_OPTIONS : LINE_OPTIONS;
+      const currentValue = selectedIndex === 1 ? settings.contentWidth : settings.pageLineCount;
+      selectedNumericOption = options.includes(currentValue) ? currentValue : "custom";
+      customInput = String(currentValue);
+      numericInputTouched = false;
+    }
+
+    render();
     return;
   }
 
-  isEditing = true;
-  editError = "";
-
-  if (selectedIndex === 1 || selectedIndex === 2) {
-    const options = selectedIndex === 1 ? WIDTH_OPTIONS : LINE_OPTIONS;
-    const currentValue = selectedIndex === 1 ? settings.contentWidth : settings.pageLineCount;
-    selectedNumericOption = options.includes(currentValue) ? currentValue : "custom";
-    customInput = String(currentValue);
-    numericInputTouched = false;
-  }
-
-  render();
+  saveEdit();
 }
 
-function changeValue(direction: -1 | 1) {
+function changeCurrentValue(direction: -1 | 1) {
+  if (isBindingItemSelected() && !isBindingCapture) {
+    selectedBindingSlot = selectedBindingSlot === 0 ? 1 : 0;
+    render();
+    return;
+  }
+
+  if (!isEditing) {
+    return;
+  }
+
   if (selectedIndex === 0) {
     const currentIndex = Math.max(0, books.findIndex((book) => book.id === activeBookId));
     const nextIndex = (currentIndex + direction + books.length) % books.length;
@@ -186,6 +194,25 @@ function changeValue(direction: -1 | 1) {
     return;
   }
 
+  if (selectedIndex === 3) {
+    settings = {
+      ...settings,
+      interfaceLanguage: getNextValue(settings.interfaceLanguage, INTERFACE_LANGUAGES, direction),
+    };
+    render();
+    return;
+  }
+
+  if (selectedIndex === 4) {
+    settings = { ...settings, theme: getNextValue(settings.theme, THEMES, direction) };
+    render();
+    return;
+  }
+
+  changeNumericValue(direction);
+}
+
+function changeNumericValue(direction: -1 | 1) {
   const options = selectedIndex === 1 ? WIDTH_OPTIONS : LINE_OPTIONS;
   const currentValue = selectedIndex === 1 ? settings.contentWidth : settings.pageLineCount;
   const currentOption = selectedNumericOption ?? (options.includes(currentValue) ? currentValue : "custom");
@@ -198,11 +225,9 @@ function changeValue(direction: -1 | 1) {
   if (typeof nextValue === "number") {
     customInput = String(nextValue);
     numericInputTouched = false;
-    if (selectedIndex === 1) {
-      settings = { ...settings, contentWidth: nextValue };
-    } else {
-      settings = { ...settings, pageLineCount: nextValue };
-    }
+    settings = selectedIndex === 1
+      ? { ...settings, contentWidth: nextValue }
+      : { ...settings, pageLineCount: nextValue };
   } else {
     customInput = "";
     numericInputTouched = true;
@@ -220,7 +245,9 @@ function saveEdit() {
     const isWidth = selectedIndex === 1;
     const isOutsideRange = numericValue < (isWidth ? 20 : 1) || (!isWidth && numericValue > 100);
     if (!Number.isInteger(numericValue) || isOutsideRange) {
-      editError = isWidth ? "正文宽度必须是大于等于 20 的整数" : "每页行数必须是 1 到 100 的整数";
+      editError = isWidth
+        ? localize("Content width must be a whole number of at least 20", "正文宽度必须是大于等于 20 的整数")
+        : localize("Page lines must be a whole number from 1 to 100", "每页行数必须是 1 到 100 的整数");
       render();
       return;
     }
@@ -232,23 +259,28 @@ function saveEdit() {
     saveReadSettings(settings);
   }
 
-  isEditing = false;
-  customInput = "";
-  numericInputTouched = false;
-  selectedNumericOption = undefined;
-  editError = "";
+  resetEditState();
   render();
 }
 
 function cancelEdit() {
+  restoreSavedValues();
+  render();
+}
+
+function restoreSavedValues() {
   settings = loadReadSettings();
   activeBookId = loadReadState().activeBookId ?? books[0]?.id;
+  resetEditState();
+}
+
+function resetEditState() {
   isEditing = false;
+  isBindingCapture = false;
   customInput = "";
   numericInputTouched = false;
   selectedNumericOption = undefined;
   editError = "";
-  render();
 }
 
 function render() {
@@ -257,6 +289,7 @@ function render() {
     activeBookId,
     settings,
     selectedIndex,
+    selectedBindingSlot,
     isEditing,
     customInput,
     selectedNumericOption,
@@ -266,23 +299,49 @@ function render() {
 }
 
 function captureBinding(input: string) {
-  const binding = normalizeBindingInput(input);
-  const action = BINDING_ACTIONS[selectedIndex - 3];
-
-  if (!binding || !action) {
+  if (isBackspace(input)) {
+    saveBinding("");
     return;
   }
 
-  settings = {
-    ...settings,
-    keyBindings: {
-      ...settings.keyBindings,
-      [action]: [binding, settings.keyBindings[action][1]],
-    },
-  };
+  const binding = normalizeBindingInput(input);
+  if (!binding) {
+    editError = localize(
+      "Use one English key, symbol, Space, Tab, or an arrow key",
+      "请按英文键、符号、空格、Tab 或方向键"
+    );
+    render();
+    return;
+  }
+
+  saveBinding(binding);
+}
+
+function saveBinding(binding: string) {
+  const action = getSelectedBindingAction();
+  if (!action) {
+    return;
+  }
+
+  const keyBindings = cloneKeyBindings(settings.keyBindings);
+  if (binding) {
+    BINDING_ACTIONS.forEach((key) => {
+      keyBindings[key] = keyBindings[key].map((value) => value === binding ? "" : value) as [string, string];
+    });
+  }
+  keyBindings[action][selectedBindingSlot] = binding;
+  settings = { ...settings, keyBindings };
   saveReadSettings(settings);
-  isBindingCapture = false;
+  resetEditState();
   render();
+}
+
+function cloneKeyBindings(value: ReadKeyBindings): ReadKeyBindings {
+  const bindings = {} as ReadKeyBindings;
+  BINDING_ACTIONS.forEach((key) => {
+    bindings[key] = [...value[key]];
+  });
+  return bindings;
 }
 
 function normalizeBindingInput(input: string): string | undefined {
@@ -291,10 +350,34 @@ function normalizeBindingInput(input: string): string | undefined {
     "\u001b[B": "arrow-down",
     "\u001b[C": "arrow-right",
     "\u001b[D": "arrow-left",
+    "\t": "tab",
     " ": "space",
+    "？": "?",
   };
 
   return specialBindings[input] ?? (/^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined);
+}
+
+function isBackspace(input: string): boolean {
+  return input === "\b" || input === "\u007f";
+}
+
+function isBindingItemSelected(): boolean {
+  return selectedIndex >= CONFIG_ITEM_COUNT;
+}
+
+function getSelectedBindingAction(): ReadBindingAction | undefined {
+  return BINDING_ACTIONS[selectedIndex - CONFIG_ITEM_COUNT];
+}
+
+function getNextValue<T>(currentValue: T, options: readonly T[], direction: -1 | 1): T {
+  const currentIndex = options.indexOf(currentValue);
+  const nextIndex = (currentIndex + direction + options.length) % options.length;
+  return options[nextIndex] ?? options[0]!;
+}
+
+function localize(english: string, chinese: string): string {
+  return settings.interfaceLanguage === "chinese" ? chinese : english;
 }
 
 function quit() {
@@ -308,7 +391,6 @@ function quit() {
 
 function openReadingSession() {
   const selectedBookId = activeBookId;
-
   if (!selectedBookId) {
     return;
   }
@@ -344,6 +426,9 @@ function parseInputs(input: string): string[] {
     if (input[index] === "\u001b" && input[index + 1] === "[" && input[index + 2]) {
       values.push(input.slice(index, index + 3));
       index += 3;
+    } else if (input[index] === "\r" && input[index + 1] === "\n") {
+      values.push("\r");
+      index += 2;
     } else {
       values.push(input[index]!);
       index += 1;

@@ -125,12 +125,12 @@ test("Read opens settings with Ctrl+O and returns with Ctrl+O or Esc", async () 
   try {
     const ctrlOResult = await runReadSession(root, ["\u000f", "\u000f", "q"]);
     assert.equal(ctrlOResult.code, 0, ctrlOResult.output);
-    assert.equal(ctrlOResult.output.includes("阅读设置"), true, ctrlOResult.output);
+    assert.equal(ctrlOResult.output.includes("Read Settings"), true, ctrlOResult.output);
     assert.equal(ctrlOResult.output.includes("read progress saved"), true, ctrlOResult.output);
 
     const escResult = await runReadSession(root, ["\u000f", "\u001b", "q"]);
     assert.equal(escResult.code, 0, escResult.output);
-    assert.equal(escResult.output.includes("阅读设置"), true, escResult.output);
+    assert.equal(escResult.output.includes("Read Settings"), true, escResult.output);
     assert.equal(escResult.output.includes("read progress saved"), true, escResult.output);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -175,7 +175,7 @@ test("Read settings select a novel and save the page layout", async () => {
     const result = await runReadSession(root, ["\r", "d", "\r", "s", "\r", "d", "\r", "s", "\r", "d", "\r", "\u000f", "q"], ["read", "-s"]);
 
     assert.equal(result.code, 0, result.output);
-    assert.equal(result.output.includes("阅读设置"), true, result.output);
+    assert.equal(result.output.includes("Read Settings"), true, result.output);
     assert.equal(result.output.includes("source loaded: bravo.txt"), true, result.output);
     const state = JSON.parse(fs.readFileSync(path.join(root, "read-progress", "state.json"), "utf-8")) as { activeBookId: string };
     assert.equal(state.activeBookId, "bravo");
@@ -204,7 +204,7 @@ test("Read settings bind a custom next-page key", async () => {
   );
 
   try {
-    const result = await runReadSession(root, ["s", "s", "s", "s", "\r", "f", "\u000f", "f", "q"], ["read", "-s"]);
+    const result = await runReadSession(root, ["s", "s", "s", "s", "s", "s", "\r", "f", "\u000f", "f", "q"], ["read", "-s"]);
 
     assert.equal(result.code, 0, result.output);
     assert.equal(result.output.includes("page 2 / 2"), true, result.output);
@@ -212,6 +212,101 @@ test("Read settings bind a custom next-page key", async () => {
       keyBindings: { nextPage: [string, string] };
     };
     assert.deepEqual(settings.keyBindings.nextPage, ["f", "arrow-right"]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Read settings select and edit either key-binding slot", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-binding-slot-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "slot.txt"), "正文。", "utf-8");
+
+  try {
+    const result = await runReadSession(
+      root,
+      ["s", "s", "s", "s", "s", "s", "d", "\r", "f", "q"],
+      ["read", "-s"]
+    );
+
+    assert.equal(result.code, 0, result.output);
+    const settings = JSON.parse(fs.readFileSync(path.join(root, "read-settings.json"), "utf-8")) as {
+      keyBindings: { nextPage: [string, string] };
+    };
+    assert.deepEqual(settings.keyBindings.nextPage, ["d", "f"]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Read settings move occupied bindings and clear slots with Backspace", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-binding-management-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "managed.txt"), "正文。", "utf-8");
+
+  try {
+    const moved = await runReadSession(
+      root,
+      ["s", "s", "s", "s", "s", "\r", "d", "q"],
+      ["read", "-s"]
+    );
+    assert.equal(moved.code, 0, moved.output);
+
+    let settings = JSON.parse(fs.readFileSync(path.join(root, "read-settings.json"), "utf-8")) as {
+      keyBindings: { previousPage: [string, string]; nextPage: [string, string] };
+    };
+    assert.deepEqual(settings.keyBindings.previousPage, ["d", "arrow-left"]);
+    assert.deepEqual(settings.keyBindings.nextPage, ["", "arrow-right"]);
+
+    const cleared = await runReadSession(
+      root,
+      ["s", "s", "s", "s", "s", "d", "\r", "\u007f", "q"],
+      ["read", "-s"]
+    );
+    assert.equal(cleared.code, 0, cleared.output);
+
+    settings = JSON.parse(fs.readFileSync(path.join(root, "read-settings.json"), "utf-8")) as {
+      keyBindings: { previousPage: [string, string]; nextPage: [string, string] };
+    };
+    assert.deepEqual(settings.keyBindings.previousPage, ["d", ""]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Read settings save their own interface language and disguise theme", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-language-theme-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "localized.txt"), "正文。", "utf-8");
+
+  try {
+    const result = await runReadSession(
+      root,
+      ["s", "s", "s", "\r", "d", "\r", "s", "\r", "d", "\r", "\u000f", "q"],
+      ["read", "-s"]
+    );
+
+    assert.equal(result.code, 0, result.output);
+    assert.equal(result.output.includes("[INFO] 阅读设置已就绪"), true, result.output);
+    assert.equal(result.output.includes("reader-api shutdown complete"), true, result.output);
+    const settings = JSON.parse(fs.readFileSync(path.join(root, "read-settings.json"), "utf-8")) as {
+      interfaceLanguage: string;
+      theme: string;
+    };
+    assert.equal(settings.interfaceLanguage, "chinese");
+    assert.equal(settings.theme, "backend-log");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

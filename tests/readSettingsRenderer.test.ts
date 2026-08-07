@@ -11,6 +11,8 @@ const books: ReadingBookSummary[] = [
 const settings: ReadSettings = {
   contentWidth: 0,
   pageLineCount: 10,
+  interfaceLanguage: "chinese",
+  theme: "build-log",
   keyBindings: {
     previousPage: ["a", "arrow-left"],
     nextPage: ["d", "arrow-right"],
@@ -49,7 +51,7 @@ test("Read settings shows cursors for custom numeric input and key capture", () 
     selectedNumericOption: "custom",
   });
   const bindingLines = captureRender({
-    selectedIndex: 3,
+    selectedIndex: 5,
     isEditing: false,
     isBindingCapture: true,
   });
@@ -57,6 +59,18 @@ test("Read settings shows cursors for custom numeric input and key capture", () 
   assert.equal(numericLines.some((line) => line.includes("25\u001b[5m_\u001b[0m")), true);
   assert.equal(numericLines.some((line) => line.includes("\u001b[7m自定义\u001b[0m")), true);
   assert.equal(bindingLines.some((line) => line.includes("\u001b[5m_\u001b[0m")), true);
+  assert.equal(bindingLines.some((line) => line.includes("左方向键")), true);
+});
+
+test("Read settings highlights one binding slot without hiding the other", () => {
+  const lines = captureRender({
+    selectedIndex: 5,
+    selectedBindingSlot: 1,
+  });
+  const bindingLine = lines.find((line) => line.includes("上一页")) ?? "";
+
+  assert.equal(bindingLine.includes("A"), true);
+  assert.equal(bindingLine.includes("\u001b[7m左方向键"), true);
 });
 
 function captureRender(overrides: Partial<Parameters<typeof renderReadSettings>[0]>): string[] {
@@ -73,6 +87,7 @@ function captureRender(overrides: Partial<Parameters<typeof renderReadSettings>[
       activeBookId: "alpha",
       settings,
       selectedIndex: 0,
+      selectedBindingSlot: 0,
       isEditing: false,
       customInput: "",
       isBindingCapture: false,

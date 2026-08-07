@@ -1,10 +1,13 @@
 import type { ReadBindingAction, ReadingBookSummary, ReadSettings } from "../models/reading.js";
+import type { InterfaceLanguage, ThemeName } from "../models/settings.js";
+import { getTerminalWidth } from "./terminalText.js";
 
 export interface RenderReadSettingsOptions {
   books: ReadingBookSummary[];
   activeBookId?: string | undefined;
   settings: ReadSettings;
   selectedIndex: number;
+  selectedBindingSlot: 0 | 1;
   isEditing: boolean;
   customInput: string;
   selectedNumericOption?: number | "custom" | undefined;
@@ -12,15 +15,19 @@ export interface RenderReadSettingsOptions {
   editError: string;
 }
 
-const LABELS = ["当前小说", "正文宽度", "每页行数"];
-const BINDING_LABELS: Array<[ReadBindingAction, string]> = [
-  ["previousPage", "上一页"],
-  ["nextPage", "下一页"],
-  ["previousChapter", "上一章"],
-  ["nextChapter", "下一章"],
-  ["repeat", "重复操作"],
-  ["toggleHelp", "打开帮助"],
+const WIDTH_OPTIONS: Array<number | "custom"> = [0, 30, 50, "custom"];
+const LINE_OPTIONS: Array<number | "custom"> = [5, 10, 15, "custom"];
+const INTERFACE_LANGUAGES: readonly InterfaceLanguage[] = ["english", "chinese"];
+const THEMES: readonly ThemeName[] = ["build-log", "backend-log", "git"];
+const BINDING_ACTIONS: ReadBindingAction[] = [
+  "previousPage",
+  "nextPage",
+  "previousChapter",
+  "nextChapter",
+  "repeat",
+  "toggleHelp",
 ];
+const BINDING_START_INDEX = 5;
 
 export function renderReadSettings(options: RenderReadSettingsOptions) {
   const {
@@ -28,93 +35,155 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
     activeBookId,
     settings,
     selectedIndex,
+    selectedBindingSlot,
     isEditing,
     customInput,
     selectedNumericOption,
     isBindingCapture,
     editError,
   } = options;
+  const language = settings.interfaceLanguage;
+  const text = getText(language);
   const activeBook = books.find((book) => book.id === activeBookId) ?? books[0];
 
   console.clear();
-  console.log("[INFO] 阅读设置已就绪");
+  console.log(text.ready);
   console.log("");
-  console.log("阅读设置");
+  console.log(text.title);
   console.log("");
-  renderItem(
+  renderConfigItem(
     0,
     selectedIndex,
     isEditing,
-    LABELS[0]!,
-    activeBook?.title ?? "暂无本地小说",
+    text.currentBook,
+    activeBook?.title ?? text.noBooks,
     formatBookOptions(books, activeBookId, selectedIndex === 0 && isEditing)
   );
-  renderItem(
+  renderConfigItem(
     1,
     selectedIndex,
     isEditing,
-    LABELS[1]!,
-    formatNumericValue(settings.contentWidth, customInput, selectedIndex === 1 && isEditing, selectedNumericOption, true),
-    formatNumericOptions(WIDTH_OPTIONS, selectedNumericOption, selectedIndex === 1 && isEditing, true)
+    text.contentWidth,
+    formatNumericValue(settings.contentWidth, customInput, selectedIndex === 1 && isEditing, selectedNumericOption, true, language),
+    formatNumericOptions(WIDTH_OPTIONS, selectedNumericOption, selectedIndex === 1 && isEditing, true, language)
   );
-  renderItem(
+  renderConfigItem(
     2,
     selectedIndex,
     isEditing,
-    LABELS[2]!,
-    formatNumericValue(settings.pageLineCount, customInput, selectedIndex === 2 && isEditing, selectedNumericOption, false),
-    formatNumericOptions(LINE_OPTIONS, selectedNumericOption, selectedIndex === 2 && isEditing, false)
+    text.pageLines,
+    formatNumericValue(settings.pageLineCount, customInput, selectedIndex === 2 && isEditing, selectedNumericOption, false, language),
+    formatNumericOptions(LINE_OPTIONS, selectedNumericOption, selectedIndex === 2 && isEditing, false, language)
   );
-  console.log("");
-  console.log("按键绑定");
-  BINDING_LABELS.forEach(([key, label], index) => {
-    const itemIndex = index + 3;
-    const marker = itemIndex === selectedIndex ? (isBindingCapture ? "*" : ">") : " ";
-    console.log(`${marker} ${label.padEnd(8)} ${isBindingCapture && itemIndex === selectedIndex ? blinkingCursor() : formatBinding(settings.keyBindings[key])}`);
-  });
-  console.log("");
-  console.log("W/S 移动 | Enter 编辑、保存或绑定 | A/D 切换选项");
-  console.log("输入数字设置自定义值 | Ctrl+O 返回或启动阅读 | Esc 取消编辑或返回 | Q 退出");
+  renderConfigItem(
+    3,
+    selectedIndex,
+    isEditing,
+    text.interfaceLanguage,
+    formatLanguage(settings.interfaceLanguage, language),
+    formatValueOptions(INTERFACE_LANGUAGES, settings.interfaceLanguage, selectedIndex === 3 && isEditing, (value) => formatLanguage(value, language))
+  );
+  renderConfigItem(
+    4,
+    selectedIndex,
+    isEditing,
+    text.theme,
+    settings.theme,
+    formatValueOptions(THEMES, settings.theme, selectedIndex === 4 && isEditing, String)
+  );
 
-  if (isEditing && selectedIndex === 1) {
-    console.log("[编辑] A/D 移动选项光标；“自动适配”会按终端宽度和当前主题计算正文宽度。");
-  } else if (isEditing && selectedIndex === 2) {
-    console.log("[编辑] A/D 移动选项光标；选择“自定义”后输入 1 到 100 的整数。");
-  } else if (isEditing && selectedIndex === 0) {
-    console.log("[编辑] A/D 移动小说光标，按 Enter 保存。");
-  }
+  console.log("");
+  console.log(text.keyBindings);
+  BINDING_ACTIONS.forEach((action, index) => {
+    const itemIndex = index + BINDING_START_INDEX;
+    renderBindingItem(
+      text.bindingLabels[action],
+      settings.keyBindings[action],
+      itemIndex === selectedIndex,
+      selectedBindingSlot,
+      isBindingCapture && itemIndex === selectedIndex,
+      language
+    );
+  });
+
+  console.log("");
+  console.log(text.controlsFirstLine);
+  console.log(text.controlsSecondLine);
 
   if (isBindingCapture) {
-    console.log("按键捕获中：按下新的按键，Esc 取消。");
+    console.log(text.bindingHint);
+  } else if (isEditing && selectedIndex === 1) {
+    console.log(text.widthHint);
+  } else if (isEditing && selectedIndex === 2) {
+    console.log(text.lineHint);
+  } else if (isEditing) {
+    console.log(text.editHint);
   }
 
   if (editError) {
-    console.log(`[警告] ${editError}`);
+    console.log(`${text.warningPrefix}${editError}`);
   }
 }
 
-const WIDTH_OPTIONS: Array<number | "custom"> = [0, 30, 50, "custom"];
-const LINE_OPTIONS: Array<number | "custom"> = [5, 10, 15, "custom"];
-
-function formatBinding(binding: [string, string]): string {
-  return binding.filter(Boolean).map(formatBindingName).join(" / ");
-}
-
-function formatBindingName(binding: string): string {
-  const labels: Record<string, string> = {
-    "arrow-up": "上方向键",
-    "arrow-down": "下方向键",
-    "arrow-left": "左方向键",
-    "arrow-right": "右方向键",
-    space: "空格",
-  };
-
-  return labels[binding] ?? binding.toUpperCase();
-}
-
-function renderItem(index: number, selectedIndex: number, isEditing: boolean, label: string, value: string, options: string) {
+function renderConfigItem(
+  index: number,
+  selectedIndex: number,
+  isEditing: boolean,
+  label: string,
+  value: string,
+  optionText: string
+) {
   const marker = index === selectedIndex ? (isEditing ? "*" : ">") : " ";
-  console.log(`${marker} ${label.padEnd(8)} ${value} ${options}`);
+  console.log(`${marker} ${padTerminal(label, 20)} ${padTerminal(value, 16)} ${optionText}`);
+}
+
+function renderBindingItem(
+  label: string,
+  bindings: [string, string],
+  selected: boolean,
+  selectedSlot: 0 | 1,
+  isCapturing: boolean,
+  language: InterfaceLanguage
+) {
+  const first = formatBindingSlot(bindings[0], selected && selectedSlot === 0, isCapturing && selectedSlot === 0, language);
+  const second = formatBindingSlot(bindings[1], selected && selectedSlot === 1, isCapturing && selectedSlot === 1, language);
+  const marker = selected && isCapturing ? "*" : selected ? ">" : " ";
+
+  console.log(`${marker} ${padTerminal(label, 20)} ${padTerminal(first, 17)} ${second}`);
+}
+
+function formatBindingSlot(binding: string, selected: boolean, isCapturing: boolean, language: InterfaceLanguage): string {
+  if (isCapturing) {
+    return blinkingCursor();
+  }
+
+  const value = padTerminal(formatBinding(binding, language), 17);
+  return selected ? formatOption(value, true) : value;
+}
+
+function formatBinding(binding: string, language: InterfaceLanguage): string {
+  const names: Record<string, string> = {
+    "": "_",
+    space: "Space",
+    tab: "Tab",
+    "arrow-up": "Up Arrow",
+    "arrow-down": "Down Arrow",
+    "arrow-left": "Left Arrow",
+    "arrow-right": "Right Arrow",
+  };
+  const value = names[binding] ?? binding.toUpperCase();
+
+  if (language !== "chinese") {
+    return value;
+  }
+
+  return {
+    Space: "空格",
+    "Up Arrow": "上方向键",
+    "Down Arrow": "下方向键",
+    "Left Arrow": "左方向键",
+    "Right Arrow": "右方向键",
+  }[value] ?? value;
 }
 
 function formatBookOptions(books: ReadingBookSummary[], activeBookId: string | undefined, editing: boolean): string {
@@ -130,25 +199,49 @@ function formatNumericValue(
   customInput: string,
   editing: boolean,
   selectedOption: number | "custom" | undefined,
-  isWidth: boolean
+  isWidth: boolean,
+  language: InterfaceLanguage
 ): string {
   if (editing && selectedOption === "custom") {
     return `${customInput}${blinkingCursor()}`;
   }
 
-  return isWidth && value === 0 ? "自动适配" : String(value);
+  return isWidth && value === 0 ? formatAutomatic(language) : String(value);
 }
 
 function formatNumericOptions(
   options: Array<number | "custom">,
   selectedOption: number | "custom" | undefined,
   editing: boolean,
-  isWidth: boolean
+  isWidth: boolean,
+  language: InterfaceLanguage
 ): string {
   return `[${options.map((option) => {
-    const label = option === "custom" ? "自定义" : isWidth && option === 0 ? "自动适配" : String(option);
+    const label = option === "custom"
+      ? language === "chinese" ? "自定义" : "custom"
+      : isWidth && option === 0 ? formatAutomatic(language) : String(option);
     return formatOption(label, editing && option === selectedOption);
   }).join(" / ")}]`;
+}
+
+function formatValueOptions<T>(
+  options: readonly T[],
+  currentValue: T,
+  editing: boolean,
+  formatter: (value: T) => string
+): string {
+  return `[${options.map((option) => formatOption(formatter(option), editing && option === currentValue)).join(" / ")}]`;
+}
+
+function formatLanguage(value: InterfaceLanguage, language: InterfaceLanguage): string {
+  if (language === "chinese") {
+    return value === "chinese" ? "中文" : "英文";
+  }
+  return value === "chinese" ? "Chinese" : "English";
+}
+
+function formatAutomatic(language: InterfaceLanguage): string {
+  return language === "chinese" ? "自动适配" : "auto";
 }
 
 function formatOption(value: string, selected: boolean): string {
@@ -157,4 +250,70 @@ function formatOption(value: string, selected: boolean): string {
 
 function blinkingCursor(): string {
   return "\u001b[5m_\u001b[0m";
+}
+
+function padTerminal(value: string, targetWidth: number): string {
+  return `${value}${" ".repeat(Math.max(0, targetWidth - getTerminalWidth(stripAnsi(value))))}`;
+}
+
+function stripAnsi(value: string): string {
+  return value.replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, "");
+}
+
+function getText(language: InterfaceLanguage) {
+  if (language === "chinese") {
+    return {
+      ready: "[INFO] 阅读设置已就绪",
+      title: "阅读设置",
+      currentBook: "当前小说",
+      noBooks: "暂无本地小说",
+      contentWidth: "正文宽度",
+      pageLines: "每页行数",
+      interfaceLanguage: "界面语言",
+      theme: "伪装主题",
+      keyBindings: "按键绑定",
+      bindingLabels: {
+        previousPage: "上一页",
+        nextPage: "下一页",
+        previousChapter: "上一章",
+        nextChapter: "下一章",
+        repeat: "重复操作",
+        toggleHelp: "打开帮助",
+      } satisfies Record<ReadBindingAction, string>,
+      controlsFirstLine: "操作  W/S 移动 | A/D 修改设置或切换键位 | Enter 编辑 | Backspace 清空",
+      controlsSecondLine: "      Esc 取消编辑 / 返回阅读 | Ctrl+O 返回阅读 | Q 退出",
+      bindingHint: "[绑定] 请按英文键、符号、空格、Tab 或方向键；已占用的键会自动清空原位置",
+      widthHint: "[编辑] A/D 移动选项光标；自动适配会按终端宽度和当前主题计算正文宽度",
+      lineHint: "[自定义] 输入 1 到 100 的整数后按 Enter 保存；A/D 可切换预设和自定义",
+      editHint: "[编辑] 修改后按 Enter 保存",
+      warningPrefix: "[警告] ",
+    };
+  }
+
+  return {
+    ready: "[INFO] Read settings ready",
+    title: "Read Settings",
+    currentBook: "Current Book",
+    noBooks: "No local novels",
+    contentWidth: "Content Width",
+    pageLines: "Page Lines",
+    interfaceLanguage: "Interface Language",
+    theme: "Disguise Theme",
+    keyBindings: "Key Bindings",
+    bindingLabels: {
+      previousPage: "Previous Page",
+      nextPage: "Next Page",
+      previousChapter: "Previous Chapter",
+      nextChapter: "Next Chapter",
+      repeat: "Repeat Action",
+      toggleHelp: "Toggle Help",
+    } satisfies Record<ReadBindingAction, string>,
+    controlsFirstLine: "Controls  W/S move | A/D setting or slot | Enter edit | Backspace clear",
+    controlsSecondLine: "          Esc cancel edit / return to read | Ctrl+O return to read | Q quit",
+    bindingHint: "[BIND] English key, symbol, Space, Tab, or arrow key; occupied keys clear their previous slot",
+    widthHint: "[EDIT] A/D moves the option cursor; auto uses the terminal width and current theme",
+    lineHint: "[CUSTOM] enter a whole number from 1 to 100, then Enter; A/D cycles presets and custom",
+    editHint: "[EDIT] change the value, then press Enter to save",
+    warningPrefix: "[WARN] ",
+  };
 }

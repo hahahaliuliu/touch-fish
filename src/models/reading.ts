@@ -1,3 +1,5 @@
+import type { InterfaceLanguage, ThemeName } from "./settings.js";
+
 export interface ReadingBook {
   id: string;
   title: string;
@@ -24,6 +26,8 @@ export interface ReadState {
 export interface ReadSettings {
   contentWidth: number;
   pageLineCount: number;
+  interfaceLanguage: InterfaceLanguage;
+  theme: ThemeName;
   keyBindings: ReadKeyBindings;
 }
 

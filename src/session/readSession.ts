@@ -13,7 +13,6 @@ import {
 } from "../services/readingPagination.js";
 import { loadReadProgress, saveReadProgress } from "../storage/readProgress.js";
 import { loadReadSettings } from "../storage/readSettings.js";
-import { loadSettings } from "../services/settingsLoader.js";
 import type { InterfaceLanguage, ThemeName } from "../models/settings.js";
 import type { ReadKeyBindings } from "../models/reading.js";
 import {
@@ -36,10 +35,9 @@ let lastNavigation: LastNavigation = "next-page";
 
 export function startReadSession(nextBook: ReadingBook) {
   book = nextBook;
-  const settings = loadSettings();
   const readSettings = loadReadSettings();
-  theme = settings.theme;
-  interfaceLanguage = settings.interfaceLanguage;
+  theme = readSettings.theme;
+  interfaceLanguage = readSettings.interfaceLanguage;
   keyBindings = readSettings.keyBindings;
   showHelp = false;
   pages = paginateReadingText(
