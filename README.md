@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>Learn in the gaps. Stay in the terminal.</strong><br>
-  A stealth terminal vocabulary learning tool disguised as development logs.
+  A stealth terminal learning tool disguised as development output.
 </p>
 
 <p align="center">
@@ -16,11 +16,11 @@
 
 Touch Fish 是一个适合开发间隙使用的终端学习工具。
 
-它把背单词内容呈现成开发日志、构建输出等终端内容，让用户在等待构建、工具响应或上下文切换时，顺手学习几个单词。
+它把背单词和小说阅读呈现成开发日志、构建输出等终端内容，让用户在等待构建、工具响应或上下文切换时，顺手学习或阅读。
 
 > Learn in the gaps. Stay in the terminal.
 
-当前项目处于 `v0.2 Product Experience` 阶段，重点是让 Word Workspace 稳定、好用，并自然地融入终端开发环境。
+当前正式发布版本为 `v0.2.0`；开发分支已完成 v0.4 的 Read 核心、Read 设置和小说管理功能，尚未发布。
 
 ## 安装与启动
 
@@ -100,7 +100,7 @@ npm install
 
 依赖会安装到项目自己的 `node_modules/` 目录。
 
-### 4. 启动 Word Session
+### 4. 启动 Word 或 Read Session
 
 在项目根目录中，使用开发方式启动：
 
@@ -109,6 +109,14 @@ npm run dev -- word
 ```
 
 看到开发日志风格的单词界面，就表示安装和启动成功。
+
+启动小说阅读：
+
+```shell
+npm run dev -- read
+```
+
+仓库自带 UTF-8 TXT 示例小说；也可以在 Read 设置中导入自己的本地 TXT 小说。
 
 ### 5. 在任意目录使用 `touchfish`
 
@@ -124,23 +132,25 @@ npm link
 touchfish word
 ```
 
-浏览收藏单词：
+浏览收藏单词或打开 Word 设置：
 
 ```shell
-touchfish favorite
+touchfish word -f
+touchfish word -s
 ```
 
-也可以在 Settings 中选择 `View Favorites` / `查看收藏`。
-
-打开独立 Settings：
+启动阅读或打开 Read 设置：
 
 ```shell
-touchfish setting
+touchfish read
+touchfish read -s
 ```
+
+`touchfish favorite` 和 `touchfish setting` 仅作为 v0.2 兼容别名保留，不再显示为一级命令。
 
 `npm link` 通常只需执行一次。请不要移动或删除项目目录；如果通过 nvm 更换了 Node.js 版本，可能需要重新执行 `npm link`。
 
-## 第一次使用
+## 第一次使用 Word
 
 仓库自带一份 30 词示例词书：
 
@@ -162,7 +172,20 @@ assets/vocabulary/ielts.example.json
 
 词书下载说明见 [docs/vocabulary-downloads.md](docs/vocabulary-downloads.md)，自定义词书格式见 [docs/vocabulary-format.md](docs/vocabulary-format.md)。
 
-## 常用快捷键
+## 第一次使用 Read
+
+仓库自带一篇 UTF-8 TXT 示例小说。运行 `touchfish read` 会继续上次阅读；运行 `touchfish read -s` 可以：
+
+- 切换当前小说；
+- 从任意本地路径导入 UTF-8 TXT 小说；导入成功后原文件可以移动或删除；
+- 查看和删除已经导入的小说，并同步清理对应阅读进度；
+- 设置正文宽度、每页行数和章节切分份数；
+- 切换中英文界面和 Build Log、Backend Log、Git 伪装主题；
+- 自定义翻页、章节或小节导航、重复操作和 Help 按键。
+
+章节切分只在自然段开头建立小节边界，不会从一段话中间切开。开启后，W/S 与上下方向键按小节导航。
+
+## Word 常用快捷键
 
 | 按键 | 作用 |
 | --- | --- |
@@ -184,9 +207,25 @@ assets/vocabulary/ielts.example.json
 
 快捷键可以在 Settings 中修改。
 
+## Read 常用快捷键
+
+| 按键 | 作用 |
+| --- | --- |
+| `A` / `←` | 上一页 |
+| `D` / `→` | 下一页 |
+| `W` / `↑` | 上一章；开启章节切分后为上一小节 |
+| `S` / `↓` | 下一章；开启章节切分后为下一小节 |
+| `Space` | 重复上一次阅读操作 |
+| `Ctrl+O` | 打开 Read 设置；在设置中返回阅读 |
+| `?` | 打开或关闭 Help |
+| `Esc` | 从 Help 返回；在设置中取消编辑或返回阅读；阅读页中保存并退出 |
+| `Q` / `Ctrl+C` | 保存阅读进度并退出 |
+
+除 `Ctrl+O`、Esc、Q 和 Ctrl+C 外，阅读快捷键可以在 Read 设置中修改。
+
 ## 当前功能
 
-- CLI 入口：`touchfish word`、`touchfish favorite`、`touchfish setting`
+- CLI 入口：`touchfish word`、`touchfish word -s`、`touchfish word -f`、`touchfish read`、`touchfish read -s`
 - 终端 Word Session 和键盘交互
 - 自定义每页单词数量
 - 可选学习分组和自定义组大小
@@ -200,6 +239,10 @@ assets/vocabulary/ielts.example.json
 - 单词备注的隐藏、显示和本地编辑
 - 本地学习进度和用户设置保存
 - 词书自动发现、下载、卸载和本地导入
+- 本地 UTF-8 TXT 小说导入、切换、删除和每本小说独立阅读进度
+- 中英文宽度适配分页、章节识别和按自然段边界进行章节切分
+- Read 独立设置、快捷键、Help 和三种终端伪装主题
+- Word 与 Read 设置页的响应式三列布局和安全退出清屏
 
 ## 开发与测试
 
@@ -209,12 +252,13 @@ assets/vocabulary/ielts.example.json
 npm test
 ```
 
-当前自动测试共 39 项，覆盖核心逻辑、渲染、进度存储、收藏和 CLI Session 交互。
+当前自动测试共 108 项，覆盖 Word、Read、渲染、进度存储、素材管理和 CLI Session 交互。
 
-不使用全局链接时打开 Settings：
+不使用全局链接时打开模块设置：
 
 ```shell
-npm run dev -- setting
+npm run dev -- word -s
+npm run dev -- read -s
 ```
 
 项目主要结构：
@@ -232,6 +276,8 @@ src/
 assets/
   vocabulary/ 词书
   progress/   本地进度
+  reading/    本地 TXT 小说
+  read-progress/ 每本小说的阅读进度
 
 docs/         格式说明和开发计划
 ```
@@ -243,6 +289,8 @@ docs/         格式说明和开发计划
 - 云同步
 - AI 功能
 - 数据库
-- Read Mode
+- 全局 `touchfish setting`（计划在 v0.5 重新设计）
+- 云端小说或内容库
+- EPUB 等非 TXT 小说格式
 
 这些功能不属于当前阶段目标。

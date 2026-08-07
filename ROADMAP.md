@@ -37,7 +37,7 @@ touchfish setting
 - `touchfish word -s / --settings`：Word 专属设置。
 - `touchfish word -f / --favorite`：查看收藏词汇。
 - `touchfish read`：继续阅读上一次阅读的小说。
-- `touchfish read -s / --settings`：Read 专属设置，计划在 v0.4 实现。
+- `touchfish read -s / --settings`：Read 专属设置，已在 v0.4 开发阶段实现。
 - `touchfish setting`：真正的全局设置，计划在 v0.5 实现。
 
 原则：模块自己的功能使用模块参数，不继续增加一级命令；顶层只保留 Word、Read 和未来真正的全局 Settings。
@@ -71,13 +71,13 @@ touchfish setting
 - 查看收藏、词书下载与导入。
 - 可自定义快捷键。
 
-## v0.3 — Read Core（开发中）
+## v0.3 — Read Core（已完成开发）
 
 ### 目标
 
 先完成小说阅读的核心体验和命令层级；不要求普通用户已经能够通过界面导入小说。
 
-### 已开始
+### 已完成
 
 - 建立 `feature/read` 分支。
 - 整理 CLI：顶层帮助只展示 Word 和 Read。
@@ -88,11 +88,8 @@ touchfish setting
 - 正文分页已支持中英文终端宽度、紧凑段落显示与按字符位置恢复页面。
 - 已支持中文、英文和 `《标题》` 形式的章节识别；示例读物可识别为两个章节。
 - Build Log、Backend Log、Git 阅读 Session 已完成，支持翻页、跳章、空格重复上次导航、章节页首对齐、进度保存和安全退出；v0.3 暂时共用现有主题设置。
-- Read Help 已完成：`?` 打开操作说明，Esc 返回阅读，Q 或 Ctrl+C 保存进度并退出。
-
-### 计划实现
-
-- 阅读 Session、存储容错和集成测试。
+- Read Help 已完成：`?` 打开操作说明和当前阅读状态，Esc 返回阅读，Q 或 Ctrl+C 保存进度并退出。
+- 阅读 Session、存储容错、分页、章节识别和集成测试均已完成。
 
 ### 本版本明确不做
 
@@ -101,7 +98,7 @@ touchfish setting
 - `touchfish read -s` 的实际设置页面。
 - 全局 `touchfish setting`。
 
-## v0.4 — Read Setup & Module Settings（计划）
+## v0.4 — Read Setup & Module Settings（功能开发已完成，待发布）
 
 ### 交互基线
 
@@ -109,19 +106,24 @@ touchfish setting
 - Read 默认沿用 Word 已建立的界面与操作规范，包括行选中、编辑态、选项高亮、输入光标、按键捕获、导航按键、保存与取消行为、帮助和错误提示。
 - 只有小说特有且 Word 没有对应交互的功能才单独设计，并在实现前确认方案。
 
-### 已完成（第一步）
+### 已完成
 
 - `touchfish read -s / --settings` 已可用：可切换当前小说、设置正文宽度和每页行数。
 - Read Settings 已按 Word Settings 的交互规范统一选中、编辑、选项光标和双键位槽，并支持 Read 独立的界面语言与 Build Log、Backend Log、Git 伪装主题。
 - Read Settings 已支持从任意本地路径导入 UTF-8 TXT 小说，校验文件后复制到本地阅读目录；同名时可选择替换、保留两本或取消，导入成功后自动设为当前小说。
 - 小说导入页已按 Word 词书管理形式列出全部本地小说（包括示例小说），支持选择、二次确认删除、同步清理阅读进度，并在删除当前小说后自动切换到下一本。
 - Read Settings 已支持章节切分：可关闭或设置每章 2、3、5 份及 2 到 20 的自定义份数；小节边界只吸附到自然段开头，段落不足时自动减少实际小节数，开启后 W/S 与上下键按小节导航。
+- Word 与 Read 的模块设置边界已明确；两者分别保存界面语言、伪装主题、布局和快捷键，`Ctrl+O`、Esc、Q 与 Ctrl+C 保留为固定控制键。
+- Word 与 Read 设置页已统一选中光标、三列布局和操作提示；三列会按终端宽度响应式换行，并在窗口缩放时重新排版。
+- Read Help 已按 Word Help 的结构补齐导航、操作和当前阅读区，能够显示当前小说、页面、章节、小节和自定义按键。
+- 从设置或素材管理页直接退出时会清除当前终端画面和滚动历史，避免学习内容残留。
+- 当前自动测试共 108 项，覆盖 Word、Read、设置、导入管理、存储和 CLI Session 交互。
 
-### 计划实现
+### 发布前收尾
 
-- 整理 Word 专属设置界面和内容。
-- 明确 Word 与 Read 各自拥有的配置边界。
-- Read 与 Word 的自定义按键绑定属于 v0.4 模块设置；`Ctrl+O` 保留为固定的“打开或返回设置”操作。
+- 完成真实终端下的 v0.4 人工验收。
+- 将 `feature/read-settings` 合并回 Read 开发主线并推送；推送与合并需明确确认。
+- 确认版本号、Release Notes 和发布方式后再发布，不把“功能开发完成”误记为“已发布”。
 
 ## v0.5 — Global Settings（计划）
 
@@ -154,5 +156,6 @@ touchfish setting
 ## 开发记录
 
 - v0.2 已完成并发布。
-- v0.3 从命令结构和 Read 核心开始。
+- v0.3 Read Core 已完成开发。
+- v0.4 Read Setup & Module Settings 已完成功能开发，当前尚未发布。
 - 旧的 `docs/settings-plan.md` 曾记录 v0.2 的 Word Settings 设想；其中大部分已实现或已不符合当前版本规划，现由本文件取代。
