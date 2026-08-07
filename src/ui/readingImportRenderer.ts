@@ -60,6 +60,7 @@ export function renderReadingImport(options: RenderReadingImportOptions) {
     console.log("");
     if (options.isConfirmingDelete) {
       const selectedBook = options.books[options.selectedIndex];
+      console.log(text.manageControls);
       console.log(text.deleteConfirm(selectedBook?.title ?? text.thisBook));
       console.log(text.deleteWarning);
       console.log(text.deleteControls);
@@ -112,9 +113,9 @@ function getText(language: InterfaceLanguage) {
       deleteHint: "当前操作  Enter 打开删除确认",
       pathControls: "操作  Enter 导入 | Backspace 删除 | Esc 取消编辑 / Ctrl+O 返回设置",
       pathExitHint: "退出程序  Ctrl+C（路径编辑时 Q 会作为路径内容输入）",
-      deleteConfirm: (title: string) => `[确认] 要删除《${title}》吗？`,
-      deleteWarning: "[警告] 本地小说副本和该小说的全部阅读进度都会被删除",
-      deleteControls: "[确认] 按 Y 删除 | Esc 取消 | Q / Ctrl+C 退出程序",
+      deleteConfirm: (title: string) => `[确认] 要删除 ${title} 吗？`,
+      deleteWarning: "[警告] 本地小说文件和该小说的全部阅读进度都会被删除",
+      deleteControls: "[确认] 按 Y 删除，或按 Esc 取消",
       thisBook: "当前小说",
       characterCount: (count: number) => `${count} 字符 [已导入]`,
       conflictTitle: "[确认] 已存在同名小说",
@@ -142,8 +143,8 @@ function getText(language: InterfaceLanguage) {
     pathControls: "Controls  Enter import | Backspace delete | Esc cancel edit / Ctrl+O return",
     pathExitHint: "Quit Program  Ctrl+C (Q is entered as part of the path while editing)",
     deleteConfirm: (title: string) => `[CONFIRM] Delete ${title}?`,
-    deleteWarning: "[WARN] The local novel copy and all reading progress for it will be deleted",
-    deleteControls: "[CONFIRM] Y delete | Esc cancel | Q / Ctrl+C quit program",
+    deleteWarning: "[WARN] The local novel file and all reading progress for it will be deleted",
+    deleteControls: "[CONFIRM] Press Y to delete, or Esc to cancel",
     thisBook: "this novel",
     characterCount: (count: number) => `${count} characters [imported]`,
     conflictTitle: "[CONFIRM] A novel with this name already exists",

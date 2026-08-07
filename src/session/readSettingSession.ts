@@ -19,10 +19,11 @@ const BINDING_ACTIONS: ReadBindingAction[] = [
   "repeat",
   "toggleHelp",
 ];
-const IMPORT_ITEM_INDEX = 1;
-const WIDTH_ITEM_INDEX = 2;
-const LINE_ITEM_INDEX = 3;
-const LANGUAGE_ITEM_INDEX = 4;
+const WIDTH_ITEM_INDEX = 0;
+const LINE_ITEM_INDEX = 1;
+const LANGUAGE_ITEM_INDEX = 2;
+const CURRENT_BOOK_ITEM_INDEX = 3;
+const IMPORT_ITEM_INDEX = 4;
 const THEME_ITEM_INDEX = 5;
 const BINDING_START_INDEX = 6;
 const ITEM_COUNT = BINDING_START_INDEX + BINDING_ACTIONS.length;
@@ -173,7 +174,7 @@ function confirmOrStartEdit() {
   }
 
   if (!isEditing) {
-    if (selectedIndex === 0 && books.length === 0) {
+    if (selectedIndex === CURRENT_BOOK_ITEM_INDEX && books.length === 0) {
       return;
     }
 
@@ -206,7 +207,7 @@ function changeCurrentValue(direction: -1 | 1) {
     return;
   }
 
-  if (selectedIndex === 0) {
+  if (selectedIndex === CURRENT_BOOK_ITEM_INDEX) {
     const currentIndex = Math.max(0, books.findIndex((book) => book.id === activeBookId));
     const nextIndex = (currentIndex + direction + books.length) % books.length;
     activeBookId = books[nextIndex]?.id;
@@ -256,7 +257,7 @@ function changeNumericValue(direction: -1 | 1) {
 }
 
 function saveEdit() {
-  if (selectedIndex === 0) {
+  if (selectedIndex === CURRENT_BOOK_ITEM_INDEX) {
     if (activeBookId) {
       saveReadState({ activeBookId });
     }

@@ -26,7 +26,18 @@ test("Read import explains source-file handling while editing a path", () => {
   assert.equal(lines.some((line) => line.includes("路径编辑时 Q 会作为路径内容输入")), true);
 });
 
-function captureRender(isImporting: boolean): string[] {
+test("Read delete confirmation follows the vocabulary manager prompt order", () => {
+  const lines = captureRender(false, true);
+  const controlsIndex = lines.findIndex((line) => line.startsWith("操作  W/S"));
+  const confirmIndex = lines.findIndex((line) => line === "[确认] 要删除 赤兔之死-止战之殇 吗？");
+
+  assert.equal(controlsIndex >= 0, true);
+  assert.equal(confirmIndex > controlsIndex, true);
+  assert.equal(lines.includes("[警告] 本地小说文件和该小说的全部阅读进度都会被删除"), true);
+  assert.equal(lines.includes("[确认] 按 Y 删除，或按 Esc 取消"), true);
+});
+
+function captureRender(isImporting: boolean, isConfirmingDelete = false): string[] {
   const lines: string[] = [];
   const originalLog = console.log;
   const originalClear = console.clear;
@@ -38,9 +49,9 @@ function captureRender(isImporting: boolean): string[] {
     renderReadingImport({
       interfaceLanguage: "chinese",
       books,
-      selectedIndex: books.length,
+      selectedIndex: isConfirmingDelete ? 0 : books.length,
       isImporting,
-      isConfirmingDelete: false,
+      isConfirmingDelete,
       importPath: "",
       conflictChoice: "replace",
       message: "",

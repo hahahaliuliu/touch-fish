@@ -28,6 +28,12 @@ const BINDING_ACTIONS: ReadBindingAction[] = [
   "repeat",
   "toggleHelp",
 ];
+const WIDTH_ITEM_INDEX = 0;
+const LINE_ITEM_INDEX = 1;
+const LANGUAGE_ITEM_INDEX = 2;
+const CURRENT_BOOK_ITEM_INDEX = 3;
+const IMPORT_ITEM_INDEX = 4;
+const THEME_ITEM_INDEX = 5;
 const BINDING_START_INDEX = 6;
 
 export function renderReadSettings(options: RenderReadSettingsOptions) {
@@ -54,15 +60,39 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
   console.log(text.title);
   console.log("");
   renderConfigItem(
-    0,
+    WIDTH_ITEM_INDEX,
+    selectedIndex,
+    isEditing,
+    text.contentWidth,
+    formatNumericValue(settings.contentWidth, customInput, selectedIndex === WIDTH_ITEM_INDEX && isEditing, selectedNumericOption, true, language),
+    formatNumericOptions(WIDTH_OPTIONS, selectedNumericOption, selectedIndex === WIDTH_ITEM_INDEX && isEditing, true, language)
+  );
+  renderConfigItem(
+    LINE_ITEM_INDEX,
+    selectedIndex,
+    isEditing,
+    text.pageLines,
+    formatNumericValue(settings.pageLineCount, customInput, selectedIndex === LINE_ITEM_INDEX && isEditing, selectedNumericOption, false, language),
+    formatNumericOptions(LINE_OPTIONS, selectedNumericOption, selectedIndex === LINE_ITEM_INDEX && isEditing, false, language)
+  );
+  renderConfigItem(
+    LANGUAGE_ITEM_INDEX,
+    selectedIndex,
+    isEditing,
+    text.interfaceLanguage,
+    formatLanguage(settings.interfaceLanguage, language),
+    formatValueOptions(INTERFACE_LANGUAGES, settings.interfaceLanguage, selectedIndex === LANGUAGE_ITEM_INDEX && isEditing, (value) => formatLanguage(value, language))
+  );
+  renderConfigItem(
+    CURRENT_BOOK_ITEM_INDEX,
     selectedIndex,
     isEditing,
     text.currentBook,
     activeBook?.title ?? text.noBooks,
-    formatBookOptions(books, activeBookId, selectedIndex === 0 && isEditing)
+    formatBookOptions(books, activeBookId, selectedIndex === CURRENT_BOOK_ITEM_INDEX && isEditing)
   );
   renderConfigItem(
-    1,
+    IMPORT_ITEM_INDEX,
     selectedIndex,
     false,
     text.importNovel,
@@ -70,36 +100,12 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
     ""
   );
   renderConfigItem(
-    2,
-    selectedIndex,
-    isEditing,
-    text.contentWidth,
-    formatNumericValue(settings.contentWidth, customInput, selectedIndex === 2 && isEditing, selectedNumericOption, true, language),
-    formatNumericOptions(WIDTH_OPTIONS, selectedNumericOption, selectedIndex === 2 && isEditing, true, language)
-  );
-  renderConfigItem(
-    3,
-    selectedIndex,
-    isEditing,
-    text.pageLines,
-    formatNumericValue(settings.pageLineCount, customInput, selectedIndex === 3 && isEditing, selectedNumericOption, false, language),
-    formatNumericOptions(LINE_OPTIONS, selectedNumericOption, selectedIndex === 3 && isEditing, false, language)
-  );
-  renderConfigItem(
-    4,
-    selectedIndex,
-    isEditing,
-    text.interfaceLanguage,
-    formatLanguage(settings.interfaceLanguage, language),
-    formatValueOptions(INTERFACE_LANGUAGES, settings.interfaceLanguage, selectedIndex === 4 && isEditing, (value) => formatLanguage(value, language))
-  );
-  renderConfigItem(
-    5,
+    THEME_ITEM_INDEX,
     selectedIndex,
     isEditing,
     text.theme,
     settings.theme,
-    formatValueOptions(THEMES, settings.theme, selectedIndex === 5 && isEditing, String)
+    formatValueOptions(THEMES, settings.theme, selectedIndex === THEME_ITEM_INDEX && isEditing, String)
   );
 
   console.log("");
@@ -122,9 +128,9 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
 
   if (isBindingCapture) {
     console.log(text.bindingHint);
-  } else if (isEditing && selectedIndex === 2) {
+  } else if (isEditing && selectedIndex === WIDTH_ITEM_INDEX) {
     console.log(text.widthHint);
-  } else if (isEditing && selectedIndex === 3) {
+  } else if (isEditing && selectedIndex === LINE_ITEM_INDEX) {
     console.log(text.lineHint);
   } else if (isEditing) {
     console.log(text.editHint);

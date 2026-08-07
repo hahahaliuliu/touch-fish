@@ -204,7 +204,7 @@ function deleteSelectedBook() {
       : Math.min(removedIndex, books.length - 1);
     message = localize(
       `[INFO] deleted ${removedBook.title}; reading progress was removed`,
-      `[INFO] 已删除 ${removedBook.title}，阅读进度已清除`
+      `[INFO] 已删除 ${removedBook.title}，阅读进度已删除`
     );
   } catch (error) {
     message = formatError(error);

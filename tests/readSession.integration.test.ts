@@ -148,7 +148,7 @@ test("Read returns from settings with the newly selected novel", async () => {
   fs.writeFileSync(path.join(readingDirectory, "bravo.txt"), "第二本。", "utf-8");
 
   try {
-    const result = await runReadSession(root, ["\u000f", "\r", "d", "\r", "\u000f", "q"]);
+    const result = await runReadSession(root, ["\u000f", "s", "s", "s", "\r", "d", "\r", "\u000f", "q"]);
 
     assert.equal(result.code, 0, result.output);
     assert.equal(result.output.includes("source loaded: bravo.txt"), true, result.output);
@@ -172,7 +172,7 @@ test("Read settings select a novel and save the page layout", async () => {
   fs.writeFileSync(path.join(readingDirectory, "bravo.txt"), "第二本。", "utf-8");
 
   try {
-    const result = await runReadSession(root, ["\r", "d", "\r", "s", "s", "\r", "d", "\r", "s", "\r", "d", "\r", "\u000f", "q"], ["read", "-s"]);
+    const result = await runReadSession(root, ["\r", "d", "\r", "s", "\r", "d", "\r", "s", "s", "\r", "d", "\r", "\u000f", "q"], ["read", "-s"]);
 
     assert.equal(result.code, 0, result.output);
     assert.equal(result.output.includes("Read Settings"), true, result.output);
@@ -294,7 +294,7 @@ test("Read settings save their own interface language and disguise theme", async
   try {
     const result = await runReadSession(
       root,
-      ["s", "s", "s", "s", "\r", "d", "\r", "s", "\r", "d", "\r", "\u000f", "q"],
+      ["s", "s", "\r", "d", "\r", "s", "s", "s", "\r", "d", "\r", "\u000f", "q"],
       ["read", "-s"]
     );
 
@@ -326,7 +326,7 @@ test("Read settings import a UTF-8 TXT novel and make it active", async () => {
   try {
     const result = await runReadSession(
       root,
-      ["s", "\r", "s", "\r", `"${sourcePath}"`, "\r", "\u000f", "\u000f", "q"],
+      ["s", "s", "s", "s", "\r", "s", "\r", `"${sourcePath}"`, "\r", "\u000f", "\u000f", "q"],
       ["read", "-s"]
     );
 
@@ -357,7 +357,7 @@ test("Read import keeps both novels when a file name conflicts", async () => {
   try {
     const result = await runReadSession(
       root,
-      ["s", "\r", "s", "\r", sourcePath, "\r", "d", "\r", "\u000f", "\u000f", "q"],
+      ["s", "s", "s", "s", "\r", "s", "\r", sourcePath, "\r", "d", "\r", "\u000f", "\u000f", "q"],
       ["read", "-s"]
     );
 
@@ -386,7 +386,7 @@ test("Read import replaces a conflicting novel after confirmation", async () => 
   try {
     const result = await runReadSession(
       root,
-      ["s", "\r", "s", "\r", sourcePath, "\r", "\r", "\u000f", "\u000f", "q"],
+      ["s", "s", "s", "s", "\r", "s", "\r", sourcePath, "\r", "\r", "\u000f", "\u000f", "q"],
       ["read", "-s"]
     );
 
@@ -413,7 +413,7 @@ test("Read import rejects files that are not TXT", async () => {
   try {
     const result = await runReadSession(
       root,
-      ["s", "\r", "s", "\r", sourcePath, "\r", "\u0003"],
+      ["s", "s", "s", "s", "\r", "s", "\r", sourcePath, "\r", "\u0003"],
       ["read", "-s"]
     );
 
@@ -439,7 +439,7 @@ test("Read import rejects invalid UTF-8 files", async () => {
   try {
     const result = await runReadSession(
       root,
-      ["s", "\r", "s", "\r", invalidPath, "\r", "\u0003"],
+      ["s", "s", "s", "s", "\r", "s", "\r", invalidPath, "\r", "\u0003"],
       ["read", "-s"]
     );
 
@@ -471,13 +471,13 @@ test("Read import manager lists novels and deletes the selected novel with its p
   try {
     const result = await runReadSession(
       root,
-      ["s", "\r", "\r", "y", "\u000f", "\u000f", "q"],
+      ["s", "s", "s", "s", "\r", "\r", "y", "\u000f", "\u000f", "q"],
       ["read", "-s"]
     );
 
     assert.equal(result.code, 0, result.output);
     assert.equal(result.output.includes("a-赤兔之死"), true, result.output);
-    assert.equal(result.output.includes("The local novel copy and all reading progress"), true, result.output);
+    assert.equal(result.output.includes("The local novel file and all reading progress"), true, result.output);
     assert.equal(fs.existsSync(samplePath), false);
     assert.equal(fs.existsSync(progressPath), false);
     const state = JSON.parse(fs.readFileSync(path.join(progressDirectory, "state.json"), "utf-8")) as {
@@ -500,7 +500,7 @@ test("Read settings reject a custom page line count above 100", async () => {
   fs.writeFileSync(path.join(readingDirectory, "limit.txt"), "正文。", "utf-8");
 
   try {
-    const result = await runReadSession(root, ["s", "s", "s", "\r", "d", "d", "101", "\r", "\u001b", "q"], ["read", "-s"]);
+    const result = await runReadSession(root, ["s", "\r", "d", "d", "101", "\r", "\u001b", "q"], ["read", "-s"]);
 
     assert.equal(result.code, 0, result.output);
     assert.equal(fs.existsSync(path.join(root, "read-settings.json")), false);

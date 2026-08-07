@@ -23,9 +23,18 @@ const settings: ReadSettings = {
   },
 };
 
+test("Read settings order mirrors the corresponding Word settings", () => {
+  const lines = captureRender({});
+  const indexes = ["正文宽度", "每页行数", "界面语言", "当前小说", "导入 TXT 小说", "伪装主题"]
+    .map((label) => lines.findIndex((line) => line.includes(label)));
+
+  assert.equal(indexes.every((index) => index >= 0), true);
+  assert.deepEqual(indexes, [...indexes].sort((left, right) => left - right));
+});
+
 test("Read settings highlights the active automatic width option while editing", () => {
   const lines = captureRender({
-    selectedIndex: 2,
+    selectedIndex: 0,
     isEditing: true,
     selectedNumericOption: 0,
   });
@@ -36,7 +45,7 @@ test("Read settings highlights the active automatic width option while editing",
 
 test("Read settings highlights the selected novel while editing", () => {
   const lines = captureRender({
-    selectedIndex: 0,
+    selectedIndex: 3,
     isEditing: true,
   });
 
@@ -45,7 +54,7 @@ test("Read settings highlights the selected novel while editing", () => {
 
 test("Read settings shows cursors for custom numeric input and key capture", () => {
   const numericLines = captureRender({
-    selectedIndex: 3,
+    selectedIndex: 1,
     isEditing: true,
     customInput: "25",
     selectedNumericOption: "custom",
