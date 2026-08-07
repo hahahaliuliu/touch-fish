@@ -1,0 +1,135 @@
+# Touch Fish 开发计划
+
+Touch Fish 是一个伪装成开发输出的终端学习工具。
+
+当前包含两个模块：
+
+- Word：背单词。
+- Read：阅读小说。
+
+## 命令结构
+
+```text
+touchfish
+touchfish word
+touchfish word -s
+touchfish word -f
+touchfish read
+touchfish read -s
+touchfish setting
+```
+
+- `touchfish`：显示核心命令和简要帮助。
+- `touchfish word`：开始背单词。
+- `touchfish word -s / --settings`：Word 专属设置。
+- `touchfish word -f / --favorite`：查看收藏词汇。
+- `touchfish read`：继续阅读上一次阅读的小说。
+- `touchfish read -s / --settings`：Read 专属设置。
+- `touchfish setting`：全局设置。
+
+## 开发计划
+
+### v0.1 — 项目基础（已完成开发）
+
+#### 版本计划
+
+- 项目目录结构和代码职责划分。
+- `touchfish word` 启动命令。
+- Word 终端伪装界面。
+- 基础操作按键和退出方式。
+- Help 界面。
+
+#### 开发记录
+
+- 版本计划全部完成。
+
+### v0.2 — Word Settings（已完成开发）
+
+#### 版本计划
+
+##### Word 核心体验
+
+- 单词分页、学习分组和分组循环。
+- 顺序、倒序、随机与重新随机学习。
+- 本地词书读取，包括示例词书和导入词书。
+- 多词书切换和每本词书独立进度。
+- 中英文界面和多种单词显示方式。
+- Build Log、Backend Log 和 Git 伪装主题。
+- 备注、组内单词测试和单词收藏。
+- Help 页面和 Settings 页面。
+
+##### Word Settings 与词书管理
+
+- 页面数量、学习组大小和分组开关。
+- 翻页循环、学习顺序和当前词书。
+- 界面语言、备注模式和伪装主题。
+- 查看收藏、词书下载、导入和卸载。
+- 自定义操作按键。
+
+#### 开发记录
+
+- 版本计划基本完成。
+- 建立自动测试、Session 集成测试和 Node.js CI。
+- 发布 v0.2.0。
+
+- 音标、例句和标签等词书附加内容的显示暂缓。
+
+### v0.3 — Read Core（已完成开发）
+
+#### 版本计划
+
+- 命令结构调整，核心模块统一为 Word 和 Read。
+- Word Settings 和收藏调整为 `touchfish word -s`、`touchfish word -f`。
+- `touchfish read` 启动命令。
+- 本地 UTF-8 TXT 小说阅读。
+- 小说分页和中英文宽度适配。
+- 小说章节识别。
+- 当前小说和每本小说独立阅读进度。
+- 上下页、上下章和重复上次操作。
+- Help 界面。
+
+#### 开发记录
+
+- 版本计划全部完成。
+- 建立 Read Session、阅读进度和章节导航的集成测试。
+
+### v0.4 — Read Settings（开发中）
+
+#### 版本计划
+
+##### Read Settings
+
+- `touchfish read -s` 启动命令。
+- Read Settings 界面。
+- 当前小说、正文宽度和每页行数。
+- 章节切分和小节导航。
+- 界面语言。
+- Build Log、Backend Log 和 Git 伪装主题。
+- 自定义操作按键。
+
+##### 小说管理
+
+- 本地 UTF-8 TXT 小说导入。
+- 多本小说管理。
+- 每本小说独立阅读进度。
+
+##### 其他阅读方式
+
+- 使用现有终端窗口直接显示阅读内容，启动方式和界面形式待定。
+
+#### 开发记录
+
+- 版本计划基本完成，v0.4 继续开发中。
+- 增加阅读进度、设置和小说数据保护。
+- 补充 Read 自动测试和 Session 集成测试。
+
+- 书签、搜索、段落收藏和更多小说格式暂缓。
+
+### v0.5 — 全局设置与更多应用（计划中）
+
+#### 版本计划
+
+- `touchfish setting` 全局设置。
+- 更多场景应用，如“科目一与科目四”“考公行测”“歌词”。
+
+#### 开发记录
