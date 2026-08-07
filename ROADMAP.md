@@ -79,14 +79,13 @@ touchfish setting
 
 ### 已完成
 
-- 建立 `feature/read` 分支。
 - 整理 CLI：顶层帮助只展示 Word 和 Read。
 - `touchfish word -s` 和 `touchfish word -f` 已接入现有功能。
-- `touchfish read` 与 `touchfish read -s` 命令骨架已建立。
-- 本地 UTF-8 TXT 小说读取已完成，并附带“赤兔之死-止战之殇”示例读物。
+- `touchfish read` 与 `touchfish read -s` 已可用。
+- 本地 UTF-8 TXT 小说读取已完成，并附带示例读物。
 - 已建立当前小说与每本小说阅读字符位置的本地存储，并对损坏进度安全回退。
 - 正文分页已支持中英文终端宽度、紧凑段落显示与按字符位置恢复页面。
-- 已支持中文、英文和 `《标题》` 形式的章节识别；示例读物可识别为两个章节。
+- 已支持中文、英文和 `《标题》` 形式的章节识别。
 - Build Log、Backend Log、Git 阅读 Session 已完成，支持翻页、跳章、空格重复上次导航、章节页首对齐、进度保存和安全退出；v0.3 暂时共用现有主题设置。
 - Read Help 已完成：`?` 打开操作说明和当前阅读状态，Esc 返回阅读，Q 或 Ctrl+C 保存进度并退出。
 - 阅读 Session、存储容错、分页、章节识别和集成测试均已完成。
