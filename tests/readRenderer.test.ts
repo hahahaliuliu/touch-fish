@@ -28,7 +28,16 @@ for (const [theme, expected] of [
     console.clear = () => undefined;
 
     try {
-      renderReadSession({ book, page, pageIndex: 0, pageTotal: 1, chapterIndex: 0, theme });
+      renderReadSession({
+        book,
+        page,
+        pageIndex: 0,
+        pageTotal: 1,
+        chapterIndex: 0,
+        theme,
+        interfaceLanguage: "english",
+        showHelp: false,
+      });
       assert.equal(lines.some((line) => line.includes(expected)), true);
     } finally {
       console.log = originalLog;
@@ -36,3 +45,30 @@ for (const [theme, expected] of [
     }
   });
 }
+
+test("read renderer displays the help screen before the selected theme", () => {
+  const lines: string[] = [];
+  const originalLog = console.log;
+  const originalClear = console.clear;
+
+  console.log = (...values: unknown[]) => lines.push(values.join(" "));
+  console.clear = () => undefined;
+
+  try {
+    renderReadSession({
+      book,
+      page,
+      pageIndex: 0,
+      pageTotal: 1,
+      chapterIndex: 0,
+      theme: "git",
+      interfaceLanguage: "english",
+      showHelp: true,
+    });
+    assert.equal(lines.some((line) => line.includes("Reading controls")), true);
+    assert.equal(lines.some((line) => line.includes("On branch feature/reading-workspace")), false);
+  } finally {
+    console.log = originalLog;
+    console.clear = originalClear;
+  }
+});

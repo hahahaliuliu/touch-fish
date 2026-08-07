@@ -12,7 +12,7 @@ import {
 } from "../services/readingPagination.js";
 import { loadReadProgress, saveReadProgress } from "../storage/readProgress.js";
 import { loadSettings } from "../services/settingsLoader.js";
-import type { ThemeName } from "../models/settings.js";
+import type { InterfaceLanguage, ThemeName } from "../models/settings.js";
 import {
   getReadContentWidth,
   getReadPageLineCount,
@@ -24,12 +24,17 @@ let book: ReadingBook;
 let pages = paginateReadingText("", 20, 1);
 let currentPageIndex = 0;
 let theme: ThemeName = "build-log";
+let interfaceLanguage: InterfaceLanguage = "english";
+let showHelp = false;
 type LastNavigation = "previous-page" | "next-page" | "previous-chapter" | "next-chapter";
 let lastNavigation: LastNavigation = "next-page";
 
 export function startReadSession(nextBook: ReadingBook) {
   book = nextBook;
-  theme = loadSettings().theme;
+  const settings = loadSettings();
+  theme = settings.theme;
+  interfaceLanguage = settings.interfaceLanguage;
+  showHelp = false;
   pages = paginateReadingText(
     book.content,
     getReadContentWidth(theme),
@@ -88,9 +93,30 @@ function parseInputs(input: string): string[] {
 }
 
 function handleInput(input: string): boolean {
-  if (input === "\u0003" || input === "\u001b" || input.toLowerCase() === "q") {
+  if (input === "\u0003" || input.toLowerCase() === "q") {
     quitReadSession();
     return false;
+  }
+
+  if (input === "\u001b") {
+    if (showHelp) {
+      showHelp = false;
+      renderSession();
+      return true;
+    }
+
+    quitReadSession();
+    return false;
+  }
+
+  if (input === "?") {
+    showHelp = !showHelp;
+    renderSession();
+    return true;
+  }
+
+  if (showHelp) {
+    return true;
   }
 
   if (input === "a" || input === "A" || input === "\u001b[D") {
@@ -190,6 +216,8 @@ function renderSession() {
     pageTotal: pages.length,
     chapterIndex: findReadingChapterIndex(book.chapters, page.startOffset),
     theme,
+    interfaceLanguage,
+    showHelp,
   });
 }
 

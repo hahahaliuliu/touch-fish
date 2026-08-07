@@ -92,6 +92,27 @@ test("Read starts every disguise theme and exits safely", async () => {
   }
 });
 
+test("Read help returns to reading when Esc is pressed", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-help-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "help-novel.txt"), "正文。", "utf-8");
+
+  try {
+    const result = await runReadSession(root, ["?", "\u001b", "q"]);
+
+    assert.equal(result.code, 0, result.output);
+    assert.equal(result.output.includes("Reading controls"), true, result.output);
+    assert.equal(result.output.includes("cache entries by path ./src/read/"), true, result.output);
+    assert.equal(result.output.includes("read progress saved"), true, result.output);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 async function runReadSession(root: string, inputs: string[]) {
   const child = spawn(process.execPath, ["--import", "tsx", "src/index.ts", "read"], {
     cwd: projectRoot,
