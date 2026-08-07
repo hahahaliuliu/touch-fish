@@ -1,6 +1,6 @@
 import type { ReadBindingAction, ReadingBookSummary, ReadSettings } from "../models/reading.js";
 import type { InterfaceLanguage, ThemeName } from "../models/settings.js";
-import { getTerminalColumns, getTerminalWidth, wrapTerminalTextWithAnsi } from "./terminalText.js";
+import { formatSettingColumns } from "./settingColumns.js";
 
 export interface RenderReadSettingsOptions {
   books: ReadingBookSummary[];
@@ -166,42 +166,10 @@ function renderConfigItem(
   optionText: string
 ) {
   const marker = index === selectedIndex ? (isEditing ? "*" : ">") : " ";
-  const prefix = `${marker} ${padTerminal(label, 20)} ${padTerminal(value, 16)} `;
-  const continuationPrefix = " ".repeat(getTerminalWidth(stripAnsi(prefix)));
-  const availableWidth = Math.max(1, getTerminalColumns() - getTerminalWidth(stripAnsi(prefix)));
-  const optionLines = wrapOptionText(optionText, availableWidth);
-
-  console.log(`${prefix}${optionLines[0] ?? ""}`);
-  optionLines.slice(1).forEach((line) => console.log(`${continuationPrefix}${line}`));
-}
-
-function wrapOptionText(optionText: string, availableWidth: number): string[] {
-  if (!optionText || getTerminalWidth(stripAnsi(optionText)) <= availableWidth) {
-    return [optionText];
-  }
-
-  if (!optionText.startsWith("[") || !optionText.endsWith("]")) {
-    return [optionText];
-  }
-
-  const options = optionText.slice(1, -1).split(" / ");
-  const lines: string[] = [];
-  let current = `[${options[0] ?? ""}`;
-
-  options.slice(1).forEach((option) => {
-    const candidate = `${current} / ${option}`;
-
-    if (getTerminalWidth(stripAnsi(`${candidate}]`)) <= availableWidth) {
-      current = candidate;
-      return;
-    }
-
-    lines.push(`${current} /`);
-    current = option;
-  });
-
-  lines.push(`${current}]`);
-  return lines.flatMap((line) => wrapTerminalTextWithAnsi(line, availableWidth));
+  formatSettingColumns(marker, label, value, optionText, {
+    desiredLabelWidth: 20,
+    desiredValueWidth: 16,
+  }).forEach((line) => console.log(line));
 }
 
 function renderBindingItem(
@@ -216,7 +184,10 @@ function renderBindingItem(
   const second = formatBindingSlot(bindings[1], selected && selectedSlot === 1, isCapturing && selectedSlot === 1, language);
   const marker = selected && isCapturing ? "*" : selected ? ">" : " ";
 
-  console.log(`${marker} ${padTerminal(label, 20)} ${padTerminal(first, 17)} ${second}`);
+  formatSettingColumns(marker, label, first, second, {
+    desiredLabelWidth: 20,
+    desiredValueWidth: 17,
+  }).forEach((line) => console.log(line));
 }
 
 function formatBindingSlot(binding: string, selected: boolean, isCapturing: boolean, language: InterfaceLanguage): string {
@@ -224,7 +195,7 @@ function formatBindingSlot(binding: string, selected: boolean, isCapturing: bool
     return blinkingCursor();
   }
 
-  const value = padTerminal(formatBinding(binding, language), 17);
+  const value = formatBinding(binding, language);
   return selected ? formatOption(value, true) : value;
 }
 
@@ -365,14 +336,6 @@ function formatOption(value: string, selected: boolean): string {
 
 function blinkingCursor(): string {
   return "\u001b[5m_\u001b[0m";
-}
-
-function padTerminal(value: string, targetWidth: number): string {
-  return `${value}${" ".repeat(Math.max(0, targetWidth - getTerminalWidth(stripAnsi(value))))}`;
-}
-
-function stripAnsi(value: string): string {
-  return value.replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, "");
 }
 
 function getText(language: InterfaceLanguage) {

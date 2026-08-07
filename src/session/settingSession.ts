@@ -70,6 +70,7 @@ export function startSettingSession(options: StartSettingSessionOptions = {}) {
   isEditing = false;
   draftSettings = settings;
   resetEditState();
+  process.stdout.on("resize", handleTerminalResize);
   render();
 
   if (process.stdin.isTTY) {
@@ -86,6 +87,10 @@ function handleKeyPress(key: string) {
       return;
     }
   }
+}
+
+function handleTerminalResize() {
+  render();
 }
 
 function parseInputs(input: string): string[] {
@@ -622,6 +627,7 @@ function getSettingLabels(language: InterfaceLanguage) {
 function openVocabularyDownloadSession() {
   const returnSelectedIndex = selectedIndex;
   process.stdin.off("data", handleKeyPress);
+  process.stdout.off("resize", handleTerminalResize);
   void startVocabularyDownloadSession({
     onReturn: () => {
       startSettingSession({
@@ -635,6 +641,7 @@ function openVocabularyDownloadSession() {
 function openFavoriteSession() {
   const returnSelectedIndex = selectedIndex;
   process.stdin.off("data", handleKeyPress);
+  process.stdout.off("resize", handleTerminalResize);
   void import("./favoriteSession.js").then(({ startFavoriteSession }) => {
     startFavoriteSession({
       onReturn: () => startSettingSession({
@@ -671,10 +678,12 @@ function returnToPreviousSession() {
   isEditing = false;
   resetEditState();
   process.stdin.off("data", handleKeyPress);
+  process.stdout.off("resize", handleTerminalResize);
   onReturn?.();
 }
 
 function quitSettingSession() {
+  process.stdout.off("resize", handleTerminalResize);
   console.clear();
   console.log("[INFO] configuration session closed");
 

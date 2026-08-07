@@ -60,6 +60,7 @@ export function startReadSettingSession(options: StartReadSettingSessionOptions 
   selectedBindingSlot = 0;
   statusMessage = options.message ?? "";
   resetEditState();
+  process.stdout.on("resize", handleTerminalResize);
   render();
 
   if (process.stdin.isTTY) {
@@ -76,6 +77,10 @@ function handleKeyPress(key: string) {
       return;
     }
   }
+}
+
+function handleTerminalResize() {
+  render();
 }
 
 function handleInput(input: string): boolean {
@@ -444,6 +449,7 @@ function getSelectedBindingAction(): ReadBindingAction | undefined {
 function openReadingImport() {
   const returnCallback = onReturnToReading;
   process.stdin.off("data", handleKeyPress);
+  process.stdout.off("resize", handleTerminalResize);
   startReadingImportSession({
     interfaceLanguage: settings.interfaceLanguage,
     onReturn: () => startReadSettingSession({
@@ -465,6 +471,7 @@ function localize(english: string, chinese: string): string {
 
 function quit() {
   process.stdin.off("data", handleKeyPress);
+  process.stdout.off("resize", handleTerminalResize);
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(false);
   }
@@ -480,12 +487,14 @@ function openReadingSession() {
 
   saveReadState({ activeBookId: selectedBookId });
   process.stdin.off("data", handleKeyPress);
+  process.stdout.off("resize", handleTerminalResize);
   startReadSession(loadReadingBook(selectedBookId));
 }
 
 function returnToReading() {
   if (onReturnToReading && activeBookId) {
     process.stdin.off("data", handleKeyPress);
+    process.stdout.off("resize", handleTerminalResize);
     onReturnToReading(activeBookId);
     return;
   }

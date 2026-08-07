@@ -1,7 +1,19 @@
 const FALLBACK_TERMINAL_COLUMNS = 100;
 
 export function getTerminalColumns(): number {
-  const columns = process.stdout.columns;
+  let windowColumns: number | undefined;
+
+  try {
+    windowColumns = typeof process.stdout.getWindowSize === "function"
+      ? process.stdout.getWindowSize()[0]
+      : undefined;
+  } catch {
+    windowColumns = undefined;
+  }
+
+  const environmentColumns = Number(process.env.COLUMNS);
+  const columns = [windowColumns, process.stdout.columns, environmentColumns]
+    .find((value) => typeof value === "number" && Number.isFinite(value) && value > 0);
 
   return columns && columns > 0 ? columns : FALLBACK_TERMINAL_COLUMNS;
 }

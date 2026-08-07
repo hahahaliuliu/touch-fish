@@ -106,10 +106,17 @@ test("Read setting option continuations stay aligned with the option column", ()
     const sectionLineIndex = lines.findIndex((line) => line.includes("章节切分"));
     const languageLineIndex = lines.findIndex((line) => line.includes("界面语言"));
     const continuationLines = lines.slice(sectionLineIndex + 1, languageLineIndex);
+    const sectionLine = lines[sectionLineIndex] ?? "";
+    const optionIndex = sectionLine.indexOf("[");
+    const optionColumn = optionIndex < 0 ? -1 : getTerminalWidth(sectionLine.slice(0, optionIndex));
 
     assert.equal(sectionLineIndex >= 0, true);
+    assert.equal(optionColumn > 0, true);
     assert.equal(continuationLines.length >= 2, true);
-    assert.equal(continuationLines.every((line) => line.startsWith(" ".repeat(40))), true);
+    assert.equal(
+      continuationLines.every((line) => (line.match(/^ */)?.[0].length ?? 0) === optionColumn),
+      true
+    );
     assert.equal(
       lines.slice(sectionLineIndex, languageLineIndex).every((line) => getTerminalWidth(line) <= 45),
       true
