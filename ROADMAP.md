@@ -103,6 +103,12 @@ touchfish setting
 
 ## v0.4 — Read Setup & Module Settings（计划）
 
+### 交互基线
+
+- Read v0.3 的核心阅读体验参考 Word v0.1；Read v0.4 的设置与完整产品体验参考 Word v0.2。
+- Read 默认沿用 Word 已建立的界面与操作规范，包括行选中、编辑态、选项高亮、输入光标、按键捕获、导航按键、保存与取消行为、帮助和错误提示。
+- 只有小说特有且 Word 没有对应交互的功能才单独设计，并在实现前确认方案。
+
 ### 已完成（第一步）
 
 - `touchfish read -s / --settings` 已可用：可切换当前小说、设置正文宽度和每页行数。
