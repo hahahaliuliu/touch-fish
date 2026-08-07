@@ -6,6 +6,14 @@ export interface TouchFishCommandHandlers {
   startWordFavorites: () => void | Promise<void>;
   startRead: () => void | Promise<void>;
   startReadSettings: () => void | Promise<void>;
+  startReadMini: () => void | Promise<void>;
+  startReadMiniChild: (options: ReadMiniChildCommandOptions) => void | Promise<void>;
+}
+
+export interface ReadMiniChildCommandOptions {
+  port: number;
+  token: string;
+  bookId: string;
 }
 
 export function createTouchFishProgram(handlers: TouchFishCommandHandlers) {
@@ -43,10 +51,43 @@ export function createTouchFishProgram(handlers: TouchFishCommandHandlers) {
   program
     .command("read")
     .description("Read novels in a disguised terminal workspace")
-    .option("-s, --settings", "Open Read settings")
-    .action(async (options: { settings?: boolean }) => {
+    .addOption(
+      new Option("-s, --settings", "Open Read settings").conflicts("mini")
+    )
+    .addOption(
+      new Option("-m, --mini", "Open Read in a small independent window").conflicts("settings")
+    )
+    .addOption(new Option("--mini-child", "Internal small-window reader").hideHelp())
+    .addOption(new Option("--mini-port <port>", "Internal host port").hideHelp().argParser(Number))
+    .addOption(new Option("--mini-token <token>", "Internal host token").hideHelp())
+    .addOption(new Option("--mini-book <bookId>", "Internal novel id").hideHelp())
+    .action(async (options: {
+      settings?: boolean;
+      mini?: boolean;
+      miniChild?: boolean;
+      miniPort?: number;
+      miniToken?: string;
+      miniBook?: string;
+    }) => {
+      if (options.miniChild) {
+        if (!Number.isInteger(options.miniPort) || !options.miniToken || !options.miniBook) {
+          throw new Error("Invalid internal Read mini-window arguments");
+        }
+        await handlers.startReadMiniChild({
+          port: options.miniPort!,
+          token: options.miniToken,
+          bookId: options.miniBook,
+        });
+        return;
+      }
+
       if (options.settings) {
         await handlers.startReadSettings();
+        return;
+      }
+
+      if (options.mini) {
+        await handlers.startReadMini();
         return;
       }
 

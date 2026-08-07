@@ -27,7 +27,7 @@ const settings: ReadSettings = {
 
 test("Read settings order mirrors the corresponding Word settings", () => {
   const lines = captureRender({});
-  const indexes = ["正文宽度", "每页行数", "章节切分", "界面语言", "当前小说", "导入 TXT 小说", "伪装主题"]
+  const indexes = ["正文宽度", "每页行数", "章节切分", "界面语言", "当前小说", "导入 TXT 小说", "伪装主题", "小窗口阅读"]
     .map((label) => lines.findIndex((line) => line.includes(label)));
 
   assert.equal(indexes.every((index) => index >= 0), true);
@@ -62,7 +62,7 @@ test("Read settings shows cursors for custom numeric input and key capture", () 
     selectedNumericOption: "custom",
   });
   const bindingLines = captureRender({
-    selectedIndex: 7,
+    selectedIndex: 8,
     isEditing: false,
     isBindingCapture: true,
   });
@@ -75,7 +75,7 @@ test("Read settings shows cursors for custom numeric input and key capture", () 
 
 test("Read settings highlights one binding slot without hiding the other", () => {
   const lines = captureRender({
-    selectedIndex: 7,
+    selectedIndex: 8,
     selectedBindingSlot: 1,
   });
   const bindingLine = lines.find((line) => line.includes("上一页")) ?? "";
@@ -92,6 +92,14 @@ test("Read settings rename chapter bindings when section navigation is enabled",
   assert.equal(lines.some((line) => line.includes("上一小节")), true);
   assert.equal(lines.some((line) => line.includes("下一小节")), true);
   assert.equal(lines.some((line) => line.includes("上一章")), false);
+});
+
+test("Read settings shows whether mini-window mode can be opened or closed", () => {
+  const closedLines = captureRender({ miniModeActive: false });
+  const openLines = captureRender({ miniModeActive: true });
+
+  assert.equal(closedLines.some((line) => line.includes("小窗口阅读") && line.includes("[打开]")), true);
+  assert.equal(openLines.some((line) => line.includes("小窗口阅读") && line.includes("[关闭]")), true);
 });
 
 test("Read setting option continuations stay aligned with the option column", () => {
@@ -146,6 +154,7 @@ function captureRender(overrides: Partial<Parameters<typeof renderReadSettings>[
       isBindingCapture: false,
       editError: "",
       statusMessage: "",
+      miniModeActive: false,
       ...overrides,
     });
     return lines;

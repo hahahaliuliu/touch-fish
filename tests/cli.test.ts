@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createTouchFishProgram } from "../src/cli.js";
 
-type HandlerName = "word" | "word-settings" | "word-favorites" | "read" | "read-settings";
+type HandlerName = "word" | "word-settings" | "word-favorites" | "read" | "read-settings" | "read-mini" | "read-mini-child";
 
 function createProgramWithCalls() {
   const calls: HandlerName[] = [];
@@ -21,6 +21,12 @@ function createProgramWithCalls() {
     },
     startReadSettings: () => {
       calls.push("read-settings");
+    },
+    startReadMini: () => {
+      calls.push("read-mini");
+    },
+    startReadMiniChild: () => {
+      calls.push("read-mini-child");
     },
   });
 
@@ -52,7 +58,7 @@ test("Word command routes its default and module options", async () => {
   assert.deepEqual(favoritesRun.calls, ["word-favorites"]);
 });
 
-test("Read command routes its default and settings option", async () => {
+test("Read command routes its default, settings, and mini-window options", async () => {
   const defaultRun = createProgramWithCalls();
   await defaultRun.program.parseAsync(["node", "touchfish", "read"]);
   assert.deepEqual(defaultRun.calls, ["read"]);
@@ -60,6 +66,17 @@ test("Read command routes its default and settings option", async () => {
   const settingsRun = createProgramWithCalls();
   await settingsRun.program.parseAsync(["node", "touchfish", "read", "-s"]);
   assert.deepEqual(settingsRun.calls, ["read-settings"]);
+
+  const miniRun = createProgramWithCalls();
+  await miniRun.program.parseAsync(["node", "touchfish", "read", "-m"]);
+  assert.deepEqual(miniRun.calls, ["read-mini"]);
+
+  const childRun = createProgramWithCalls();
+  await childRun.program.parseAsync([
+    "node", "touchfish", "read", "--mini-child", "--mini-port", "4310",
+    "--mini-token", "token", "--mini-book", "alpha",
+  ]);
+  assert.deepEqual(childRun.calls, ["read-mini-child"]);
 });
 
 test("legacy v0.2 commands remain available as hidden aliases", async () => {

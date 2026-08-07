@@ -16,6 +16,7 @@ touchfish word -s
 touchfish word -f
 touchfish read
 touchfish read -s
+touchfish read -m
 touchfish setting
 ```
 
@@ -25,6 +26,7 @@ touchfish setting
 - `touchfish word -f / --favorite`：查看收藏词汇。
 - `touchfish read`：继续阅读上一次阅读的小说。
 - `touchfish read -s / --settings`：Read 专属设置。
+- `touchfish read -m / --mini`：启动小窗口阅读模式。
 - `touchfish setting`：全局设置。
 
 ## 开发计划
@@ -115,7 +117,11 @@ touchfish setting
 
 ##### 其他阅读方式
 
-- 使用现有终端窗口直接显示阅读内容，启动方式和界面形式待定。
+- 小窗口阅读模式使用独立终端窗口显示正文。
+- 原窗口保留当前伪装主题，并可进入 Help 和 Read Settings。
+- 小窗口关闭后原程序继续运行，关闭小窗口模式后恢复原有伪装阅读界面。
+- 小窗口设置，包括窗口尺寸和字体大小调整。
+- 探索上下滚动阅读和鼠标操作。
 
 #### 开发记录
 

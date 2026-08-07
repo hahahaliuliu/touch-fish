@@ -18,6 +18,7 @@ export interface RenderReadSettingsOptions {
   isBindingCapture: boolean;
   editError: string;
   statusMessage: string;
+  miniModeActive: boolean;
 }
 
 const WIDTH_OPTIONS: Array<number | "custom"> = [0, 30, 50, "custom"];
@@ -40,7 +41,8 @@ const LANGUAGE_ITEM_INDEX = 3;
 const CURRENT_BOOK_ITEM_INDEX = 4;
 const IMPORT_ITEM_INDEX = 5;
 const THEME_ITEM_INDEX = 6;
-const BINDING_START_INDEX = 7;
+const MINI_WINDOW_ITEM_INDEX = 7;
+const BINDING_START_INDEX = 8;
 
 export function renderReadSettings(options: RenderReadSettingsOptions) {
   const {
@@ -55,6 +57,7 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
     isBindingCapture,
     editError,
     statusMessage,
+    miniModeActive,
   } = options;
   const language = settings.interfaceLanguage;
   const text = getText(language);
@@ -120,6 +123,14 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
     text.theme,
     settings.theme,
     formatValueOptions(THEMES, settings.theme, selectedIndex === THEME_ITEM_INDEX && isEditing, String)
+  );
+  renderConfigItem(
+    MINI_WINDOW_ITEM_INDEX,
+    selectedIndex,
+    false,
+    text.miniWindow,
+    miniModeActive ? text.close : text.open,
+    ""
   );
 
   console.log("");
@@ -352,7 +363,9 @@ function getText(language: InterfaceLanguage) {
       chapterSections: "章节切分",
       interfaceLanguage: "界面语言",
       theme: "伪装主题",
+      miniWindow: "小窗口阅读",
       keyBindings: "按键绑定",
+      close: "[关闭]",
       bindingLabels: {
         previousPage: "上一页",
         nextPage: "下一页",
@@ -386,7 +399,9 @@ function getText(language: InterfaceLanguage) {
     chapterSections: "Chapter Sections",
     interfaceLanguage: "Interface Language",
     theme: "Disguise Theme",
+    miniWindow: "Mini Window Reading",
     keyBindings: "Key Bindings",
+    close: "[close]",
     bindingLabels: {
       previousPage: "Previous Page",
       nextPage: "Next Page",

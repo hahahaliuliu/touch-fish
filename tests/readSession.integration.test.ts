@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import net from "node:net";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -109,6 +110,48 @@ test("Read help returns to reading when Esc is pressed", async () => {
     assert.equal(result.output.includes("cache entries by path ./src/read/"), true, result.output);
     assert.equal(result.output.includes("read progress saved"), true, result.output);
   } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Read mini child renders plain text and Q closes only the child session", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-mini-child-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+  const token = "mini-test-token";
+  let authenticated = false;
+  const server = net.createServer((socket) => {
+    socket.setEncoding("utf8");
+    socket.on("data", (value) => {
+      authenticated ||= value.includes(token);
+    });
+  });
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "mini.txt"), "《小窗口》\n正文内容。", "utf8");
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  assert.equal(typeof address === "object" && address !== null, true);
+  const port = typeof address === "object" && address ? address.port : 0;
+
+  try {
+    const result = await runReadSession(
+      root,
+      ["q"],
+      [
+        "read", "--mini-child", "--mini-port", String(port),
+        "--mini-token", token, "--mini-book", "mini",
+      ]
+    );
+
+    assert.equal(result.code, 0, result.output);
+    assert.equal(result.output.includes("小窗口"), true, result.output);
+    assert.equal(result.output.includes("cache/read/"), false, result.output);
+    assert.equal(authenticated, true);
+    assert.equal(server.listening, true);
+  } finally {
+    server.close();
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
@@ -239,7 +282,7 @@ test("Read settings bind a custom next-page key", async () => {
   );
 
   try {
-    const result = await runReadSession(root, ["s", "s", "s", "s", "s", "s", "s", "s", "\r", "f", "\u000f", "f", "q"], ["read", "-s"]);
+    const result = await runReadSession(root, ["s", "s", "s", "s", "s", "s", "s", "s", "s", "\r", "f", "\u000f", "f", "q"], ["read", "-s"]);
 
     assert.equal(result.code, 0, result.output);
     assert.equal(result.output.includes("page 2 / 2"), true, result.output);
@@ -264,7 +307,7 @@ test("Read settings select and edit either key-binding slot", async () => {
   try {
     const result = await runReadSession(
       root,
-      ["s", "s", "s", "s", "s", "s", "s", "s", "d", "\r", "f", "q"],
+      ["s", "s", "s", "s", "s", "s", "s", "s", "s", "d", "\r", "f", "q"],
       ["read", "-s"]
     );
 
@@ -290,7 +333,7 @@ test("Read settings move occupied bindings and clear slots with Backspace", asyn
   try {
     const moved = await runReadSession(
       root,
-      ["s", "s", "s", "s", "s", "s", "s", "\r", "d", "q"],
+      ["s", "s", "s", "s", "s", "s", "s", "s", "\r", "d", "q"],
       ["read", "-s"]
     );
     assert.equal(moved.code, 0, moved.output);
@@ -303,7 +346,7 @@ test("Read settings move occupied bindings and clear slots with Backspace", asyn
 
     const cleared = await runReadSession(
       root,
-      ["s", "s", "s", "s", "s", "s", "s", "d", "\r", "\u007f", "q"],
+      ["s", "s", "s", "s", "s", "s", "s", "s", "d", "\r", "\u007f", "q"],
       ["read", "-s"]
     );
     assert.equal(cleared.code, 0, cleared.output);

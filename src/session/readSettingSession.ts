@@ -28,7 +28,8 @@ const LANGUAGE_ITEM_INDEX = 3;
 const CURRENT_BOOK_ITEM_INDEX = 4;
 const IMPORT_ITEM_INDEX = 5;
 const THEME_ITEM_INDEX = 6;
-const BINDING_START_INDEX = 7;
+const MINI_WINDOW_ITEM_INDEX = 7;
+const BINDING_START_INDEX = 8;
 const ITEM_COUNT = BINDING_START_INDEX + BINDING_ACTIONS.length;
 type BindingSlot = 0 | 1;
 
@@ -45,15 +46,24 @@ let isBindingCapture = false;
 let editError = "";
 let statusMessage = "";
 let onReturnToReading: ((bookId: string) => void) | undefined;
+let onOpenMiniMode: ((bookId: string) => void) | undefined;
+let onCloseMiniMode: ((bookId: string) => void) | undefined;
+let miniModeActive = false;
 
 interface StartReadSettingSessionOptions {
   onReturn?: (bookId: string) => void;
+  onOpenMiniMode?: (bookId: string) => void;
+  onCloseMiniMode?: (bookId: string) => void;
+  miniModeActive?: boolean;
   selectedIndex?: number;
   message?: string;
 }
 
 export function startReadSettingSession(options: StartReadSettingSessionOptions = {}) {
   onReturnToReading = options.onReturn;
+  onOpenMiniMode = options.onOpenMiniMode;
+  onCloseMiniMode = options.onCloseMiniMode;
+  miniModeActive = options.miniModeActive ?? false;
   books = listReadingBooks();
   activeBookId = loadReadState().activeBookId ?? books[0]?.id;
   settings = loadReadSettings();
@@ -171,6 +181,11 @@ function moveSelection(direction: -1 | 1) {
 function confirmOrStartEdit() {
   if (selectedIndex === IMPORT_ITEM_INDEX) {
     openReadingImport();
+    return;
+  }
+
+  if (selectedIndex === MINI_WINDOW_ITEM_INDEX) {
+    toggleMiniWindowMode();
     return;
   }
 
@@ -372,6 +387,7 @@ function render() {
     isBindingCapture,
     editError,
     statusMessage,
+    miniModeActive,
   });
 }
 
@@ -449,15 +465,39 @@ function getSelectedBindingAction(): ReadBindingAction | undefined {
 
 function openReadingImport() {
   const returnCallback = onReturnToReading;
+  const openMiniCallback = onOpenMiniMode;
+  const closeMiniCallback = onCloseMiniMode;
+  const wasMiniModeActive = miniModeActive;
   process.stdin.off("data", handleKeyPress);
   process.stdout.off("resize", handleTerminalResize);
   startReadingImportSession({
     interfaceLanguage: settings.interfaceLanguage,
     onReturn: () => startReadSettingSession({
       ...(returnCallback ? { onReturn: returnCallback } : {}),
+      ...(openMiniCallback ? { onOpenMiniMode: openMiniCallback } : {}),
+      ...(closeMiniCallback ? { onCloseMiniMode: closeMiniCallback } : {}),
+      miniModeActive: wasMiniModeActive,
       selectedIndex: IMPORT_ITEM_INDEX,
     }),
   });
+}
+
+function toggleMiniWindowMode() {
+  const selectedBookId = activeBookId;
+  if (!selectedBookId) {
+    return;
+  }
+
+  saveReadState({ activeBookId: selectedBookId });
+  process.stdin.off("data", handleKeyPress);
+  process.stdout.off("resize", handleTerminalResize);
+
+  if (miniModeActive) {
+    onCloseMiniMode?.(selectedBookId);
+    return;
+  }
+
+  onOpenMiniMode?.(selectedBookId);
 }
 
 function getNextValue<T>(currentValue: T, options: readonly T[], direction: -1 | 1): T {

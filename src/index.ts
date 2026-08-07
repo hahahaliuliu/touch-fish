@@ -3,6 +3,8 @@ import { startWordCommand } from "./commands/word.js";
 import { startFavoriteCommand } from "./commands/favorite.js";
 import {
   startReadCommand,
+  startReadMiniChildCommand,
+  startReadMiniCommand,
   startReadSettingsCommand,
 } from "./commands/read.js";
 import { createTouchFishProgram } from "./cli.js";
@@ -13,6 +15,8 @@ const program = createTouchFishProgram({
   startWordFavorites: startFavoriteCommand,
   startRead: startReadCommand,
   startReadSettings: startReadSettingsCommand,
+  startReadMini: startReadMiniCommand,
+  startReadMiniChild: startReadMiniChildCommand,
 });
 
 if (process.argv.length <= 2) {

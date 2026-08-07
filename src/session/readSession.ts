@@ -27,7 +27,13 @@ import {
   renderReadQuitMessage,
   renderReadSession,
 } from "../ui/readRenderer.js";
+import {
+  getReadMiniContentWidth,
+  renderReadMiniQuitMessage,
+  renderReadMiniSession,
+} from "../ui/readMiniRenderer.js";
 import { startReadSettingSession } from "./readSettingSession.js";
+import { startReadMiniHostSession } from "./readMiniHostSession.js";
 
 let book: ReadingBook;
 let pages = paginateReadingText("", 20, 1);
@@ -40,9 +46,18 @@ let keyBindings: ReadKeyBindings;
 let sectionNavigationEnabled = false;
 type LastNavigation = "previous-page" | "next-page" | "previous-chapter" | "next-chapter";
 let lastNavigation: LastNavigation = "next-page";
+let sessionMode: "disguised" | "mini" = "disguised";
+let onSessionQuit: (() => void) | undefined;
 
-export function startReadSession(nextBook: ReadingBook) {
+interface StartReadSessionOptions {
+  mode?: "disguised" | "mini";
+  onQuit?: () => void;
+}
+
+export function startReadSession(nextBook: ReadingBook, options: StartReadSessionOptions = {}) {
   book = nextBook;
+  sessionMode = options.mode ?? "disguised";
+  onSessionQuit = options.onQuit;
   const readSettings = loadReadSettings();
   theme = readSettings.theme;
   interfaceLanguage = readSettings.interfaceLanguage;
@@ -56,7 +71,9 @@ export function startReadSession(nextBook: ReadingBook) {
   );
   pages = paginateReadingText(
     book.content,
-    getReadContentWidth(theme, readSettings.contentWidth),
+    sessionMode === "mini"
+      ? getReadMiniContentWidth(readSettings.contentWidth)
+      : getReadContentWidth(theme, readSettings.contentWidth),
     getReadPageLineCount(readSettings.pageLineCount),
     sections.map((section) => section.startOffset)
   );
@@ -71,6 +88,10 @@ export function startReadSession(nextBook: ReadingBook) {
   process.stdin.resume();
   process.stdin.setEncoding("utf8");
   process.stdin.on("data", handleKeyPress);
+
+  return {
+    close: quitReadSession,
+  };
 }
 
 function handleKeyPress(key: string) {
@@ -137,6 +158,9 @@ function handleInput(input: string): boolean {
   }
 
   if (input === "\u000f") {
+    if (sessionMode === "mini") {
+      return true;
+    }
     openReadSettings();
     return false;
   }
@@ -272,7 +296,7 @@ function renderSession() {
     ? sections[findReadingSectionIndex(sections, page.startOffset)]
     : undefined;
 
-  renderReadSession({
+  const renderOptions = {
     book,
     page,
     pageIndex: currentPageIndex,
@@ -285,18 +309,29 @@ function renderSession() {
     interfaceLanguage,
     keyBindings,
     showHelp,
-  });
+  };
+
+  if (sessionMode === "mini") {
+    renderReadMiniSession(renderOptions);
+  } else {
+    renderReadSession({ ...renderOptions, theme });
+  }
 }
 
 function quitReadSession() {
   saveCurrentProgress();
   process.stdin.off("data", handleKeyPress);
-  renderReadQuitMessage(theme);
+  if (sessionMode === "mini") {
+    renderReadMiniQuitMessage();
+  } else {
+    renderReadQuitMessage(theme);
+  }
 
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(false);
   }
   process.stdin.pause();
+  onSessionQuit?.();
   process.exit(0);
 }
 
@@ -305,5 +340,6 @@ function openReadSettings() {
   process.stdin.off("data", handleKeyPress);
   startReadSettingSession({
     onReturn: (bookId) => startReadSession(loadReadingBook(bookId)),
+    onOpenMiniMode: (bookId) => startReadMiniHostSession(loadReadingBook(bookId), true),
   });
 }
