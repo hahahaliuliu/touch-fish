@@ -22,8 +22,10 @@ let settings: ReadSettings;
 let selectedIndex = 0;
 let isEditing = false;
 let customInput = "";
-let customSelected = false;
+let numericInputTouched = false;
+let selectedNumericOption: number | "custom" | undefined;
 let isBindingCapture = false;
+let editError = "";
 let onReturnToReading: ((bookId: string) => void) | undefined;
 
 export function startReadSettingSession(options: { onReturn?: (bookId: string) => void } = {}) {
@@ -34,8 +36,10 @@ export function startReadSettingSession(options: { onReturn?: (bookId: string) =
   selectedIndex = 0;
   isEditing = false;
   customInput = "";
-  customSelected = false;
+  numericInputTouched = false;
+  selectedNumericOption = undefined;
   isBindingCapture = false;
+  editError = "";
   render();
 
   if (process.stdin.isTTY) {
@@ -99,14 +103,18 @@ function handleInput(input: string): boolean {
     return true;
   }
 
-  if (isEditing && customSelected && /^\d$/.test(input)) {
-    customInput += input;
+  if (isEditing && selectedNumericOption === "custom" && /^\d$/.test(input)) {
+    customInput = numericInputTouched ? `${customInput}${input}` : input;
+    numericInputTouched = true;
+    editError = "";
     render();
     return true;
   }
 
-  if (isEditing && customSelected && (input === "\b" || input === "\u007f")) {
-    customInput = customInput.slice(0, -1);
+  if (isEditing && selectedNumericOption === "custom" && (input === "\b" || input === "\u007f")) {
+    customInput = numericInputTouched ? customInput.slice(0, -1) : "";
+    numericInputTouched = true;
+    editError = "";
     render();
     return true;
   }
@@ -156,15 +164,23 @@ function startEdit() {
   }
 
   isEditing = true;
-  customInput = "";
-  customSelected = false;
+  editError = "";
+
+  if (selectedIndex === 1 || selectedIndex === 2) {
+    const options = selectedIndex === 1 ? WIDTH_OPTIONS : LINE_OPTIONS;
+    const currentValue = selectedIndex === 1 ? settings.contentWidth : settings.pageLineCount;
+    selectedNumericOption = options.includes(currentValue) ? currentValue : "custom";
+    customInput = String(currentValue);
+    numericInputTouched = false;
+  }
+
   render();
 }
 
 function changeValue(direction: -1 | 1) {
   if (selectedIndex === 0) {
     const currentIndex = Math.max(0, books.findIndex((book) => book.id === activeBookId));
-    const nextIndex = Math.min(Math.max(currentIndex + direction, 0), Math.max(books.length - 1, 0));
+    const nextIndex = (currentIndex + direction + books.length) % books.length;
     activeBookId = books[nextIndex]?.id;
     render();
     return;
@@ -172,18 +188,24 @@ function changeValue(direction: -1 | 1) {
 
   const options = selectedIndex === 1 ? WIDTH_OPTIONS : LINE_OPTIONS;
   const currentValue = selectedIndex === 1 ? settings.contentWidth : settings.pageLineCount;
-  const currentIndex = customSelected ? options.indexOf("custom") : Math.max(0, options.indexOf(currentValue));
-  const nextIndex = Math.min(Math.max(currentIndex + direction, 0), options.length - 1);
+  const currentOption = selectedNumericOption ?? (options.includes(currentValue) ? currentValue : "custom");
+  const currentIndex = options.indexOf(currentOption);
+  const nextIndex = (currentIndex + direction + options.length) % options.length;
   const nextValue = options[nextIndex]!;
 
-  customSelected = nextValue === "custom";
-  customInput = "";
+  selectedNumericOption = nextValue;
+  editError = "";
   if (typeof nextValue === "number") {
+    customInput = String(nextValue);
+    numericInputTouched = false;
     if (selectedIndex === 1) {
       settings = { ...settings, contentWidth: nextValue };
     } else {
       settings = { ...settings, pageLineCount: nextValue };
     }
+  } else {
+    customInput = "";
+    numericInputTouched = true;
   }
   render();
 }
@@ -193,11 +215,12 @@ function saveEdit() {
     if (activeBookId) {
       saveReadState({ activeBookId });
     }
-  } else if (customSelected) {
+  } else if (selectedNumericOption === "custom") {
     const numericValue = Number(customInput);
     const isWidth = selectedIndex === 1;
     const isOutsideRange = numericValue < (isWidth ? 20 : 1) || (!isWidth && numericValue > 100);
     if (!Number.isInteger(numericValue) || isOutsideRange) {
+      editError = isWidth ? "正文宽度必须是大于等于 20 的整数" : "每页行数必须是 1 到 100 的整数";
       render();
       return;
     }
@@ -211,7 +234,9 @@ function saveEdit() {
 
   isEditing = false;
   customInput = "";
-  customSelected = false;
+  numericInputTouched = false;
+  selectedNumericOption = undefined;
+  editError = "";
   render();
 }
 
@@ -220,12 +245,24 @@ function cancelEdit() {
   activeBookId = loadReadState().activeBookId ?? books[0]?.id;
   isEditing = false;
   customInput = "";
-  customSelected = false;
+  numericInputTouched = false;
+  selectedNumericOption = undefined;
+  editError = "";
   render();
 }
 
 function render() {
-  renderReadSettings({ books, activeBookId, settings, selectedIndex, isEditing, customInput, isBindingCapture });
+  renderReadSettings({
+    books,
+    activeBookId,
+    settings,
+    selectedIndex,
+    isEditing,
+    customInput,
+    selectedNumericOption,
+    isBindingCapture,
+    editError,
+  });
 }
 
 function captureBinding(input: string) {
