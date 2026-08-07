@@ -11,28 +11,33 @@ test("Read import waits for Enter before showing the path editor", () => {
   const lines = captureRender(false);
 
   assert.equal(lines.some((line) => line.includes("赤兔之死-止战之殇")), true);
-  assert.equal(lines.some((line) => line.includes("Enter 开始输入小说文件路径")), true);
+  assert.equal(lines.includes("当前操作"), true);
+  assert.equal(lines.some((line) => line.includes("操作  Enter 开始导入")), true);
   assert.equal(lines.includes("小说文件路径"), false);
   assert.equal(lines.some((line) => line.includes("\u001b[5m_\u001b[0m")), false);
   assert.equal(lines.some((line) => line.includes("Q / Ctrl+C 退出程序")), true);
+  assert.equal(lines.some((line) => line.includes("成功后可移动或删除原文件")), true);
 });
 
-test("Read import explains source-file handling while editing a path", () => {
+test("Read import shows only path controls while editing a path", () => {
   const lines = captureRender(true);
 
   assert.equal(lines.includes("小说文件路径"), true);
   assert.equal(lines.some((line) => line.includes("\u001b[5m_\u001b[0m")), true);
-  assert.equal(lines.some((line) => line.includes("成功后可移动或删除原文件")), true);
+  assert.equal(lines.includes("当前操作"), false);
+  assert.equal(lines.some((line) => line.includes("成功后可移动或删除原文件")), false);
   assert.equal(lines.some((line) => line.includes("路径编辑时 Q 会作为路径内容输入")), true);
 });
 
 test("Read delete confirmation follows the vocabulary manager prompt order", () => {
   const lines = captureRender(false, true);
   const controlsIndex = lines.findIndex((line) => line.startsWith("操作  W/S"));
+  const deleteActionIndex = lines.findIndex((line) => line.startsWith("操作  Enter 删除"));
   const confirmIndex = lines.findIndex((line) => line === "[确认] 要删除 赤兔之死-止战之殇 吗？");
 
   assert.equal(controlsIndex >= 0, true);
-  assert.equal(confirmIndex > controlsIndex, true);
+  assert.equal(deleteActionIndex > controlsIndex, true);
+  assert.equal(confirmIndex > deleteActionIndex, true);
   assert.equal(lines.includes("[警告] 本地小说文件和该小说的全部阅读进度都会被删除"), true);
   assert.equal(lines.includes("[确认] 按 Y 删除，或按 Esc 取消"), true);
 });

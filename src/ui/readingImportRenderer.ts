@@ -58,22 +58,32 @@ export function renderReadingImport(options: RenderReadingImportOptions) {
     }
 
     console.log("");
-    if (options.isConfirmingDelete) {
-      const selectedBook = options.books[options.selectedIndex];
-      console.log(text.manageControls);
-      console.log(text.deleteConfirm(selectedBook?.title ?? text.thisBook));
-      console.log(text.deleteWarning);
-      console.log(text.deleteControls);
-    } else if (options.isImporting) {
-      console.log(text.description);
-      console.log(text.sourceFileNotice);
-      console.log(text.validation);
-      console.log("");
+    if (options.isImporting) {
       console.log(text.pathControls);
       console.log(text.pathExitHint);
     } else {
+      const selectedBook = options.books[options.selectedIndex];
+      if (importSelected) {
+        console.log(text.selectedAction);
+        console.log(`  ${text.description}`);
+        console.log(`  ${text.sourceFileNotice}`);
+        console.log(`  ${text.validation}`);
+      } else if (selectedBook) {
+        console.log(text.selectedBook);
+        console.log(`  ${selectedBook.title}`);
+        console.log(`  ${text.characterCount(selectedBook.characterCount)}`);
+        console.log(`  ${text.openDelete}`);
+      }
+
+      console.log("");
       console.log(text.manageControls);
-      console.log(importSelected ? text.importHint : text.deleteHint);
+      console.log(importSelected ? text.importActionControls : text.deleteActionControls);
+
+      if (options.isConfirmingDelete) {
+        console.log(text.deleteConfirm(selectedBook?.title ?? text.thisBook));
+        console.log(text.deleteWarning);
+        console.log(text.deleteControls);
+      }
     }
   }
 
@@ -108,9 +118,12 @@ function getText(language: InterfaceLanguage) {
       description: "可输入项目内或项目外的任意本地 TXT 文件路径。",
       sourceFileNotice: "导入时会在 Touch Fish 中保存独立副本；成功后可移动或删除原文件，不影响阅读。",
       validation: "仅支持 UTF-8 编码且内容不为空的 .txt 文件，导入前会自动检查。",
-      manageControls: "操作  W/S 或上下方向键移动 | Enter 选择 | Esc / Ctrl+O 返回设置 | Q / Ctrl+C 退出程序",
-      importHint: "当前操作  Enter 开始输入小说文件路径",
-      deleteHint: "当前操作  Enter 打开删除确认",
+      selectedAction: "当前操作",
+      selectedBook: "当前小说",
+      openDelete: "按 Enter 打开删除确认",
+      manageControls: "操作  W/S 或上下方向键移动 | Esc / Ctrl+O 返回设置 | Q / Ctrl+C 退出程序",
+      importActionControls: "操作  Enter 开始导入 | 粘贴 UTF-8 TXT 小说文件路径 | Enter 确认",
+      deleteActionControls: "操作  Enter 删除 | 再按 Y 确认删除小说和阅读进度",
       pathControls: "操作  Enter 导入 | Backspace 删除 | Esc 取消编辑 / Ctrl+O 返回设置",
       pathExitHint: "退出程序  Ctrl+C（路径编辑时 Q 会作为路径内容输入）",
       deleteConfirm: (title: string) => `[确认] 要删除 ${title} 吗？`,
@@ -137,9 +150,12 @@ function getText(language: InterfaceLanguage) {
     description: "Enter any local TXT path, whether it is inside or outside the project.",
     sourceFileNotice: "Touch Fish saves an independent copy; after import, the original can be moved or deleted.",
     validation: "Only non-empty UTF-8 .txt files are supported and validated before import.",
-    manageControls: "Controls  W/S or Up/Down move | Enter select | Esc / Ctrl+O return | Q / Ctrl+C quit program",
-    importHint: "Selected Action  Enter to type a novel file path",
-    deleteHint: "Selected Action  Enter opens delete confirmation",
+    selectedAction: "Selected Action",
+    selectedBook: "Selected Novel",
+    openDelete: "Press Enter to open delete confirmation",
+    manageControls: "Controls  W/S or Up/Down move | Esc / Ctrl+O return | Q / Ctrl+C quit program",
+    importActionControls: "Action    Enter start import | paste a UTF-8 TXT novel path | Enter confirm",
+    deleteActionControls: "Action    Enter delete | then press Y to confirm deleting the novel and progress",
     pathControls: "Controls  Enter import | Backspace delete | Esc cancel edit / Ctrl+O return",
     pathExitHint: "Quit Program  Ctrl+C (Q is entered as part of the path while editing)",
     deleteConfirm: (title: string) => `[CONFIRM] Delete ${title}?`,
