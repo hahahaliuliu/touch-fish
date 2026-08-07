@@ -18,7 +18,7 @@ Touch Fish 是一个适合开发间隙使用的低调终端学习工具，将学
 ## Current Stage / 当前阶段
 
 - 正式发布版本：`v0.2.0`。
-- 当前开发阶段：v0.4 Read Setup & Module Settings 功能开发已完成，待人工验收、整合和发布。
+- 当前开发阶段：v0.4 Read Setup & Module Settings 正在开发，现有 Read 设置与管理功能已完成，但 v0.4 仍有新功能待增加。
 - 当前分支：`feature/read-settings`。
 - 当前分支尚未推送；推送、合并和发布需要用户明确确认。
 - 当前工作区只有 `tmp/` 为未跟踪测试素材，不应提交。
@@ -141,10 +141,10 @@ npm test
 
 ## Next Steps / 下一步
 
-1. 在真实终端中完成 v0.4 全流程人工验收。
-2. 确认是否将 `feature/read-settings` 合并到 Read 开发主线并推送。
-3. 确认版本号、Release Notes 和发布方式。
-4. v0.4 发布后，再讨论 v0.5 全局 `touchfish setting` 的配置边界。
+1. 与用户讨论并记录 v0.4 剩余功能及交互方案。
+2. 继续在 `feature/read-settings` 上小步实现并进行实际界面检查。
+3. 用户明确确认 v0.4 功能完成后，再做完整人工验收、分支整合和发布准备。
+4. v0.4 完成前不提前进入 v0.5 全局 `touchfish setting`。
 
 ## Development Rules / 开发规则
 

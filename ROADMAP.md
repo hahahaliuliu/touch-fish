@@ -98,7 +98,7 @@ touchfish setting
 - `touchfish read -s` 的实际设置页面。
 - 全局 `touchfish setting`。
 
-## v0.4 — Read Setup & Module Settings（功能开发已完成，待发布）
+## v0.4 — Read Setup & Module Settings（开发中）
 
 ### 交互基线
 
@@ -119,11 +119,12 @@ touchfish setting
 - 从设置或素材管理页直接退出时会清除当前终端画面和滚动历史，避免学习内容残留。
 - 当前自动测试共 108 项，覆盖 Word、Read、设置、导入管理、存储和 CLI Session 交互。
 
-### 发布前收尾
+### 后续开发
 
-- 完成真实终端下的 v0.4 人工验收。
-- 将 `feature/read-settings` 合并回 Read 开发主线并推送；推送与合并需明确确认。
-- 确认版本号、Release Notes 和发布方式后再发布，不把“功能开发完成”误记为“已发布”。
+- v0.4 仍有功能需要继续增加；新增较大功能前先讨论并确认交互。
+- 已完成列表只表示当前进度，不表示 v0.4 已完成功能开发或进入发布阶段。
+- 用户明确确认 v0.4 功能完成后，再进行完整人工验收、分支整合、版本号和发布准备。
+- 推送、合并和发布均需用户明确确认。
 
 ## v0.5 — Global Settings（计划）
 
@@ -157,5 +158,5 @@ touchfish setting
 
 - v0.2 已完成并发布。
 - v0.3 Read Core 已完成开发。
-- v0.4 Read Setup & Module Settings 已完成功能开发，当前尚未发布。
+- v0.4 Read Setup & Module Settings 正在开发中，已完成部分功能，仍会继续增加功能。
 - 旧的 `docs/settings-plan.md` 曾记录 v0.2 的 Word Settings 设想；其中大部分已实现或已不符合当前版本规划，现由本文件取代。
