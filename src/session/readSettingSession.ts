@@ -5,6 +5,7 @@ import { loadReadState, saveReadState } from "../storage/readProgress.js";
 import { loadReadSettings, saveReadSettings } from "../storage/readSettings.js";
 import { renderReadSettings } from "../ui/readSettingsRenderer.js";
 import { startReadSession } from "./readSession.js";
+import { startReadingImportSession } from "./readingImportSession.js";
 
 const WIDTH_OPTIONS: Array<number | "custom"> = [0, 30, 50, "custom"];
 const LINE_OPTIONS: Array<number | "custom"> = [5, 10, 15, "custom"];
@@ -18,8 +19,13 @@ const BINDING_ACTIONS: ReadBindingAction[] = [
   "repeat",
   "toggleHelp",
 ];
-const CONFIG_ITEM_COUNT = 5;
-const ITEM_COUNT = CONFIG_ITEM_COUNT + BINDING_ACTIONS.length;
+const IMPORT_ITEM_INDEX = 1;
+const WIDTH_ITEM_INDEX = 2;
+const LINE_ITEM_INDEX = 3;
+const LANGUAGE_ITEM_INDEX = 4;
+const THEME_ITEM_INDEX = 5;
+const BINDING_START_INDEX = 6;
+const ITEM_COUNT = BINDING_START_INDEX + BINDING_ACTIONS.length;
 type BindingSlot = 0 | 1;
 
 let books: ReadingBookSummary[] = [];
@@ -33,15 +39,23 @@ let numericInputTouched = false;
 let selectedNumericOption: number | "custom" | undefined;
 let isBindingCapture = false;
 let editError = "";
+let statusMessage = "";
 let onReturnToReading: ((bookId: string) => void) | undefined;
 
-export function startReadSettingSession(options: { onReturn?: (bookId: string) => void } = {}) {
+interface StartReadSettingSessionOptions {
+  onReturn?: (bookId: string) => void;
+  selectedIndex?: number;
+  message?: string;
+}
+
+export function startReadSettingSession(options: StartReadSettingSessionOptions = {}) {
   onReturnToReading = options.onReturn;
   books = listReadingBooks();
   activeBookId = loadReadState().activeBookId ?? books[0]?.id;
   settings = loadReadSettings();
-  selectedIndex = 0;
+  selectedIndex = Math.min(Math.max(options.selectedIndex ?? 0, 0), ITEM_COUNT - 1);
   selectedBindingSlot = 0;
+  statusMessage = options.message ?? "";
   resetEditState();
   render();
 
@@ -141,10 +155,16 @@ function moveSelection(direction: -1 | 1) {
 
   selectedIndex = (selectedIndex + direction + ITEM_COUNT) % ITEM_COUNT;
   selectedBindingSlot = 0;
+  statusMessage = "";
   render();
 }
 
 function confirmOrStartEdit() {
+  if (selectedIndex === IMPORT_ITEM_INDEX) {
+    openReadingImport();
+    return;
+  }
+
   if (isBindingItemSelected()) {
     isBindingCapture = true;
     editError = "";
@@ -160,9 +180,9 @@ function confirmOrStartEdit() {
     isEditing = true;
     editError = "";
 
-    if (selectedIndex === 1 || selectedIndex === 2) {
-      const options = selectedIndex === 1 ? WIDTH_OPTIONS : LINE_OPTIONS;
-      const currentValue = selectedIndex === 1 ? settings.contentWidth : settings.pageLineCount;
+    if (selectedIndex === WIDTH_ITEM_INDEX || selectedIndex === LINE_ITEM_INDEX) {
+      const options = selectedIndex === WIDTH_ITEM_INDEX ? WIDTH_OPTIONS : LINE_OPTIONS;
+      const currentValue = selectedIndex === WIDTH_ITEM_INDEX ? settings.contentWidth : settings.pageLineCount;
       selectedNumericOption = options.includes(currentValue) ? currentValue : "custom";
       customInput = String(currentValue);
       numericInputTouched = false;
@@ -194,7 +214,7 @@ function changeCurrentValue(direction: -1 | 1) {
     return;
   }
 
-  if (selectedIndex === 3) {
+  if (selectedIndex === LANGUAGE_ITEM_INDEX) {
     settings = {
       ...settings,
       interfaceLanguage: getNextValue(settings.interfaceLanguage, INTERFACE_LANGUAGES, direction),
@@ -203,7 +223,7 @@ function changeCurrentValue(direction: -1 | 1) {
     return;
   }
 
-  if (selectedIndex === 4) {
+  if (selectedIndex === THEME_ITEM_INDEX) {
     settings = { ...settings, theme: getNextValue(settings.theme, THEMES, direction) };
     render();
     return;
@@ -213,8 +233,8 @@ function changeCurrentValue(direction: -1 | 1) {
 }
 
 function changeNumericValue(direction: -1 | 1) {
-  const options = selectedIndex === 1 ? WIDTH_OPTIONS : LINE_OPTIONS;
-  const currentValue = selectedIndex === 1 ? settings.contentWidth : settings.pageLineCount;
+  const options = selectedIndex === WIDTH_ITEM_INDEX ? WIDTH_OPTIONS : LINE_OPTIONS;
+  const currentValue = selectedIndex === WIDTH_ITEM_INDEX ? settings.contentWidth : settings.pageLineCount;
   const currentOption = selectedNumericOption ?? (options.includes(currentValue) ? currentValue : "custom");
   const currentIndex = options.indexOf(currentOption);
   const nextIndex = (currentIndex + direction + options.length) % options.length;
@@ -225,7 +245,7 @@ function changeNumericValue(direction: -1 | 1) {
   if (typeof nextValue === "number") {
     customInput = String(nextValue);
     numericInputTouched = false;
-    settings = selectedIndex === 1
+    settings = selectedIndex === WIDTH_ITEM_INDEX
       ? { ...settings, contentWidth: nextValue }
       : { ...settings, pageLineCount: nextValue };
   } else {
@@ -242,7 +262,7 @@ function saveEdit() {
     }
   } else if (selectedNumericOption === "custom") {
     const numericValue = Number(customInput);
-    const isWidth = selectedIndex === 1;
+    const isWidth = selectedIndex === WIDTH_ITEM_INDEX;
     const isOutsideRange = numericValue < (isWidth ? 20 : 1) || (!isWidth && numericValue > 100);
     if (!Number.isInteger(numericValue) || isOutsideRange) {
       editError = isWidth
@@ -295,6 +315,7 @@ function render() {
     selectedNumericOption,
     isBindingCapture,
     editError,
+    statusMessage,
   });
 }
 
@@ -363,11 +384,31 @@ function isBackspace(input: string): boolean {
 }
 
 function isBindingItemSelected(): boolean {
-  return selectedIndex >= CONFIG_ITEM_COUNT;
+  return selectedIndex >= BINDING_START_INDEX;
 }
 
 function getSelectedBindingAction(): ReadBindingAction | undefined {
-  return BINDING_ACTIONS[selectedIndex - CONFIG_ITEM_COUNT];
+  return BINDING_ACTIONS[selectedIndex - BINDING_START_INDEX];
+}
+
+function openReadingImport() {
+  const returnCallback = onReturnToReading;
+  process.stdin.off("data", handleKeyPress);
+  startReadingImportSession({
+    interfaceLanguage: settings.interfaceLanguage,
+    onReturn: () => startReadSettingSession({
+      ...(returnCallback ? { onReturn: returnCallback } : {}),
+      selectedIndex: IMPORT_ITEM_INDEX,
+    }),
+    onImported: (importedBook) => {
+      saveReadState({ activeBookId: importedBook.id });
+      startReadSettingSession({
+        ...(returnCallback ? { onReturn: returnCallback } : {}),
+        selectedIndex: 0,
+        message: localize(`[INFO] imported ${importedBook.title}`, `[INFO] 已导入 ${importedBook.title}`),
+      });
+    },
+  });
 }
 
 function getNextValue<T>(currentValue: T, options: readonly T[], direction: -1 | 1): T {

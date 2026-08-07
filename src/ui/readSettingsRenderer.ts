@@ -13,6 +13,7 @@ export interface RenderReadSettingsOptions {
   selectedNumericOption?: number | "custom" | undefined;
   isBindingCapture: boolean;
   editError: string;
+  statusMessage: string;
 }
 
 const WIDTH_OPTIONS: Array<number | "custom"> = [0, 30, 50, "custom"];
@@ -27,7 +28,7 @@ const BINDING_ACTIONS: ReadBindingAction[] = [
   "repeat",
   "toggleHelp",
 ];
-const BINDING_START_INDEX = 5;
+const BINDING_START_INDEX = 6;
 
 export function renderReadSettings(options: RenderReadSettingsOptions) {
   const {
@@ -41,6 +42,7 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
     selectedNumericOption,
     isBindingCapture,
     editError,
+    statusMessage,
   } = options;
   const language = settings.interfaceLanguage;
   const text = getText(language);
@@ -62,34 +64,42 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
   renderConfigItem(
     1,
     selectedIndex,
-    isEditing,
-    text.contentWidth,
-    formatNumericValue(settings.contentWidth, customInput, selectedIndex === 1 && isEditing, selectedNumericOption, true, language),
-    formatNumericOptions(WIDTH_OPTIONS, selectedNumericOption, selectedIndex === 1 && isEditing, true, language)
+    false,
+    text.importNovel,
+    text.open,
+    ""
   );
   renderConfigItem(
     2,
     selectedIndex,
     isEditing,
-    text.pageLines,
-    formatNumericValue(settings.pageLineCount, customInput, selectedIndex === 2 && isEditing, selectedNumericOption, false, language),
-    formatNumericOptions(LINE_OPTIONS, selectedNumericOption, selectedIndex === 2 && isEditing, false, language)
+    text.contentWidth,
+    formatNumericValue(settings.contentWidth, customInput, selectedIndex === 2 && isEditing, selectedNumericOption, true, language),
+    formatNumericOptions(WIDTH_OPTIONS, selectedNumericOption, selectedIndex === 2 && isEditing, true, language)
   );
   renderConfigItem(
     3,
     selectedIndex,
     isEditing,
-    text.interfaceLanguage,
-    formatLanguage(settings.interfaceLanguage, language),
-    formatValueOptions(INTERFACE_LANGUAGES, settings.interfaceLanguage, selectedIndex === 3 && isEditing, (value) => formatLanguage(value, language))
+    text.pageLines,
+    formatNumericValue(settings.pageLineCount, customInput, selectedIndex === 3 && isEditing, selectedNumericOption, false, language),
+    formatNumericOptions(LINE_OPTIONS, selectedNumericOption, selectedIndex === 3 && isEditing, false, language)
   );
   renderConfigItem(
     4,
     selectedIndex,
     isEditing,
+    text.interfaceLanguage,
+    formatLanguage(settings.interfaceLanguage, language),
+    formatValueOptions(INTERFACE_LANGUAGES, settings.interfaceLanguage, selectedIndex === 4 && isEditing, (value) => formatLanguage(value, language))
+  );
+  renderConfigItem(
+    5,
+    selectedIndex,
+    isEditing,
     text.theme,
     settings.theme,
-    formatValueOptions(THEMES, settings.theme, selectedIndex === 4 && isEditing, String)
+    formatValueOptions(THEMES, settings.theme, selectedIndex === 5 && isEditing, String)
   );
 
   console.log("");
@@ -112,9 +122,9 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
 
   if (isBindingCapture) {
     console.log(text.bindingHint);
-  } else if (isEditing && selectedIndex === 1) {
-    console.log(text.widthHint);
   } else if (isEditing && selectedIndex === 2) {
+    console.log(text.widthHint);
+  } else if (isEditing && selectedIndex === 3) {
     console.log(text.lineHint);
   } else if (isEditing) {
     console.log(text.editHint);
@@ -122,6 +132,10 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
 
   if (editError) {
     console.log(`${text.warningPrefix}${editError}`);
+  }
+
+  if (statusMessage) {
+    console.log(statusMessage);
   }
 }
 
@@ -266,6 +280,8 @@ function getText(language: InterfaceLanguage) {
       ready: "[INFO] 阅读设置已就绪",
       title: "阅读设置",
       currentBook: "当前小说",
+      importNovel: "导入 TXT 小说",
+      open: "[打开]",
       noBooks: "暂无本地小说",
       contentWidth: "正文宽度",
       pageLines: "每页行数",
@@ -294,6 +310,8 @@ function getText(language: InterfaceLanguage) {
     ready: "[INFO] Read settings ready",
     title: "Read Settings",
     currentBook: "Current Book",
+    importNovel: "Import TXT Novel",
+    open: "[open]",
     noBooks: "No local novels",
     contentWidth: "Content Width",
     pageLines: "Page Lines",

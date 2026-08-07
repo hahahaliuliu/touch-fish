@@ -172,7 +172,7 @@ test("Read settings select a novel and save the page layout", async () => {
   fs.writeFileSync(path.join(readingDirectory, "bravo.txt"), "第二本。", "utf-8");
 
   try {
-    const result = await runReadSession(root, ["\r", "d", "\r", "s", "\r", "d", "\r", "s", "\r", "d", "\r", "\u000f", "q"], ["read", "-s"]);
+    const result = await runReadSession(root, ["\r", "d", "\r", "s", "s", "\r", "d", "\r", "s", "\r", "d", "\r", "\u000f", "q"], ["read", "-s"]);
 
     assert.equal(result.code, 0, result.output);
     assert.equal(result.output.includes("Read Settings"), true, result.output);
@@ -204,7 +204,7 @@ test("Read settings bind a custom next-page key", async () => {
   );
 
   try {
-    const result = await runReadSession(root, ["s", "s", "s", "s", "s", "s", "\r", "f", "\u000f", "f", "q"], ["read", "-s"]);
+    const result = await runReadSession(root, ["s", "s", "s", "s", "s", "s", "s", "\r", "f", "\u000f", "f", "q"], ["read", "-s"]);
 
     assert.equal(result.code, 0, result.output);
     assert.equal(result.output.includes("page 2 / 2"), true, result.output);
@@ -229,7 +229,7 @@ test("Read settings select and edit either key-binding slot", async () => {
   try {
     const result = await runReadSession(
       root,
-      ["s", "s", "s", "s", "s", "s", "d", "\r", "f", "q"],
+      ["s", "s", "s", "s", "s", "s", "s", "d", "\r", "f", "q"],
       ["read", "-s"]
     );
 
@@ -255,7 +255,7 @@ test("Read settings move occupied bindings and clear slots with Backspace", asyn
   try {
     const moved = await runReadSession(
       root,
-      ["s", "s", "s", "s", "s", "\r", "d", "q"],
+      ["s", "s", "s", "s", "s", "s", "\r", "d", "q"],
       ["read", "-s"]
     );
     assert.equal(moved.code, 0, moved.output);
@@ -268,7 +268,7 @@ test("Read settings move occupied bindings and clear slots with Backspace", asyn
 
     const cleared = await runReadSession(
       root,
-      ["s", "s", "s", "s", "s", "d", "\r", "\u007f", "q"],
+      ["s", "s", "s", "s", "s", "s", "d", "\r", "\u007f", "q"],
       ["read", "-s"]
     );
     assert.equal(cleared.code, 0, cleared.output);
@@ -294,7 +294,7 @@ test("Read settings save their own interface language and disguise theme", async
   try {
     const result = await runReadSession(
       root,
-      ["s", "s", "s", "\r", "d", "\r", "s", "\r", "d", "\r", "\u000f", "q"],
+      ["s", "s", "s", "s", "\r", "d", "\r", "s", "\r", "d", "\r", "\u000f", "q"],
       ["read", "-s"]
     );
 
@@ -312,6 +312,145 @@ test("Read settings save their own interface language and disguise theme", async
   }
 });
 
+test("Read settings import a UTF-8 TXT novel and make it active", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-import-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+  const sourcePath = path.join(root, "My Novel.txt");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "existing.txt"), "已有小说。", "utf-8");
+  fs.writeFileSync(sourcePath, "\uFEFF《导入章节》\r\n导入正文。", "utf-8");
+
+  try {
+    const result = await runReadSession(
+      root,
+      ["s", "\r", `"${sourcePath}"`, "\r", "\u000f", "q"],
+      ["read", "-s"]
+    );
+
+    assert.equal(result.code, 0, result.output);
+    assert.equal(result.output.includes("[INFO] imported My Novel"), true, result.output);
+    assert.equal(result.output.includes("source loaded: My Novel.txt"), true, result.output);
+    assert.equal(fs.readFileSync(path.join(readingDirectory, "My Novel.txt"), "utf-8"), "《导入章节》\n导入正文。");
+    const state = JSON.parse(fs.readFileSync(path.join(root, "read-progress", "state.json"), "utf-8")) as {
+      activeBookId: string;
+    };
+    assert.equal(state.activeBookId, "My Novel");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Read import keeps both novels when a file name conflicts", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-import-conflict-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+  const sourcePath = path.join(root, "duplicate.txt");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "duplicate.txt"), "旧正文。", "utf-8");
+  fs.writeFileSync(sourcePath, "新正文。", "utf-8");
+
+  try {
+    const result = await runReadSession(
+      root,
+      ["s", "\r", sourcePath, "\r", "d", "\r", "\u000f", "q"],
+      ["read", "-s"]
+    );
+
+    assert.equal(result.code, 0, result.output);
+    assert.equal(result.output.includes("A novel with this name already exists"), true, result.output);
+    assert.equal(fs.readFileSync(path.join(readingDirectory, "duplicate.txt"), "utf-8"), "旧正文。");
+    assert.equal(fs.readFileSync(path.join(readingDirectory, "duplicate (2).txt"), "utf-8"), "新正文。");
+    assert.equal(result.output.includes("source loaded: duplicate (2).txt"), true, result.output);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Read import replaces a conflicting novel after confirmation", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-import-replace-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+  const sourcePath = path.join(root, "replace.txt");
+  const destinationPath = path.join(readingDirectory, "replace.txt");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(destinationPath, "旧正文。", "utf-8");
+  fs.writeFileSync(sourcePath, "新正文。", "utf-8");
+
+  try {
+    const result = await runReadSession(
+      root,
+      ["s", "\r", sourcePath, "\r", "\r", "\u000f", "q"],
+      ["read", "-s"]
+    );
+
+    assert.equal(result.code, 0, result.output);
+    assert.equal(fs.readFileSync(destinationPath, "utf-8"), "新正文。");
+    assert.equal(fs.readdirSync(readingDirectory).some((name) => name.endsWith(".backup") || name.endsWith(".import")), false);
+    assert.equal(result.output.includes("source loaded: replace.txt"), true, result.output);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Read import rejects files that are not TXT", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-import-extension-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+  const sourcePath = path.join(root, "novel.md");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "existing.txt"), "已有小说。", "utf-8");
+  fs.writeFileSync(sourcePath, "正文。", "utf-8");
+
+  try {
+    const result = await runReadSession(
+      root,
+      ["s", "\r", sourcePath, "\r", "\u0003"],
+      ["read", "-s"]
+    );
+
+    assert.equal(result.code, 0, result.output);
+    assert.equal(result.output.includes("supports UTF-8 TXT files only"), true, result.output);
+    assert.equal(fs.existsSync(path.join(readingDirectory, "novel.md")), false);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Read import rejects invalid UTF-8 files", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-import-invalid-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+  const invalidPath = path.join(root, "invalid.txt");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "existing.txt"), "已有小说。", "utf-8");
+  fs.writeFileSync(invalidPath, Buffer.from([0xff, 0xfe, 0xfd]));
+
+  try {
+    const result = await runReadSession(
+      root,
+      ["s", "\r", invalidPath, "\r", "\u0003"],
+      ["read", "-s"]
+    );
+
+    assert.equal(result.code, 0, result.output);
+    assert.equal(result.output.includes("Unable to decode novel as UTF-8"), true, result.output);
+    assert.equal(fs.existsSync(path.join(readingDirectory, "invalid.txt")), false);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("Read settings reject a custom page line count above 100", async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-line-limit-"));
   const readingDirectory = path.join(root, "reading");
@@ -322,7 +461,7 @@ test("Read settings reject a custom page line count above 100", async () => {
   fs.writeFileSync(path.join(readingDirectory, "limit.txt"), "正文。", "utf-8");
 
   try {
-    const result = await runReadSession(root, ["s", "s", "\r", "d", "d", "101", "\r", "\u001b", "q"], ["read", "-s"]);
+    const result = await runReadSession(root, ["s", "s", "s", "\r", "d", "d", "101", "\r", "\u001b", "q"], ["read", "-s"]);
 
     assert.equal(result.code, 0, result.output);
     assert.equal(fs.existsSync(path.join(root, "read-settings.json")), false);

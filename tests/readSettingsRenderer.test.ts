@@ -25,7 +25,7 @@ const settings: ReadSettings = {
 
 test("Read settings highlights the active automatic width option while editing", () => {
   const lines = captureRender({
-    selectedIndex: 1,
+    selectedIndex: 2,
     isEditing: true,
     selectedNumericOption: 0,
   });
@@ -45,13 +45,13 @@ test("Read settings highlights the selected novel while editing", () => {
 
 test("Read settings shows cursors for custom numeric input and key capture", () => {
   const numericLines = captureRender({
-    selectedIndex: 2,
+    selectedIndex: 3,
     isEditing: true,
     customInput: "25",
     selectedNumericOption: "custom",
   });
   const bindingLines = captureRender({
-    selectedIndex: 5,
+    selectedIndex: 6,
     isEditing: false,
     isBindingCapture: true,
   });
@@ -64,7 +64,7 @@ test("Read settings shows cursors for custom numeric input and key capture", () 
 
 test("Read settings highlights one binding slot without hiding the other", () => {
   const lines = captureRender({
-    selectedIndex: 5,
+    selectedIndex: 6,
     selectedBindingSlot: 1,
   });
   const bindingLine = lines.find((line) => line.includes("上一页")) ?? "";
@@ -92,6 +92,7 @@ function captureRender(overrides: Partial<Parameters<typeof renderReadSettings>[
       customInput: "",
       isBindingCapture: false,
       editError: "",
+      statusMessage: "",
       ...overrides,
     });
     return lines;

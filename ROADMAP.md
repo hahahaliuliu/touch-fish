@@ -113,6 +113,7 @@ touchfish setting
 
 - `touchfish read -s / --settings` 已可用：可切换当前小说、设置正文宽度和每页行数。
 - Read Settings 已按 Word Settings 的交互规范统一选中、编辑、选项光标和双键位槽，并支持 Read 独立的界面语言与 Build Log、Backend Log、Git 伪装主题。
+- Read Settings 已支持从任意本地路径导入 UTF-8 TXT 小说，校验文件后复制到本地阅读目录；同名时可选择替换、保留两本或取消，导入成功后自动设为当前小说。
 
 ### 计划实现
 
@@ -140,6 +141,7 @@ touchfish setting
 - 模块共用的默认主题或终端外观。
 - 共用快捷键与退出行为。
 - 未来新增学习模块可继承的通用配置。
+- 本地学习材料识别与转换：提供 `touchfish import <文件>`，根据文件类型和内容结构识别阅读材料、词表、题库或问答材料，并转换到 Read、Word、Quiz 或未来的 Recall 模块；识别不确定时由用户选择导入目标。首版只处理本地文件，不提供第三方内容库，也不依赖复杂 Agent。
 
 ## 远期想法（未决定）
 
