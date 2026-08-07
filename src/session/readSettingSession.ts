@@ -400,14 +400,6 @@ function openReadingImport() {
       ...(returnCallback ? { onReturn: returnCallback } : {}),
       selectedIndex: IMPORT_ITEM_INDEX,
     }),
-    onImported: (importedBook) => {
-      saveReadState({ activeBookId: importedBook.id });
-      startReadSettingSession({
-        ...(returnCallback ? { onReturn: returnCallback } : {}),
-        selectedIndex: 0,
-        message: localize(`[INFO] imported ${importedBook.title}`, `[INFO] 已导入 ${importedBook.title}`),
-      });
-    },
   });
 }
 

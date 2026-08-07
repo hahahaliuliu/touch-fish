@@ -21,6 +21,14 @@ export function saveReadProgress(bookId: string, progress: ReadProgress) {
   });
 }
 
+export function deleteReadProgress(bookId: string) {
+  const progressPath = getProgressPath(bookId);
+
+  if (fs.existsSync(progressPath)) {
+    fs.unlinkSync(progressPath);
+  }
+}
+
 export function loadReadState(): ReadState {
   const data = readJsonFile(statePath);
 

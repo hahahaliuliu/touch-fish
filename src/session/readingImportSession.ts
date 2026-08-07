@@ -1,10 +1,13 @@
 import type { InterfaceLanguage } from "../models/settings.js";
+import type { ReadingBookSummary } from "../models/reading.js";
+import { deleteReadingBook, listReadingBooks } from "../services/readingLoader.js";
 import {
   importReadingBook,
   inspectReadingImport,
   type ImportedReadingBook,
   type ReadingImportCandidate,
 } from "../services/readingImport.js";
+import { deleteReadProgress, loadReadState, saveReadState } from "../storage/readProgress.js";
 import {
   renderReadingImport,
   type ReadingConflictChoice,
@@ -13,13 +16,15 @@ import {
 interface StartReadingImportSessionOptions {
   interfaceLanguage: InterfaceLanguage;
   onReturn: () => void;
-  onImported: (book: ImportedReadingBook) => void;
 }
 
 const CONFLICT_CHOICES: readonly ReadingConflictChoice[] = ["replace", "keep-both", "cancel"];
 let interfaceLanguage: InterfaceLanguage = "english";
 let onReturnToSettings: (() => void) | undefined;
-let onImported: ((book: ImportedReadingBook) => void) | undefined;
+let books: ReadingBookSummary[] = [];
+let selectedIndex = 0;
+let isImporting = false;
+let isConfirmingDelete = false;
 let importPath = "";
 let candidate: ReadingImportCandidate | undefined;
 let conflictChoice: ReadingConflictChoice = "replace";
@@ -28,7 +33,10 @@ let message = "";
 export function startReadingImportSession(options: StartReadingImportSessionOptions) {
   interfaceLanguage = options.interfaceLanguage;
   onReturnToSettings = options.onReturn;
-  onImported = options.onImported;
+  books = listReadingBooks();
+  selectedIndex = 0;
+  isImporting = false;
+  isConfirmingDelete = false;
   importPath = "";
   candidate = undefined;
   conflictChoice = "replace";
@@ -70,9 +78,63 @@ function handleInput(input: string): boolean {
     return handleConflictInput(input);
   }
 
+  if (isConfirmingDelete) {
+    if (input.toLowerCase() === "q") {
+      quit();
+      return false;
+    }
+
+    if (input === "\u001b") {
+      isConfirmingDelete = false;
+      message = localize("[INFO] deletion cancelled", "[INFO] 已取消删除");
+      render();
+      return true;
+    }
+
+    if (input === "y" || input === "Y") {
+      deleteSelectedBook();
+    }
+    return true;
+  }
+
+  if (isImporting) {
+    return handleImportInput(input);
+  }
+
+  if (input.toLowerCase() === "q") {
+    quit();
+    return false;
+  }
+
   if (input === "\u001b") {
     returnToSettings();
     return false;
+  }
+
+  if (input === "w" || input === "W" || input === "\u001b[A") {
+    moveSelection(-1);
+    return true;
+  }
+
+  if (input === "s" || input === "S" || input === "\u001b[B") {
+    moveSelection(1);
+    return true;
+  }
+
+  if (input === "\r" || input === "\n") {
+    activateSelection();
+  }
+
+  return true;
+}
+
+function handleImportInput(input: string): boolean {
+  if (input === "\u001b") {
+    isImporting = false;
+    importPath = "";
+    message = localize("[INFO] import cancelled", "[INFO] 已取消导入");
+    render();
+    return true;
   }
 
   if (input === "\r" || input === "\n") {
@@ -94,6 +156,62 @@ function handleInput(input: string): boolean {
   }
 
   return true;
+}
+
+function moveSelection(direction: -1 | 1) {
+  const itemCount = books.length + 1;
+  selectedIndex = (selectedIndex + direction + itemCount) % itemCount;
+  message = "";
+  render();
+}
+
+function activateSelection() {
+  if (selectedIndex === books.length) {
+    isImporting = true;
+    importPath = "";
+    message = "";
+    render();
+    return;
+  }
+
+  if (books[selectedIndex]) {
+    isConfirmingDelete = true;
+    message = "";
+    render();
+  }
+}
+
+function deleteSelectedBook() {
+  const selectedBook = books[selectedIndex];
+  if (!selectedBook) {
+    isConfirmingDelete = false;
+    return;
+  }
+
+  const removedIndex = selectedIndex;
+  try {
+    const removedBook = deleteReadingBook(selectedBook.id);
+    deleteReadProgress(removedBook.id);
+    books = listReadingBooks();
+
+    if (loadReadState().activeBookId === removedBook.id) {
+      const replacement = books[Math.min(removedIndex, Math.max(books.length - 1, 0))];
+      saveReadState(replacement ? { activeBookId: replacement.id } : {});
+    }
+
+    selectedIndex = books.length === 0
+      ? 0
+      : Math.min(removedIndex, books.length - 1);
+    message = localize(
+      `[INFO] deleted ${removedBook.title}; reading progress was removed`,
+      `[INFO] 已删除 ${removedBook.title}，阅读进度已清除`
+    );
+  } catch (error) {
+    message = formatError(error);
+  } finally {
+    isConfirmingDelete = false;
+    render();
+  }
 }
 
 function handleConflictInput(input: string): boolean {
@@ -170,9 +288,14 @@ function confirmConflictChoice() {
 }
 
 function finishImport(book: ImportedReadingBook) {
-  const callback = onImported;
-  detach();
-  callback?.(book);
+  saveReadState({ activeBookId: book.id });
+  books = listReadingBooks();
+  selectedIndex = Math.max(0, books.findIndex((candidateBook) => candidateBook.id === book.id));
+  isImporting = false;
+  importPath = "";
+  candidate = undefined;
+  message = localize(`[INFO] imported ${book.title}`, `[INFO] 已导入 ${book.title}`);
+  render();
 }
 
 function returnToSettings() {
@@ -184,7 +307,6 @@ function returnToSettings() {
 function detach() {
   process.stdin.off("data", handleKeyPress);
   onReturnToSettings = undefined;
-  onImported = undefined;
 }
 
 function quit() {
@@ -200,7 +322,17 @@ function quit() {
 }
 
 function render() {
-  renderReadingImport({ interfaceLanguage, importPath, candidate, conflictChoice, message });
+  renderReadingImport({
+    interfaceLanguage,
+    books,
+    selectedIndex,
+    isImporting,
+    isConfirmingDelete,
+    importPath,
+    candidate,
+    conflictChoice,
+    message,
+  });
 }
 
 function formatError(error: unknown): string {

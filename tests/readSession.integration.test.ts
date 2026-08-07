@@ -326,7 +326,7 @@ test("Read settings import a UTF-8 TXT novel and make it active", async () => {
   try {
     const result = await runReadSession(
       root,
-      ["s", "\r", `"${sourcePath}"`, "\r", "\u000f", "q"],
+      ["s", "\r", "s", "\r", `"${sourcePath}"`, "\r", "\u000f", "\u000f", "q"],
       ["read", "-s"]
     );
 
@@ -357,7 +357,7 @@ test("Read import keeps both novels when a file name conflicts", async () => {
   try {
     const result = await runReadSession(
       root,
-      ["s", "\r", sourcePath, "\r", "d", "\r", "\u000f", "q"],
+      ["s", "\r", "s", "\r", sourcePath, "\r", "d", "\r", "\u000f", "\u000f", "q"],
       ["read", "-s"]
     );
 
@@ -386,7 +386,7 @@ test("Read import replaces a conflicting novel after confirmation", async () => 
   try {
     const result = await runReadSession(
       root,
-      ["s", "\r", sourcePath, "\r", "\r", "\u000f", "q"],
+      ["s", "\r", "s", "\r", sourcePath, "\r", "\r", "\u000f", "\u000f", "q"],
       ["read", "-s"]
     );
 
@@ -413,7 +413,7 @@ test("Read import rejects files that are not TXT", async () => {
   try {
     const result = await runReadSession(
       root,
-      ["s", "\r", sourcePath, "\r", "\u0003"],
+      ["s", "\r", "s", "\r", sourcePath, "\r", "\u0003"],
       ["read", "-s"]
     );
 
@@ -439,13 +439,52 @@ test("Read import rejects invalid UTF-8 files", async () => {
   try {
     const result = await runReadSession(
       root,
-      ["s", "\r", invalidPath, "\r", "\u0003"],
+      ["s", "\r", "s", "\r", invalidPath, "\r", "\u0003"],
       ["read", "-s"]
     );
 
     assert.equal(result.code, 0, result.output);
     assert.equal(result.output.includes("Unable to decode novel as UTF-8"), true, result.output);
     assert.equal(fs.existsSync(path.join(readingDirectory, "invalid.txt")), false);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Read import manager lists novels and deletes the selected novel with its progress", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-delete-"));
+  const readingDirectory = path.join(root, "reading");
+  const progressDirectory = path.join(root, "read-progress");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+  const sampleId = "a-赤兔之死";
+  const samplePath = path.join(readingDirectory, `${sampleId}.example.txt`);
+  const progressPath = path.join(progressDirectory, `${encodeURIComponent(sampleId)}.json`);
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(progressDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(samplePath, "样例正文。", "utf-8");
+  fs.writeFileSync(path.join(readingDirectory, "b-next.txt"), "下一本正文。", "utf-8");
+  fs.writeFileSync(path.join(progressDirectory, "state.json"), JSON.stringify({ activeBookId: sampleId }), "utf-8");
+  fs.writeFileSync(progressPath, JSON.stringify({ characterOffset: 2 }), "utf-8");
+
+  try {
+    const result = await runReadSession(
+      root,
+      ["s", "\r", "\r", "y", "\u000f", "\u000f", "q"],
+      ["read", "-s"]
+    );
+
+    assert.equal(result.code, 0, result.output);
+    assert.equal(result.output.includes("a-赤兔之死"), true, result.output);
+    assert.equal(result.output.includes("The local novel copy and all reading progress"), true, result.output);
+    assert.equal(fs.existsSync(samplePath), false);
+    assert.equal(fs.existsSync(progressPath), false);
+    const state = JSON.parse(fs.readFileSync(path.join(progressDirectory, "state.json"), "utf-8")) as {
+      activeBookId: string;
+    };
+    assert.equal(state.activeBookId, "b-next");
+    assert.equal(result.output.includes("source loaded: b-next.txt"), true, result.output);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

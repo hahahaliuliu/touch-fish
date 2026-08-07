@@ -30,6 +30,23 @@ export function loadReadingBook(bookId?: string): ReadingBook {
   return loadReadingBookFile(selectedPath);
 }
 
+export function deleteReadingBook(bookId: string): ReadingBookSummary {
+  const filePath = getReadingFilePaths().find((candidatePath) => getBookId(candidatePath) === bookId);
+
+  if (!filePath) {
+    throw new Error(`Novel not found: ${bookId}`);
+  }
+
+  const book = loadReadingBookFile(filePath);
+  fs.unlinkSync(filePath);
+
+  return {
+    id: book.id,
+    title: book.title,
+    characterCount: book.characterCount,
+  };
+}
+
 function getReadingFilePaths(): string[] {
   const readingDirectory = resolveAssetPath("reading");
 
