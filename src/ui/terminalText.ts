@@ -69,6 +69,53 @@ export function getTerminalWidth(value: string): number {
   return [...value].reduce((width, character) => width + getCharacterWidth(character), 0);
 }
 
+export function wrapTerminalTextWithAnsi(value: string, maxWidth: number): string[] {
+  if (!value || maxWidth <= 0) {
+    return value ? [value] : [""];
+  }
+
+  if (getTerminalWidth(stripAnsi(value)) <= maxWidth) {
+    return [value];
+  }
+
+  const tokens = value.match(/\u001b\[[0-?]*[ -/]*[@-~]|./gu) ?? [];
+  const lines: string[] = [];
+  let line = "";
+  let width = 0;
+  let activeSgr = "";
+
+  tokens.forEach((token) => {
+    if (token.startsWith("\u001b[")) {
+      line += token;
+      if (token.endsWith("m")) {
+        activeSgr = token === "\u001b[0m" ? "" : token;
+      }
+      return;
+    }
+
+    const tokenWidth = getTerminalWidth(token);
+    if (width > 0 && width + tokenWidth > maxWidth) {
+      lines.push(`${line}${activeSgr ? "\u001b[0m" : ""}`);
+      line = `${activeSgr}${token}`;
+      width = tokenWidth;
+      return;
+    }
+
+    line += token;
+    width += tokenWidth;
+  });
+
+  if (line || lines.length === 0) {
+    lines.push(line);
+  }
+
+  return lines;
+}
+
+function stripAnsi(value: string): string {
+  return value.replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, "");
+}
+
 function getCharacterWidth(character: string): number {
   return /[\u1100-\u115f\u2e80-\ua4cf\uac00-\ud7a3\uf900-\ufaff\uff01-\uff60\uffe0-\uffe6]/.test(character)
     ? 2

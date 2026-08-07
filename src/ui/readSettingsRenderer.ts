@@ -1,6 +1,6 @@
 import type { ReadBindingAction, ReadingBookSummary, ReadSettings } from "../models/reading.js";
 import type { InterfaceLanguage, ThemeName } from "../models/settings.js";
-import { getTerminalColumns, getTerminalWidth } from "./terminalText.js";
+import { getTerminalColumns, getTerminalWidth, wrapTerminalTextWithAnsi } from "./terminalText.js";
 
 export interface RenderReadSettingsOptions {
   books: ReadingBookSummary[];
@@ -201,7 +201,7 @@ function wrapOptionText(optionText: string, availableWidth: number): string[] {
   });
 
   lines.push(`${current}]`);
-  return lines;
+  return lines.flatMap((line) => wrapTerminalTextWithAnsi(line, availableWidth));
 }
 
 function renderBindingItem(

@@ -1,5 +1,5 @@
 import type { InterfaceLanguage, KeyBindings, Settings } from "../models/settings.js";
-import { getTerminalColumns } from "./terminalText.js";
+import { getTerminalColumns, wrapTerminalTextWithAnsi } from "./terminalText.js";
 
 interface ConfigItem {
   kind: "setting";
@@ -199,7 +199,9 @@ function renderVocabularyBookItem(
     return formatOption(formatOptionValue(optionValue, language), optionValue === selectedValue);
   });
 
-  console.log(`${valuePrefix}${value}`);
+  const valueLines = wrapTerminalTextWithAnsi(value, availableWidth);
+  console.log(`${valuePrefix}${valueLines[0] ?? ""}`);
+  valueLines.slice(1).forEach((line) => console.log(`${continuationPrefix}${line}`));
   wrapCompleteOptions(options, availableWidth)
     .forEach((line) => console.log(`${continuationPrefix}${line}`));
 }
@@ -225,7 +227,7 @@ function wrapCompleteOptions(options: string[], availableWidth: number): string[
   });
 
   lines.push(`${current}]`);
-  return lines;
+  return lines.flatMap((line) => wrapTerminalTextWithAnsi(line, availableWidth));
 }
 
 function renderBindingItem(

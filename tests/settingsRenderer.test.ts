@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { DEFAULT_SETTINGS } from "../src/config/defaultSettings.js";
 import { renderSettingSession } from "../src/ui/settingsRenderer.js";
+import { getTerminalWidth } from "../src/ui/terminalText.js";
 
 test("vocabulary book options wrap at complete names with an indented continuation", () => {
   const lines: string[] = [];
@@ -56,7 +57,7 @@ test("Word setting option continuations stay aligned with the option column", ()
 
   console.log = (...values: unknown[]) => lines.push(values.join(" "));
   console.clear = () => undefined;
-  Object.defineProperty(process.stdout, "columns", { value: 50, configurable: true });
+  Object.defineProperty(process.stdout, "columns", { value: 40, configurable: true });
 
   try {
     renderSettingSession({
@@ -77,11 +78,13 @@ test("Word setting option continuations stay aligned with the option column", ()
       isReshuffleArmed: false,
     });
 
-    const optionLines = lines.filter((line) =>
-      line.includes("build-log") || line.includes("backend-log") || line.includes("git")
-    );
-    assert.equal(optionLines.length >= 2, true);
+    const settingLineIndex = lines.findIndex((line) => line.includes("Disguise Theme"));
+    const nextBlankLineIndex = lines.findIndex((line, index) => index > settingLineIndex && line === "");
+    const optionLines = lines.slice(settingLineIndex, nextBlankLineIndex);
+
+    assert.equal(optionLines.length >= 3, true);
     assert.equal(optionLines.slice(1).every((line) => line.startsWith(" ".repeat(34))), true);
+    assert.equal(optionLines.every((line) => getTerminalWidth(line) <= 40), true);
   } finally {
     console.log = originalLog;
     console.clear = originalClear;

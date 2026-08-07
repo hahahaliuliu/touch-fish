@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ReadSettings, ReadingBookSummary } from "../src/models/reading.js";
 import { renderReadSettings } from "../src/ui/readSettingsRenderer.js";
+import { getTerminalWidth } from "../src/ui/terminalText.js";
 
 const books: ReadingBookSummary[] = [
   { id: "alpha", title: "Alpha", characterCount: 100 },
@@ -95,7 +96,7 @@ test("Read settings rename chapter bindings when section navigation is enabled",
 
 test("Read setting option continuations stay aligned with the option column", () => {
   const originalColumns = process.stdout.columns;
-  Object.defineProperty(process.stdout, "columns", { value: 70, configurable: true });
+  Object.defineProperty(process.stdout, "columns", { value: 45, configurable: true });
 
   try {
     const lines = captureRender({
@@ -103,11 +104,16 @@ test("Read setting option continuations stay aligned with the option column", ()
       settings: { ...settings, chapterSectionCount: 3 },
     });
     const sectionLineIndex = lines.findIndex((line) => line.includes("章节切分"));
-    const continuationLine = lines[sectionLineIndex + 1] ?? "";
+    const languageLineIndex = lines.findIndex((line) => line.includes("界面语言"));
+    const continuationLines = lines.slice(sectionLineIndex + 1, languageLineIndex);
 
     assert.equal(sectionLineIndex >= 0, true);
-    assert.equal(continuationLine.startsWith(" ".repeat(40)), true);
-    assert.equal(continuationLine.includes("自定义]"), true);
+    assert.equal(continuationLines.length >= 2, true);
+    assert.equal(continuationLines.every((line) => line.startsWith(" ".repeat(40))), true);
+    assert.equal(
+      lines.slice(sectionLineIndex, languageLineIndex).every((line) => getTerminalWidth(line) <= 45),
+      true
+    );
   } finally {
     Object.defineProperty(process.stdout, "columns", { value: originalColumns, configurable: true });
   }
