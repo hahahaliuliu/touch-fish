@@ -24,9 +24,9 @@ let isEditing = false;
 let customInput = "";
 let customSelected = false;
 let isBindingCapture = false;
-let onReturnToReading: (() => void) | undefined;
+let onReturnToReading: ((bookId: string) => void) | undefined;
 
-export function startReadSettingSession(options: { onReturn?: () => void } = {}) {
+export function startReadSettingSession(options: { onReturn?: (bookId: string) => void } = {}) {
   onReturnToReading = options.onReturn;
   books = listReadingBooks();
   activeBookId = loadReadState().activeBookId ?? books[0]?.id;
@@ -196,7 +196,8 @@ function saveEdit() {
   } else if (customSelected) {
     const numericValue = Number(customInput);
     const isWidth = selectedIndex === 1;
-    if (!Number.isInteger(numericValue) || numericValue < (isWidth ? 20 : 1)) {
+    const isOutsideRange = numericValue < (isWidth ? 20 : 1) || (!isWidth && numericValue > 100);
+    if (!Number.isInteger(numericValue) || isOutsideRange) {
       render();
       return;
     }
@@ -281,9 +282,9 @@ function openReadingSession() {
 }
 
 function returnToReading() {
-  if (onReturnToReading) {
+  if (onReturnToReading && activeBookId) {
     process.stdin.off("data", handleKeyPress);
-    onReturnToReading();
+    onReturnToReading(activeBookId);
     return;
   }
 

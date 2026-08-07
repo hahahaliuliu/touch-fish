@@ -1,4 +1,5 @@
 import type { ReadingBook } from "../models/reading.js";
+import { loadReadingBook } from "../services/readingLoader.js";
 import {
   findReadingChapterIndex,
   getNextReadingChapterIndex,
@@ -246,6 +247,7 @@ function renderSession() {
     chapterIndex: findReadingChapterIndex(book.chapters, page.startOffset),
     theme,
     interfaceLanguage,
+    keyBindings,
     showHelp,
   });
 }
@@ -266,6 +268,6 @@ function openReadSettings() {
   saveCurrentProgress();
   process.stdin.off("data", handleKeyPress);
   startReadSettingSession({
-    onReturn: () => startReadSession(book),
+    onReturn: (bookId) => startReadSession(loadReadingBook(bookId)),
   });
 }

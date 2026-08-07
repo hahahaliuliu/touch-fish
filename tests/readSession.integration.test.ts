@@ -137,6 +137,30 @@ test("Read opens settings with Ctrl+O and returns with Ctrl+O or Esc", async () 
   }
 });
 
+test("Read returns from settings with the newly selected novel", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-switch-from-session-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "alpha.txt"), "第一本。", "utf-8");
+  fs.writeFileSync(path.join(readingDirectory, "bravo.txt"), "第二本。", "utf-8");
+
+  try {
+    const result = await runReadSession(root, ["\u000f", "\r", "d", "\r", "\u000f", "q"]);
+
+    assert.equal(result.code, 0, result.output);
+    assert.equal(result.output.includes("source loaded: bravo.txt"), true, result.output);
+    const state = JSON.parse(fs.readFileSync(path.join(root, "read-progress", "state.json"), "utf-8")) as {
+      activeBookId: string;
+    };
+    assert.equal(state.activeBookId, "bravo");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("Read settings select a novel and save the page layout", async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-settings-"));
   const readingDirectory = path.join(root, "reading");
@@ -188,6 +212,25 @@ test("Read settings bind a custom next-page key", async () => {
       keyBindings: { nextPage: [string, string] };
     };
     assert.deepEqual(settings.keyBindings.nextPage, ["f", "arrow-right"]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Read settings reject a custom page line count above 100", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-line-limit-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "limit.txt"), "正文。", "utf-8");
+
+  try {
+    const result = await runReadSession(root, ["s", "s", "\r", "d", "d", "101", "\r", "\u001b", "q"], ["read", "-s"]);
+
+    assert.equal(result.code, 0, result.output);
+    assert.equal(fs.existsSync(path.join(root, "read-settings.json")), false);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
