@@ -49,11 +49,15 @@ export function findReadingPageIndex(pages: ReadingPage[], characterOffset: numb
   }
 
   const normalizedOffset = Math.max(0, Math.floor(characterOffset));
-  const matchingIndex = pages.findIndex(
-    (page) => normalizedOffset >= page.startOffset && normalizedOffset < page.endOffset
-  );
+  let pageIndex = 0;
 
-  return matchingIndex === -1 ? pages.length - 1 : matchingIndex;
+  pages.forEach((page, index) => {
+    if (page.startOffset <= normalizedOffset) {
+      pageIndex = index;
+    }
+  });
+
+  return pageIndex;
 }
 
 export function getNextReadingPageIndex(pages: ReadingPage[], currentIndex: number): number {
@@ -74,11 +78,6 @@ function createReadingLines(content: string, maxWidth: number): ReadingLine[] {
     const hasTrailingNewline = sourceLineIndex < sourceLines.length - 1;
 
     if (characters.length === 0) {
-      lines.push({
-        text: "",
-        startOffset: offset,
-        endOffset: offset + (hasTrailingNewline ? 1 : 0),
-      });
       offset += hasTrailingNewline ? 1 : 0;
       return;
     }

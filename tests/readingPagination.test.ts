@@ -15,12 +15,12 @@ test("reading pagination wraps Chinese and English text within the requested wid
   assert.equal(pages[0]?.lines.every((line) => getTerminalWidth(line) <= 8), true);
 });
 
-test("reading pagination preserves blank paragraph lines", () => {
+test("reading pagination removes blank paragraph lines while retaining their offsets", () => {
   const content = "第一段\n\n第二段";
   const pages = paginateReadingText(content, 20, 2);
 
-  assert.deepEqual(pages.map((page) => page.lines), [["第一段", ""], ["第二段"]]);
-  assert.equal(pages[1]?.startOffset, [..."第一段\n\n"].length);
+  assert.deepEqual(pages.map((page) => page.lines), [["第一段", "第二段"]]);
+  assert.equal(findReadingPageIndex(pages, [..."第一段\n"].length), 0);
 });
 
 test("reading pages retain character offsets for navigation and resuming", () => {

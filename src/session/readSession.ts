@@ -11,6 +11,8 @@ import {
   paginateReadingText,
 } from "../services/readingPagination.js";
 import { loadReadProgress, saveReadProgress } from "../storage/readProgress.js";
+import { loadSettings } from "../services/settingsLoader.js";
+import type { ThemeName } from "../models/settings.js";
 import {
   getReadContentWidth,
   getReadPageLineCount,
@@ -21,14 +23,16 @@ import {
 let book: ReadingBook;
 let pages = paginateReadingText("", 20, 1);
 let currentPageIndex = 0;
+let theme: ThemeName = "build-log";
 type LastNavigation = "previous-page" | "next-page" | "previous-chapter" | "next-chapter";
 let lastNavigation: LastNavigation = "next-page";
 
 export function startReadSession(nextBook: ReadingBook) {
   book = nextBook;
+  theme = loadSettings().theme;
   pages = paginateReadingText(
     book.content,
-    getReadContentWidth(),
+    getReadContentWidth(theme),
     getReadPageLineCount(),
     book.chapters.map((chapter) => chapter.startOffset)
   );
@@ -185,13 +189,14 @@ function renderSession() {
     pageIndex: currentPageIndex,
     pageTotal: pages.length,
     chapterIndex: findReadingChapterIndex(book.chapters, page.startOffset),
+    theme,
   });
 }
 
 function quitReadSession() {
   saveCurrentProgress();
   process.stdin.off("data", handleKeyPress);
-  renderReadQuitMessage();
+  renderReadQuitMessage(theme);
 
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(false);

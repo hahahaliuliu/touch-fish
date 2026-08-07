@@ -55,6 +55,43 @@ test("Read pages through text, jumps chapters, and saves progress", async () => 
   }
 });
 
+test("Read starts every disguise theme and exits safely", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-theme-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(
+    path.join(readingDirectory, "theme-novel.txt"),
+    "《主题测试》\n第一段正文。\n第二段正文。",
+    "utf-8"
+  );
+
+  const cases = [
+    { theme: "build-log", quit: "\u0003", expected: "[INFO] read progress saved" },
+    { theme: "backend-log", quit: "q", expected: "reader-api shutdown complete" },
+    { theme: "git", quit: "\u001b", expected: "chore: save reading checkpoint" },
+  ] as const;
+
+  try {
+    for (const scenario of cases) {
+      fs.writeFileSync(
+        path.join(root, "settings.json"),
+        JSON.stringify({ theme: scenario.theme }),
+        "utf-8"
+      );
+
+      const result = await runReadSession(root, [scenario.quit]);
+
+      assert.equal(result.code, 0, result.output);
+      assert.equal(result.output.includes(scenario.expected), true, result.output);
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 async function runReadSession(root: string, inputs: string[]) {
   const child = spawn(process.execPath, ["--import", "tsx", "src/index.ts", "read"], {
     cwd: projectRoot,
