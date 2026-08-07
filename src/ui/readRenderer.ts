@@ -21,18 +21,19 @@ export interface RenderReadSessionOptions {
   showHelp: boolean;
 }
 
-export function getReadContentWidth(theme: ThemeName = "build-log"): number {
+export function getReadContentWidth(theme: ThemeName = "build-log", contentWidth = 0): number {
   const prefix = theme === "backend-log"
     ? "2026-08-07T00:00:00.000Z DEBUG read fragment=001 text=\"\""
     : theme === "git"
       ? "+  src/reading/page-001.txt: "
       : CONTENT_PREFIX;
+  const availableWidth = Math.max(20, getTerminalColumns() - getTerminalWidth(prefix));
 
-  return Math.max(20, getTerminalColumns() - getTerminalWidth(prefix));
+  return contentWidth >= 20 ? Math.min(contentWidth, availableWidth) : availableWidth;
 }
 
-export function getReadPageLineCount(): number {
-  return DEFAULT_PAGE_LINE_COUNT;
+export function getReadPageLineCount(pageLineCount = DEFAULT_PAGE_LINE_COUNT): number {
+  return Math.max(1, pageLineCount);
 }
 
 export function renderReadSession(options: RenderReadSessionOptions) {
@@ -127,6 +128,7 @@ function renderReadHelp(language: InterfaceLanguage) {
   console.log(`  W / ↑     ${chinese ? "上一章" : "Previous chapter"}`);
   console.log(`  S / ↓     ${chinese ? "下一章" : "Next chapter"}`);
   console.log(`  Space     ${chinese ? "重复上次操作" : "Repeat last action"}`);
+  console.log(`  Ctrl+O    ${chinese ? "打开阅读设置" : "Open Read settings"}`);
   console.log(`  ?         ${chinese ? "关闭帮助" : "Close help"}`);
   console.log("");
   console.log(chinese

@@ -21,6 +21,22 @@ export interface ReadState {
   activeBookId?: string;
 }
 
+export interface ReadSettings {
+  contentWidth: number;
+  pageLineCount: number;
+  keyBindings: ReadKeyBindings;
+}
+
+export type ReadBindingAction =
+  | "previousPage"
+  | "nextPage"
+  | "previousChapter"
+  | "nextChapter"
+  | "repeat"
+  | "toggleHelp";
+
+export type ReadKeyBindings = Record<ReadBindingAction, [string, string]>;
+
 export interface ReadingPage {
   startOffset: number;
   endOffset: number;

@@ -11,14 +11,17 @@ import {
   paginateReadingText,
 } from "../services/readingPagination.js";
 import { loadReadProgress, saveReadProgress } from "../storage/readProgress.js";
+import { loadReadSettings } from "../storage/readSettings.js";
 import { loadSettings } from "../services/settingsLoader.js";
 import type { InterfaceLanguage, ThemeName } from "../models/settings.js";
+import type { ReadKeyBindings } from "../models/reading.js";
 import {
   getReadContentWidth,
   getReadPageLineCount,
   renderReadQuitMessage,
   renderReadSession,
 } from "../ui/readRenderer.js";
+import { startReadSettingSession } from "./readSettingSession.js";
 
 let book: ReadingBook;
 let pages = paginateReadingText("", 20, 1);
@@ -26,19 +29,22 @@ let currentPageIndex = 0;
 let theme: ThemeName = "build-log";
 let interfaceLanguage: InterfaceLanguage = "english";
 let showHelp = false;
+let keyBindings: ReadKeyBindings;
 type LastNavigation = "previous-page" | "next-page" | "previous-chapter" | "next-chapter";
 let lastNavigation: LastNavigation = "next-page";
 
 export function startReadSession(nextBook: ReadingBook) {
   book = nextBook;
   const settings = loadSettings();
+  const readSettings = loadReadSettings();
   theme = settings.theme;
   interfaceLanguage = settings.interfaceLanguage;
+  keyBindings = readSettings.keyBindings;
   showHelp = false;
   pages = paginateReadingText(
     book.content,
-    getReadContentWidth(theme),
-    getReadPageLineCount(),
+    getReadContentWidth(theme, readSettings.contentWidth),
+    getReadPageLineCount(readSettings.pageLineCount),
     book.chapters.map((chapter) => chapter.startOffset)
   );
   const progress = loadReadProgress(book.id, book.characterCount);
@@ -109,42 +115,65 @@ function handleInput(input: string): boolean {
     return false;
   }
 
-  if (input === "?") {
+  const binding = normalizeBindingInput(input);
+
+  if (matchesBinding(binding, "toggleHelp")) {
     showHelp = !showHelp;
     renderSession();
     return true;
+  }
+
+  if (input === "\u000f") {
+    openReadSettings();
+    return false;
   }
 
   if (showHelp) {
     return true;
   }
 
-  if (input === "a" || input === "A" || input === "\u001b[D") {
+  if (matchesBinding(binding, "previousPage")) {
     movePage(-1);
     return true;
   }
 
-  if (input === "d" || input === "D" || input === "\u001b[C") {
+  if (matchesBinding(binding, "nextPage")) {
     movePage(1);
     return true;
   }
 
-  if (input === "w" || input === "W" || input === "\u001b[A") {
+  if (matchesBinding(binding, "previousChapter")) {
     moveChapter(-1);
     return true;
   }
 
-  if (input === "s" || input === "S" || input === "\u001b[B") {
+  if (matchesBinding(binding, "nextChapter")) {
     moveChapter(1);
     return true;
   }
 
-  if (input === " ") {
+  if (matchesBinding(binding, "repeat")) {
     repeatLastNavigation();
     return true;
   }
 
   return true;
+}
+
+function normalizeBindingInput(input: string): string | undefined {
+  const specialBindings: Record<string, string> = {
+    "\u001b[A": "arrow-up",
+    "\u001b[B": "arrow-down",
+    "\u001b[C": "arrow-right",
+    "\u001b[D": "arrow-left",
+    " ": "space",
+  };
+
+  return specialBindings[input] ?? (/^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined);
+}
+
+function matchesBinding(binding: string | undefined, action: keyof ReadKeyBindings): boolean {
+  return binding !== undefined && keyBindings[action].includes(binding);
 }
 
 function movePage(direction: -1 | 1) {
@@ -231,4 +260,12 @@ function quitReadSession() {
   }
   process.stdin.pause();
   process.exit(0);
+}
+
+function openReadSettings() {
+  saveCurrentProgress();
+  process.stdin.off("data", handleKeyPress);
+  startReadSettingSession({
+    onReturn: () => startReadSession(book),
+  });
 }

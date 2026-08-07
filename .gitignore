@@ -47,3 +47,4 @@ assets/vocabulary/*.json
 assets/reading/*.txt
 !assets/reading/*.example.txt
 assets/read-progress/*.json
+assets/read-settings.json

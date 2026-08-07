@@ -113,8 +113,88 @@ test("Read help returns to reading when Esc is pressed", async () => {
   }
 });
 
-async function runReadSession(root: string, inputs: string[]) {
-  const child = spawn(process.execPath, ["--import", "tsx", "src/index.ts", "read"], {
+test("Read opens settings with Ctrl+O and returns with Ctrl+O or Esc", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-settings-return-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "return-novel.txt"), "正文。", "utf-8");
+
+  try {
+    const ctrlOResult = await runReadSession(root, ["\u000f", "\u000f", "q"]);
+    assert.equal(ctrlOResult.code, 0, ctrlOResult.output);
+    assert.equal(ctrlOResult.output.includes("阅读设置"), true, ctrlOResult.output);
+    assert.equal(ctrlOResult.output.includes("read progress saved"), true, ctrlOResult.output);
+
+    const escResult = await runReadSession(root, ["\u000f", "\u001b", "q"]);
+    assert.equal(escResult.code, 0, escResult.output);
+    assert.equal(escResult.output.includes("阅读设置"), true, escResult.output);
+    assert.equal(escResult.output.includes("read progress saved"), true, escResult.output);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Read settings select a novel and save the page layout", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-settings-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "alpha.txt"), "第一本。", "utf-8");
+  fs.writeFileSync(path.join(readingDirectory, "bravo.txt"), "第二本。", "utf-8");
+
+  try {
+    const result = await runReadSession(root, ["\r", "d", "\r", "s", "\r", "d", "\r", "s", "\r", "d", "\r", "\u000f", "q"], ["read", "-s"]);
+
+    assert.equal(result.code, 0, result.output);
+    assert.equal(result.output.includes("阅读设置"), true, result.output);
+    assert.equal(result.output.includes("source loaded: bravo.txt"), true, result.output);
+    const state = JSON.parse(fs.readFileSync(path.join(root, "read-progress", "state.json"), "utf-8")) as { activeBookId: string };
+    assert.equal(state.activeBookId, "bravo");
+    const readSettings = JSON.parse(fs.readFileSync(path.join(root, "read-settings.json"), "utf-8")) as {
+      contentWidth: number;
+      pageLineCount: number;
+    };
+    assert.equal(readSettings.contentWidth, 30);
+    assert.equal(readSettings.pageLineCount, 15);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Read settings bind a custom next-page key", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-key-binding-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(
+    path.join(readingDirectory, "binding-novel.txt"),
+    Array.from({ length: 12 }, (_, index) => `第${index + 1}段正文。`).join("\n"),
+    "utf-8"
+  );
+
+  try {
+    const result = await runReadSession(root, ["s", "s", "s", "s", "\r", "f", "\u000f", "f", "q"], ["read", "-s"]);
+
+    assert.equal(result.code, 0, result.output);
+    assert.equal(result.output.includes("page 2 / 2"), true, result.output);
+    const settings = JSON.parse(fs.readFileSync(path.join(root, "read-settings.json"), "utf-8")) as {
+      keyBindings: { nextPage: [string, string] };
+    };
+    assert.deepEqual(settings.keyBindings.nextPage, ["f", "arrow-right"]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+async function runReadSession(root: string, inputs: string[], command = ["read"]) {
+  const child = spawn(process.execPath, ["--import", "tsx", "src/index.ts", ...command], {
     cwd: projectRoot,
     env: { ...process.env, TOUCHFISH_ASSET_DIR: root },
     stdio: ["pipe", "pipe", "pipe"],
@@ -142,7 +222,10 @@ async function runReadSession(root: string, inputs: string[]) {
 
   await waitUntil(() => output.length > 0 || child.exitCode !== null, 5000);
 
-  child.stdin.write(inputs.join(""));
+  for (const input of inputs) {
+    child.stdin.write(input);
+    await wait(20);
+  }
 
   const code = await exitPromise;
 

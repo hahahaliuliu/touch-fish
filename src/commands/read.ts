@@ -1,6 +1,7 @@
 import { loadReadingBook, listReadingBooks } from "../services/readingLoader.js";
 import { loadReadState, saveReadState } from "../storage/readProgress.js";
 import { startReadSession } from "../session/readSession.js";
+import { startReadSettingSession } from "../session/readSettingSession.js";
 
 export function startReadCommand() {
   const books = listReadingBooks();
@@ -18,5 +19,5 @@ export function startReadCommand() {
 }
 
 export function startReadSettingsCommand() {
-  console.log("[INFO] Read settings are planned for v0.4.");
+  startReadSettingSession();
 }

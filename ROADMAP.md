@@ -103,13 +103,19 @@ touchfish setting
 
 ## v0.4 — Read Setup & Module Settings（计划）
 
-- 实现 `touchfish read -s / --settings`。
+### 已完成（第一步）
+
+- `touchfish read -s / --settings` 已可用：可切换当前小说、设置正文宽度和每页行数。
+
+### 计划实现
+
 - 小说导入、书架、切换、删除和管理。
 - 设计 Read 专属设置。
 - 在 Read 设置中支持“每行字符数量”和“每页行数”；两项共同决定一页显示多少正文。
 - 支持把一个章节按固定份数切分为阅读小节，例如每章分为 3 段；开启后 `W/S` 或上下键按小节跳转，而不是一次跳完整章。
 - 整理 Word 专属设置界面和内容。
 - 明确 Word 与 Read 各自拥有的配置边界。
+- Read 与 Word 的自定义按键绑定属于 v0.4 模块设置；`Ctrl+O` 保留为固定的“打开或返回设置”操作。
 
 ## v0.5 — Global Settings（计划）
 
