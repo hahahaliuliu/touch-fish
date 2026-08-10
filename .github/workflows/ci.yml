@@ -2,7 +2,6 @@ name: Node.js CI
 
 on:
   push:
-    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -12,7 +11,13 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
 
     steps:
       - name: Checkout repository
