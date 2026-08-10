@@ -1,6 +1,13 @@
-import type { ReadingBook, ReadingPage, ReadKeyBindings } from "../models/reading.js";
+import type {
+  ReadingBook,
+  ReadingPage,
+  ReadKeyBindings,
+  ReadMouseWheelMode,
+} from "../models/reading.js";
 import type { InterfaceLanguage } from "../models/settings.js";
-import { getTerminalColumns, getTerminalWidth } from "./terminalText.js";
+import { getTerminalColumns, getTerminalWidth, truncateTerminalText } from "./terminalText.js";
+
+const MINI_FIXED_ROW_COUNT = 1;
 
 export interface RenderReadMiniSessionOptions {
   book: ReadingBook;
@@ -13,12 +20,20 @@ export interface RenderReadMiniSessionOptions {
   sectionNavigationEnabled: boolean;
   interfaceLanguage: InterfaceLanguage;
   keyBindings: ReadKeyBindings;
+  mouseWheelMode: ReadMouseWheelMode;
   showHelp: boolean;
 }
 
 export function getReadMiniContentWidth(contentWidth: number) {
   const availableWidth = Math.max(20, getTerminalColumns() - 4);
   return contentWidth >= 20 ? Math.min(contentWidth, availableWidth) : availableWidth;
+}
+
+export function getReadMiniPageLineCount(configuredRows: number) {
+  const terminalRows = Number.isInteger(process.stdout.rows) && process.stdout.rows > 0
+    ? process.stdout.rows
+    : configuredRows;
+  return Math.max(1, terminalRows - MINI_FIXED_ROW_COUNT);
 }
 
 export function renderReadMiniSession(options: RenderReadMiniSessionOptions) {
@@ -29,17 +44,18 @@ export function renderReadMiniSession(options: RenderReadMiniSessionOptions) {
   }
 
   const chapter = options.book.chapters[options.chapterIndex] ?? options.book.chapters[0];
-  console.log(options.book.title);
-  console.log(chapter?.title ?? "");
-  console.log("");
-  options.page.lines.forEach((line) => console.log(line));
-  console.log("");
-
+  const heading = chapter?.title
+    ? `${options.book.title}  |  ${chapter.title}`
+    : options.book.title;
   const section = options.sectionNavigationEnabled
     ? ` | ${options.sectionIndex ?? 1}/${options.sectionTotal ?? 1}`
     : "";
-  console.log(`${options.pageIndex + 1}/${options.pageTotal}${section}`);
-  console.log(">");
+  const progress = `${options.pageIndex + 1}/${options.pageTotal}${section}`;
+  const terminalWidth = Math.max(1, getTerminalColumns() - 2);
+  const progressWidth = getTerminalWidth(progress) + 3;
+  const compactHeading = truncateTerminalText(heading, Math.max(1, terminalWidth - progressWidth));
+  console.log(`${compactHeading} | ${progress}`);
+  process.stdout.write(options.page.lines.join("\n"));
 }
 
 export function renderReadMiniQuitMessage() {
@@ -65,6 +81,12 @@ function renderHelp(options: RenderReadMiniSessionOptions) {
       : options.sectionNavigationEnabled ? "next section" : "next chapter"
   );
   renderBinding(options.keyBindings.repeat, chinese ? "重复操作" : "repeat action");
+  renderRow(
+    chinese ? "鼠标滚轮" : "Mouse Wheel",
+    chinese
+      ? options.mouseWheelMode === "page" ? "左右翻页" : "上下逐行滚动"
+      : options.mouseWheelMode === "page" ? "page navigation" : "line scrolling"
+  );
   renderBinding(options.keyBindings.toggleHelp, chinese ? "关闭帮助" : "close help");
   renderRow("Esc", chinese ? "返回阅读" : "return to reading");
   renderRow("Q / Ctrl+C", chinese ? "保存并关闭小窗口" : "save and close mini window");

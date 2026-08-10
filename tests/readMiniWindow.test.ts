@@ -9,6 +9,8 @@ import {
   writeReadMiniTerminalProfile,
 } from "../src/services/readMiniWindow.js";
 import { persistReadMiniWindowSize } from "../src/session/readMiniSession.js";
+import { getReadMouseWheelDirection } from "../src/session/readSession.js";
+import { getReadMiniPageLineCount } from "../src/ui/readMiniRenderer.js";
 import type { ReadSettings } from "../src/models/reading.js";
 
 test("Read mini-window profile uses a smaller font and closes with its command", () => {
@@ -60,6 +62,7 @@ test("dragged mini-window dimensions replace the saved size", () => {
     miniWindowColumns: 64,
     miniWindowRows: 22,
     miniWindowFontSize: 8,
+    miniWindowMouseMode: "page",
     interfaceLanguage: "english",
     theme: "build-log",
     keyBindings: {
@@ -84,4 +87,21 @@ test("dragged mini-window dimensions replace the saved size", () => {
   assert.equal(saved?.miniWindowColumns, 73);
   assert.equal(saved?.miniWindowRows, 27);
   assert.equal(saved?.miniWindowFontSize, 8);
+});
+
+test("Read mini-window recognizes wheel-up and wheel-down input", () => {
+  assert.equal(getReadMouseWheelDirection("\u001b[<64;10;5M"), -1);
+  assert.equal(getReadMouseWheelDirection("\u001b[<65;10;5M"), 1);
+  assert.equal(getReadMouseWheelDirection("\u001b[<0;10;5M"), undefined);
+});
+
+test("Read mini-window fills the available terminal height", () => {
+  const originalRows = process.stdout.rows;
+  Object.defineProperty(process.stdout, "rows", { value: 18, configurable: true });
+
+  try {
+    assert.equal(getReadMiniPageLineCount(22), 17);
+  } finally {
+    Object.defineProperty(process.stdout, "rows", { value: originalRows, configurable: true });
+  }
 });

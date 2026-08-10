@@ -30,10 +30,13 @@ export interface ReadSettings {
   miniWindowColumns: number;
   miniWindowRows: number;
   miniWindowFontSize: number;
+  miniWindowMouseMode: ReadMouseWheelMode;
   interfaceLanguage: InterfaceLanguage;
   theme: ThemeName;
   keyBindings: ReadKeyBindings;
 }
+
+export type ReadMouseWheelMode = "page" | "scroll";
 
 export type ReadBindingAction =
   | "previousPage"

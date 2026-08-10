@@ -1,4 +1,4 @@
-import type { ReadBindingAction, ReadingBookSummary, ReadSettings } from "../models/reading.js";
+import type { ReadBindingAction, ReadingBookSummary, ReadMouseWheelMode, ReadSettings } from "../models/reading.js";
 import type { InterfaceLanguage, ThemeName } from "../models/settings.js";
 import {
   BINDING_SETTING_COLUMNS,
@@ -27,6 +27,7 @@ const SECTION_OPTIONS: Array<number | "custom"> = [0, 2, 3, 5, "custom"];
 const MINI_COLUMN_OPTIONS: Array<number | "custom"> = [48, 64, 80, "custom"];
 const MINI_ROW_OPTIONS: Array<number | "custom"> = [16, 22, 30, "custom"];
 const MINI_FONT_OPTIONS: Array<number | "custom"> = [6, 8, 10, "custom"];
+const MINI_MOUSE_MODES: readonly ReadMouseWheelMode[] = ["page", "scroll"];
 const INTERFACE_LANGUAGES: readonly InterfaceLanguage[] = ["english", "chinese"];
 const THEMES: readonly ThemeName[] = ["build-log", "backend-log", "git"];
 const BINDING_ACTIONS: ReadBindingAction[] = [
@@ -48,7 +49,8 @@ const MINI_WINDOW_ITEM_INDEX = 7;
 const MINI_COLUMNS_ITEM_INDEX = 8;
 const MINI_ROWS_ITEM_INDEX = 9;
 const MINI_FONT_ITEM_INDEX = 10;
-const BINDING_START_INDEX = 11;
+const MINI_MOUSE_ITEM_INDEX = 11;
+const BINDING_START_INDEX = 12;
 
 export function renderReadSettings(options: RenderReadSettingsOptions) {
   const {
@@ -161,6 +163,19 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
     text.miniWindowFont,
     formatNumericValue(settings.miniWindowFontSize, customInput, selectedIndex === MINI_FONT_ITEM_INDEX && isEditing, selectedNumericOption, false, language),
     formatNumericOptions(MINI_FONT_OPTIONS, selectedNumericOption, selectedIndex === MINI_FONT_ITEM_INDEX && isEditing, false, language)
+  );
+  renderConfigItem(
+    MINI_MOUSE_ITEM_INDEX,
+    selectedIndex,
+    isEditing,
+    text.miniWindowMouse,
+    formatMouseMode(settings.miniWindowMouseMode, language),
+    formatValueOptions(
+      MINI_MOUSE_MODES,
+      settings.miniWindowMouseMode,
+      selectedIndex === MINI_MOUSE_ITEM_INDEX && isEditing,
+      (value) => formatMouseMode(value, language)
+    )
   );
 
   console.log("");
@@ -369,6 +384,13 @@ function formatLanguage(value: InterfaceLanguage, language: InterfaceLanguage): 
   return value === "chinese" ? "Chinese" : "English";
 }
 
+function formatMouseMode(value: ReadMouseWheelMode, language: InterfaceLanguage): string {
+  if (language === "chinese") {
+    return value === "page" ? "左右翻页" : "上下滚动";
+  }
+  return value === "page" ? "page" : "scroll";
+}
+
 function formatAutomatic(language: InterfaceLanguage): string {
   return language === "chinese" ? "自动适配" : "auto";
 }
@@ -399,6 +421,7 @@ function getText(language: InterfaceLanguage) {
       miniWindowWidth: "小窗口宽度",
       miniWindowHeight: "小窗口高度",
       miniWindowFont: "小窗口字体",
+      miniWindowMouse: "鼠标滚轮",
       keyBindings: "按键绑定",
       close: "[关闭]",
       bindingLabels: {
@@ -439,6 +462,7 @@ function getText(language: InterfaceLanguage) {
     miniWindowWidth: "Mini Window Width",
     miniWindowHeight: "Mini Window Height",
     miniWindowFont: "Mini Window Font",
+    miniWindowMouse: "Mouse Wheel",
     keyBindings: "Key Bindings",
     close: "[close]",
     bindingLabels: {

@@ -1,4 +1,4 @@
-import type { ReadBindingAction, ReadingBookSummary, ReadKeyBindings, ReadSettings } from "../models/reading.js";
+import type { ReadBindingAction, ReadingBookSummary, ReadKeyBindings, ReadMouseWheelMode, ReadSettings } from "../models/reading.js";
 import type { InterfaceLanguage, ThemeName } from "../models/settings.js";
 import { listReadingBooks, loadReadingBook } from "../services/readingLoader.js";
 import { loadReadState, saveReadState } from "../storage/readProgress.js";
@@ -14,6 +14,7 @@ const SECTION_OPTIONS: Array<number | "custom"> = [0, 2, 3, 5, "custom"];
 const MINI_COLUMN_OPTIONS: Array<number | "custom"> = [48, 64, 80, "custom"];
 const MINI_ROW_OPTIONS: Array<number | "custom"> = [16, 22, 30, "custom"];
 const MINI_FONT_OPTIONS: Array<number | "custom"> = [6, 8, 10, "custom"];
+const MINI_MOUSE_MODES: readonly ReadMouseWheelMode[] = ["page", "scroll"];
 const INTERFACE_LANGUAGES: readonly InterfaceLanguage[] = ["english", "chinese"];
 const THEMES: readonly ThemeName[] = ["build-log", "backend-log", "git"];
 const BINDING_ACTIONS: ReadBindingAction[] = [
@@ -35,7 +36,8 @@ const MINI_WINDOW_ITEM_INDEX = 7;
 const MINI_COLUMNS_ITEM_INDEX = 8;
 const MINI_ROWS_ITEM_INDEX = 9;
 const MINI_FONT_ITEM_INDEX = 10;
-const BINDING_START_INDEX = 11;
+const MINI_MOUSE_ITEM_INDEX = 11;
+const BINDING_START_INDEX = 12;
 const ITEM_COUNT = BINDING_START_INDEX + BINDING_ACTIONS.length;
 type BindingSlot = 0 | 1;
 
@@ -255,6 +257,15 @@ function changeCurrentValue(direction: -1 | 1) {
 
   if (selectedIndex === THEME_ITEM_INDEX) {
     settings = { ...settings, theme: getNextValue(settings.theme, THEMES, direction) };
+    render();
+    return;
+  }
+
+  if (selectedIndex === MINI_MOUSE_ITEM_INDEX) {
+    settings = {
+      ...settings,
+      miniWindowMouseMode: getNextValue(settings.miniWindowMouseMode, MINI_MOUSE_MODES, direction),
+    };
     render();
     return;
   }

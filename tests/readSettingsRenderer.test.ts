@@ -16,6 +16,7 @@ const settings: ReadSettings = {
   miniWindowColumns: 64,
   miniWindowRows: 22,
   miniWindowFontSize: 8,
+  miniWindowMouseMode: "page",
   interfaceLanguage: "chinese",
   theme: "build-log",
   keyBindings: {
@@ -32,7 +33,7 @@ test("Read settings order mirrors the corresponding Word settings", () => {
   const lines = captureRender({});
   const indexes = [
     "正文宽度", "每页行数", "章节切分", "界面语言", "当前小说", "导入 TXT 小说",
-    "伪装主题", "小窗口阅读", "小窗口宽度", "小窗口高度", "小窗口字体",
+    "伪装主题", "小窗口阅读", "小窗口宽度", "小窗口高度", "小窗口字体", "鼠标滚轮",
   ]
     .map((label) => lines.findIndex((line) => line.includes(label)));
 
@@ -68,7 +69,7 @@ test("Read settings shows cursors for custom numeric input and key capture", () 
     selectedNumericOption: "custom",
   });
   const bindingLines = captureRender({
-    selectedIndex: 11,
+    selectedIndex: 12,
     isEditing: false,
     isBindingCapture: true,
   });
@@ -81,7 +82,7 @@ test("Read settings shows cursors for custom numeric input and key capture", () 
 
 test("Read settings highlights one binding slot without hiding the other", () => {
   const lines = captureRender({
-    selectedIndex: 11,
+    selectedIndex: 12,
     selectedBindingSlot: 1,
   });
   const bindingLine = lines.find((line) => line.includes("上一页")) ?? "";

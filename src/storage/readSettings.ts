@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { resolveAssetPath } from "../config/paths.js";
-import type { ReadBindingAction, ReadKeyBindings, ReadSettings } from "../models/reading.js";
+import type { ReadBindingAction, ReadKeyBindings, ReadMouseWheelMode, ReadSettings } from "../models/reading.js";
 import type { InterfaceLanguage, ThemeName } from "../models/settings.js";
 import { loadSettings } from "../services/settingsLoader.js";
 
@@ -34,6 +34,7 @@ function getDefaultReadSettings(): ReadSettings {
     miniWindowColumns: 64,
     miniWindowRows: 22,
     miniWindowFontSize: 8,
+    miniWindowMouseMode: "page",
     interfaceLanguage,
     theme,
     keyBindings: cloneKeyBindings(DEFAULT_KEY_BINDINGS),
@@ -56,6 +57,7 @@ export function loadReadSettings(): ReadSettings {
       miniWindowColumns: isValidMiniWindowColumns(value.miniWindowColumns) ? value.miniWindowColumns : defaults.miniWindowColumns,
       miniWindowRows: isValidMiniWindowRows(value.miniWindowRows) ? value.miniWindowRows : defaults.miniWindowRows,
       miniWindowFontSize: isValidMiniWindowFontSize(value.miniWindowFontSize) ? value.miniWindowFontSize : defaults.miniWindowFontSize,
+      miniWindowMouseMode: isReadMouseWheelMode(value.miniWindowMouseMode) ? value.miniWindowMouseMode : defaults.miniWindowMouseMode,
       interfaceLanguage: isInterfaceLanguage(value.interfaceLanguage) ? value.interfaceLanguage : defaults.interfaceLanguage,
       theme: isReadTheme(value.theme) ? value.theme : defaults.theme,
       keyBindings: readKeyBindings(value.keyBindings),
@@ -74,6 +76,7 @@ export function saveReadSettings(settings: ReadSettings) {
     miniWindowColumns: isValidMiniWindowColumns(settings.miniWindowColumns) ? settings.miniWindowColumns : defaults.miniWindowColumns,
     miniWindowRows: isValidMiniWindowRows(settings.miniWindowRows) ? settings.miniWindowRows : defaults.miniWindowRows,
     miniWindowFontSize: isValidMiniWindowFontSize(settings.miniWindowFontSize) ? settings.miniWindowFontSize : defaults.miniWindowFontSize,
+    miniWindowMouseMode: isReadMouseWheelMode(settings.miniWindowMouseMode) ? settings.miniWindowMouseMode : defaults.miniWindowMouseMode,
     interfaceLanguage: isInterfaceLanguage(settings.interfaceLanguage) ? settings.interfaceLanguage : defaults.interfaceLanguage,
     theme: isReadTheme(settings.theme) ? settings.theme : defaults.theme,
     keyBindings: readKeyBindings(settings.keyBindings),
@@ -115,6 +118,10 @@ function isValidMiniWindowRows(value: unknown): value is number {
 
 function isValidMiniWindowFontSize(value: unknown): value is number {
   return typeof value === "number" && Number.isInteger(value) && value >= 5 && value <= 72;
+}
+
+function isReadMouseWheelMode(value: unknown): value is ReadMouseWheelMode {
+  return value === "page" || value === "scroll";
 }
 
 function readKeyBindings(value: unknown): ReadKeyBindings {
