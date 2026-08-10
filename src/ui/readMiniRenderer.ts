@@ -54,11 +54,17 @@ export function renderReadMiniSession(options: RenderReadMiniSessionOptions) {
     ? ` | ${options.sectionIndex ?? 1}/${options.sectionTotal ?? 1}`
     : "";
   const resumeStatus = formatResumeDistance(options.scrollResumeDistance, options.interfaceLanguage);
-  const progress = `${options.pageIndex + 1}/${options.pageTotal}${section}${resumeStatus}`;
+  const progress = `${options.pageIndex + 1}/${options.pageTotal}${section}`;
   const terminalWidth = Math.max(1, getTerminalColumns() - 2);
   const progressWidth = getTerminalWidth(progress) + 3;
   const compactHeading = truncateTerminalText(heading, Math.max(1, terminalWidth - progressWidth));
-  console.log(`${compactHeading} | ${progress}`);
+  const fixedHeader = `${compactHeading}   ${progress}`;
+  const availableStatusWidth = Math.max(0, terminalWidth - getTerminalWidth(fixedHeader));
+  const compactStatus = truncateTerminalText(resumeStatus, availableStatusWidth);
+  const statusSpacing = compactStatus
+    ? " ".repeat(Math.max(0, availableStatusWidth - getTerminalWidth(compactStatus)))
+    : "";
+  console.log(`${fixedHeader}${statusSpacing}${compactStatus}`);
   const contentLines = options.mouseWheelMode === "scroll"
     ? options.page.lines.map((line, index) => `${index === options.scrollResumeLineIndex ? "> " : "  "}${line}`)
     : options.page.lines;

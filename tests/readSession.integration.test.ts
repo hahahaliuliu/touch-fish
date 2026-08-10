@@ -226,7 +226,10 @@ for (const mouseMode of ["page", "scroll"] as const) {
       const result = await runReadSession(
         root,
         mouseMode === "scroll"
-          ? ["\u001b[<65;1;1M", "\u001b[<65;1;1M", "\u001b[<65;1;1M", "\u001b[<64;1;1M", "q"]
+          ? [
+            "\u001b[<65;1;1M", "\u001b[<65;1;1M", "\u001b[<65;1;1M",
+            "\u001b[<64;1;1M", "\u001b[<64;1;1M", "\u001b[<64;1;1M", "q",
+          ]
           : ["\u001b[<65;1;1M", "q"],
         [
           "read", "--mini-child", "--mini-port", String(port),
@@ -236,12 +239,13 @@ for (const mouseMode of ["page", "scroll"] as const) {
       const progress = JSON.parse(
         fs.readFileSync(path.join(root, "read-progress", "wheel.json"), "utf8")
       ) as { characterOffset: number };
-      const expectedOffset = content.indexOf("第五行");
+      const expectedOffset = content.indexOf(mouseMode === "page" ? "第五行" : "第一行");
 
       assert.equal(result.code, 0, result.output);
       assert.equal(progress.characterOffset, expectedOffset);
       if (mouseMode === "scroll") {
         assert.equal([...result.output.matchAll(/\n> 第五行/g)].length >= 3, true, result.output);
+        assert.match(result.output, /↓ last position 1 lines below/);
       } else {
         assert.doesNotMatch(result.output, /\n> /);
       }

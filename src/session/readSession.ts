@@ -265,8 +265,12 @@ function moveScrollLine(direction: -1 | 1) {
   let resumeAnchor: number | null;
   const directionChanged = scrollGestureDirection !== undefined
     && scrollGestureDirection !== direction;
-  if ((directionChanged || restoringScrollHistory) && scrollResumeHistory.has(nextIndex)) {
-    resumeAnchor = scrollResumeHistory.get(nextIndex) ?? null;
+  if (directionChanged || restoringScrollHistory) {
+    resumeAnchor = scrollResumeHistory.has(nextIndex)
+      ? scrollResumeHistory.get(nextIndex) ?? null
+      : scrollGestureAnchor ?? (direction === 1
+        ? Math.min(scrollLines.length - 1, previousIndex + pageLineCount)
+        : previousIndex);
     restoringScrollHistory = true;
   } else if (isContinuousScroll) {
     resumeAnchor = scrollGestureAnchor ?? null;
@@ -458,7 +462,6 @@ function resetScrollResumeState() {
   scrollResumeLineIndex = undefined;
   scrollResumeDistance = undefined;
   scrollResumeHistory.clear();
-  scrollResumeHistory.set(currentScrollLineIndex, null);
   scrollGestureDirection = undefined;
   scrollGestureAnchor = undefined;
   restoringScrollHistory = false;
