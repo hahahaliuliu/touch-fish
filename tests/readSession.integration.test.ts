@@ -282,7 +282,7 @@ test("Read settings bind a custom next-page key", async () => {
   );
 
   try {
-    const result = await runReadSession(root, ["s", "s", "s", "s", "s", "s", "s", "s", "s", "\r", "f", "\u000f", "f", "q"], ["read", "-s"]);
+    const result = await runReadSession(root, ["s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "\r", "f", "\u000f", "f", "q"], ["read", "-s"]);
 
     assert.equal(result.code, 0, result.output);
     assert.equal(result.output.includes("page 2 / 2"), true, result.output);
@@ -307,7 +307,7 @@ test("Read settings select and edit either key-binding slot", async () => {
   try {
     const result = await runReadSession(
       root,
-      ["s", "s", "s", "s", "s", "s", "s", "s", "s", "d", "\r", "f", "q"],
+      ["s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "d", "\r", "f", "q"],
       ["read", "-s"]
     );
 
@@ -333,7 +333,7 @@ test("Read settings move occupied bindings and clear slots with Backspace", asyn
   try {
     const moved = await runReadSession(
       root,
-      ["s", "s", "s", "s", "s", "s", "s", "s", "\r", "d", "q"],
+      ["s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "\r", "d", "q"],
       ["read", "-s"]
     );
     assert.equal(moved.code, 0, moved.output);
@@ -346,7 +346,7 @@ test("Read settings move occupied bindings and clear slots with Backspace", asyn
 
     const cleared = await runReadSession(
       root,
-      ["s", "s", "s", "s", "s", "s", "s", "s", "d", "\r", "\u007f", "q"],
+      ["s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "d", "\r", "\u007f", "q"],
       ["read", "-s"]
     );
     assert.equal(cleared.code, 0, cleared.output);
@@ -385,6 +385,42 @@ test("Read settings save their own interface language and disguise theme", async
     };
     assert.equal(settings.interfaceLanguage, "chinese");
     assert.equal(settings.theme, "backend-log");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Read settings save mini-window width, height, and font size", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-mini-settings-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "mini-settings.txt"), "正文。", "utf8");
+
+  try {
+    const result = await runReadSession(
+      root,
+      [
+        ...Array.from({ length: 8 }, () => "s"),
+        "\r", "d", "\r",
+        "s", "\r", "d", "\r",
+        "s", "\r", "d", "\r",
+        "q",
+      ],
+      ["read", "-s"]
+    );
+
+    assert.equal(result.code, 0, result.output);
+    const settings = JSON.parse(fs.readFileSync(path.join(root, "read-settings.json"), "utf8")) as {
+      miniWindowColumns: number;
+      miniWindowRows: number;
+      miniWindowFontSize: number;
+    };
+    assert.equal(settings.miniWindowColumns, 80);
+    assert.equal(settings.miniWindowRows, 30);
+    assert.equal(settings.miniWindowFontSize, 10);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

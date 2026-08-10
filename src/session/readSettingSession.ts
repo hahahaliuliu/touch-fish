@@ -11,6 +11,9 @@ import { startReadingImportSession } from "./readingImportSession.js";
 const WIDTH_OPTIONS: Array<number | "custom"> = [0, 30, 50, "custom"];
 const LINE_OPTIONS: Array<number | "custom"> = [5, 10, 15, "custom"];
 const SECTION_OPTIONS: Array<number | "custom"> = [0, 2, 3, 5, "custom"];
+const MINI_COLUMN_OPTIONS: Array<number | "custom"> = [48, 64, 80, "custom"];
+const MINI_ROW_OPTIONS: Array<number | "custom"> = [16, 22, 30, "custom"];
+const MINI_FONT_OPTIONS: Array<number | "custom"> = [6, 8, 10, "custom"];
 const INTERFACE_LANGUAGES: readonly InterfaceLanguage[] = ["english", "chinese"];
 const THEMES: readonly ThemeName[] = ["build-log", "backend-log", "git"];
 const BINDING_ACTIONS: ReadBindingAction[] = [
@@ -29,7 +32,10 @@ const CURRENT_BOOK_ITEM_INDEX = 4;
 const IMPORT_ITEM_INDEX = 5;
 const THEME_ITEM_INDEX = 6;
 const MINI_WINDOW_ITEM_INDEX = 7;
-const BINDING_START_INDEX = 8;
+const MINI_COLUMNS_ITEM_INDEX = 8;
+const MINI_ROWS_ITEM_INDEX = 9;
+const MINI_FONT_ITEM_INDEX = 10;
+const BINDING_START_INDEX = 11;
 const ITEM_COUNT = BINDING_START_INDEX + BINDING_ACTIONS.length;
 type BindingSlot = 0 | 1;
 
@@ -303,7 +309,10 @@ function saveEdit() {
 function isNumericSettingSelected(): boolean {
   return selectedIndex === WIDTH_ITEM_INDEX
     || selectedIndex === LINE_ITEM_INDEX
-    || selectedIndex === SECTION_ITEM_INDEX;
+    || selectedIndex === SECTION_ITEM_INDEX
+    || selectedIndex === MINI_COLUMNS_ITEM_INDEX
+    || selectedIndex === MINI_ROWS_ITEM_INDEX
+    || selectedIndex === MINI_FONT_ITEM_INDEX;
 }
 
 function getSelectedNumericOptions(): Array<number | "custom"> {
@@ -312,6 +321,15 @@ function getSelectedNumericOptions(): Array<number | "custom"> {
   }
   if (selectedIndex === SECTION_ITEM_INDEX) {
     return SECTION_OPTIONS;
+  }
+  if (selectedIndex === MINI_COLUMNS_ITEM_INDEX) {
+    return MINI_COLUMN_OPTIONS;
+  }
+  if (selectedIndex === MINI_ROWS_ITEM_INDEX) {
+    return MINI_ROW_OPTIONS;
+  }
+  if (selectedIndex === MINI_FONT_ITEM_INDEX) {
+    return MINI_FONT_OPTIONS;
   }
   return LINE_OPTIONS;
 }
@@ -323,6 +341,15 @@ function getSelectedNumericValue(): number {
   if (selectedIndex === SECTION_ITEM_INDEX) {
     return settings.chapterSectionCount;
   }
+  if (selectedIndex === MINI_COLUMNS_ITEM_INDEX) {
+    return settings.miniWindowColumns;
+  }
+  if (selectedIndex === MINI_ROWS_ITEM_INDEX) {
+    return settings.miniWindowRows;
+  }
+  if (selectedIndex === MINI_FONT_ITEM_INDEX) {
+    return settings.miniWindowFontSize;
+  }
   return settings.pageLineCount;
 }
 
@@ -332,6 +359,15 @@ function applySelectedNumericValue(value: number): ReadSettings {
   }
   if (selectedIndex === SECTION_ITEM_INDEX) {
     return { ...settings, chapterSectionCount: value };
+  }
+  if (selectedIndex === MINI_COLUMNS_ITEM_INDEX) {
+    return { ...settings, miniWindowColumns: value };
+  }
+  if (selectedIndex === MINI_ROWS_ITEM_INDEX) {
+    return { ...settings, miniWindowRows: value };
+  }
+  if (selectedIndex === MINI_FONT_ITEM_INDEX) {
+    return { ...settings, miniWindowFontSize: value };
   }
   return { ...settings, pageLineCount: value };
 }
@@ -347,6 +383,24 @@ function getNumericValidationError(value: number): string {
     return Number.isInteger(value) && value >= 2 && value <= 20
       ? ""
       : localize("Chapter sections must be a whole number from 2 to 20", "章节切分必须是 2 到 20 的整数");
+  }
+
+  if (selectedIndex === MINI_COLUMNS_ITEM_INDEX) {
+    return Number.isInteger(value) && value >= 20 && value <= 500
+      ? ""
+      : localize("Mini-window width must be a whole number from 20 to 500", "小窗口宽度必须是 20 到 500 的整数");
+  }
+
+  if (selectedIndex === MINI_ROWS_ITEM_INDEX) {
+    return Number.isInteger(value) && value >= 5 && value <= 200
+      ? ""
+      : localize("Mini-window height must be a whole number from 5 to 200", "小窗口高度必须是 5 到 200 的整数");
+  }
+
+  if (selectedIndex === MINI_FONT_ITEM_INDEX) {
+    return Number.isInteger(value) && value >= 5 && value <= 72
+      ? ""
+      : localize("Mini-window font size must be a whole number from 5 to 72", "小窗口字体必须是 5 到 72 的整数");
   }
 
   return Number.isInteger(value) && value >= 1 && value <= 100

@@ -27,6 +27,9 @@ export interface ReadSettings {
   contentWidth: number;
   pageLineCount: number;
   chapterSectionCount: number;
+  miniWindowColumns: number;
+  miniWindowRows: number;
+  miniWindowFontSize: number;
   interfaceLanguage: InterfaceLanguage;
   theme: ThemeName;
   keyBindings: ReadKeyBindings;

@@ -91,6 +91,7 @@ export function startReadSession(nextBook: ReadingBook, options: StartReadSessio
 
   return {
     close: quitReadSession,
+    resize: resizeReadSession,
   };
 }
 
@@ -283,6 +284,23 @@ function saveCurrentProgress() {
   if (page) {
     saveReadProgress(book.id, { characterOffset: page.startOffset });
   }
+}
+
+function resizeReadSession() {
+  if (sessionMode !== "mini") {
+    return;
+  }
+
+  const currentOffset = pages[currentPageIndex]?.startOffset ?? 0;
+  const readSettings = loadReadSettings();
+  pages = paginateReadingText(
+    book.content,
+    getReadMiniContentWidth(readSettings.contentWidth),
+    getReadPageLineCount(readSettings.pageLineCount),
+    sections.map((section) => section.startOffset)
+  );
+  currentPageIndex = findReadingPageIndex(pages, currentOffset);
+  renderSession();
 }
 
 function renderSession() {

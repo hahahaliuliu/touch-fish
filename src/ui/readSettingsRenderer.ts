@@ -24,6 +24,9 @@ export interface RenderReadSettingsOptions {
 const WIDTH_OPTIONS: Array<number | "custom"> = [0, 30, 50, "custom"];
 const LINE_OPTIONS: Array<number | "custom"> = [5, 10, 15, "custom"];
 const SECTION_OPTIONS: Array<number | "custom"> = [0, 2, 3, 5, "custom"];
+const MINI_COLUMN_OPTIONS: Array<number | "custom"> = [48, 64, 80, "custom"];
+const MINI_ROW_OPTIONS: Array<number | "custom"> = [16, 22, 30, "custom"];
+const MINI_FONT_OPTIONS: Array<number | "custom"> = [6, 8, 10, "custom"];
 const INTERFACE_LANGUAGES: readonly InterfaceLanguage[] = ["english", "chinese"];
 const THEMES: readonly ThemeName[] = ["build-log", "backend-log", "git"];
 const BINDING_ACTIONS: ReadBindingAction[] = [
@@ -42,7 +45,10 @@ const CURRENT_BOOK_ITEM_INDEX = 4;
 const IMPORT_ITEM_INDEX = 5;
 const THEME_ITEM_INDEX = 6;
 const MINI_WINDOW_ITEM_INDEX = 7;
-const BINDING_START_INDEX = 8;
+const MINI_COLUMNS_ITEM_INDEX = 8;
+const MINI_ROWS_ITEM_INDEX = 9;
+const MINI_FONT_ITEM_INDEX = 10;
+const BINDING_START_INDEX = 11;
 
 export function renderReadSettings(options: RenderReadSettingsOptions) {
   const {
@@ -132,6 +138,30 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
     miniModeActive ? text.close : text.open,
     ""
   );
+  renderConfigItem(
+    MINI_COLUMNS_ITEM_INDEX,
+    selectedIndex,
+    isEditing,
+    text.miniWindowWidth,
+    formatNumericValue(settings.miniWindowColumns, customInput, selectedIndex === MINI_COLUMNS_ITEM_INDEX && isEditing, selectedNumericOption, false, language),
+    formatNumericOptions(MINI_COLUMN_OPTIONS, selectedNumericOption, selectedIndex === MINI_COLUMNS_ITEM_INDEX && isEditing, false, language)
+  );
+  renderConfigItem(
+    MINI_ROWS_ITEM_INDEX,
+    selectedIndex,
+    isEditing,
+    text.miniWindowHeight,
+    formatNumericValue(settings.miniWindowRows, customInput, selectedIndex === MINI_ROWS_ITEM_INDEX && isEditing, selectedNumericOption, false, language),
+    formatNumericOptions(MINI_ROW_OPTIONS, selectedNumericOption, selectedIndex === MINI_ROWS_ITEM_INDEX && isEditing, false, language)
+  );
+  renderConfigItem(
+    MINI_FONT_ITEM_INDEX,
+    selectedIndex,
+    isEditing,
+    text.miniWindowFont,
+    formatNumericValue(settings.miniWindowFontSize, customInput, selectedIndex === MINI_FONT_ITEM_INDEX && isEditing, selectedNumericOption, false, language),
+    formatNumericOptions(MINI_FONT_OPTIONS, selectedNumericOption, selectedIndex === MINI_FONT_ITEM_INDEX && isEditing, false, language)
+  );
 
   console.log("");
   console.log(text.keyBindings);
@@ -159,6 +189,8 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
     console.log(text.lineHint);
   } else if (isEditing && selectedIndex === SECTION_ITEM_INDEX) {
     console.log(text.sectionHint);
+  } else if (isEditing && selectedIndex >= MINI_COLUMNS_ITEM_INDEX && selectedIndex <= MINI_FONT_ITEM_INDEX) {
+    console.log(text.miniWindowHint);
   } else if (isEditing) {
     console.log(text.editHint);
   }
@@ -364,6 +396,9 @@ function getText(language: InterfaceLanguage) {
       interfaceLanguage: "界面语言",
       theme: "伪装主题",
       miniWindow: "小窗口阅读",
+      miniWindowWidth: "小窗口宽度",
+      miniWindowHeight: "小窗口高度",
+      miniWindowFont: "小窗口字体",
       keyBindings: "按键绑定",
       close: "[关闭]",
       bindingLabels: {
@@ -382,6 +417,7 @@ function getText(language: InterfaceLanguage) {
       widthHint: "[编辑] A/D 移动选项光标；自动适配会按终端宽度和当前主题计算正文宽度",
       lineHint: "[自定义] 输入 1 到 100 的整数后按 Enter 保存；A/D 可切换预设和自定义",
       sectionHint: "[编辑] 关闭时 W/S 跳章节；开启后按自然段分为阅读小节，输入 2 到 20 的整数可自定义份数",
+      miniWindowHint: "[编辑] 宽度和高度使用终端列数与行数；拖动小窗口后会自动保存实际尺寸",
       editHint: "[编辑] 修改后按 Enter 保存",
       warningPrefix: "[警告] ",
     };
@@ -400,6 +436,9 @@ function getText(language: InterfaceLanguage) {
     interfaceLanguage: "Interface Language",
     theme: "Disguise Theme",
     miniWindow: "Mini Window Reading",
+    miniWindowWidth: "Mini Window Width",
+    miniWindowHeight: "Mini Window Height",
+    miniWindowFont: "Mini Window Font",
     keyBindings: "Key Bindings",
     close: "[close]",
     bindingLabels: {
@@ -418,6 +457,7 @@ function getText(language: InterfaceLanguage) {
     widthHint: "[EDIT] A/D moves the option cursor; auto uses the terminal width and current theme",
     lineHint: "[CUSTOM] enter a whole number from 1 to 100, then Enter; A/D cycles presets and custom",
     sectionHint: "[EDIT] off makes W/S jump chapters; enabled splits at paragraphs, with 2 to 20 custom parts",
+    miniWindowHint: "[EDIT] width and height use terminal columns and rows; dragging the mini window saves its actual size",
     editHint: "[EDIT] change the value, then press Enter to save",
     warningPrefix: "[WARN] ",
   };

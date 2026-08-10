@@ -6,7 +6,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const MINI_PROFILE_NAME = "Touch Fish Mini";
-const MINI_WINDOW_SIZE = "64,22";
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const touchFishBin = path.join(projectRoot, "bin", "touchfish.js");
 
@@ -15,6 +14,12 @@ export type ReadMiniWindowStatus = "closed" | "opening" | "open" | "error";
 export interface ReadMiniWindowState {
   status: ReadMiniWindowStatus;
   message?: string | undefined;
+}
+
+export interface ReadMiniWindowPreferences {
+  columns: number;
+  rows: number;
+  fontSize: number;
 }
 
 type StateListener = (state: ReadMiniWindowState) => void;
@@ -35,7 +40,7 @@ export class ReadMiniWindowController {
     return () => this.listeners.delete(listener);
   }
 
-  async open(bookId: string) {
+  async open(bookId: string, preferences: ReadMiniWindowPreferences) {
     if (this.state.status === "opening" || this.state.status === "open") {
       return;
     }
@@ -50,9 +55,15 @@ export class ReadMiniWindowController {
 
     try {
       const port = await listenOnLocalhost(this.server);
-      writeReadMiniTerminalProfile();
+      writeReadMiniTerminalProfile(preferences.fontSize);
       this.setState({ status: "opening" });
-      const child = launchReadMiniTerminal({ port, token: this.token, bookId });
+      const child = launchReadMiniTerminal({
+        port,
+        token: this.token,
+        bookId,
+        columns: preferences.columns,
+        rows: preferences.rows,
+      });
       child.once("error", (error) => {
         this.closeServer();
         this.setState({ status: "error", message: error.message });
@@ -150,13 +161,13 @@ export function getReadMiniTerminalFragmentPath(localAppData = process.env.LOCAL
   );
 }
 
-export function createReadMiniTerminalFragment() {
+export function createReadMiniTerminalFragment(fontSize = 8) {
   return {
     profiles: [
       {
         name: MINI_PROFILE_NAME,
         commandline: "cmd.exe",
-        fontSize: 8,
+        fontSize,
         padding: "4",
         closeOnExit: "always",
         historySize: 0,
@@ -167,9 +178,12 @@ export function createReadMiniTerminalFragment() {
   };
 }
 
-export function writeReadMiniTerminalProfile(localAppData = process.env.LOCALAPPDATA) {
+export function writeReadMiniTerminalProfile(
+  fontSize = 8,
+  localAppData = process.env.LOCALAPPDATA
+) {
   const fragmentPath = getReadMiniTerminalFragmentPath(localAppData);
-  const content = `${JSON.stringify(createReadMiniTerminalFragment(), null, 2)}\n`;
+  const content = `${JSON.stringify(createReadMiniTerminalFragment(fontSize), null, 2)}\n`;
   fs.mkdirSync(path.dirname(fragmentPath), { recursive: true });
 
   if (!fs.existsSync(fragmentPath) || fs.readFileSync(fragmentPath, "utf8") !== content) {
@@ -183,10 +197,12 @@ export function buildReadMiniTerminalArguments(options: {
   port: number;
   token: string;
   bookId: string;
+  columns: number;
+  rows: number;
 }) {
   return [
     "--window", "new",
-    "--size", MINI_WINDOW_SIZE,
+    "--size", `${options.columns},${options.rows}`,
     "new-tab",
     "--profile", MINI_PROFILE_NAME,
     "--startingDirectory", projectRoot,
@@ -206,6 +222,8 @@ function launchReadMiniTerminal(options: {
   port: number;
   token: string;
   bookId: string;
+  columns: number;
+  rows: number;
 }): ChildProcess {
   const child = spawn("wt.exe", buildReadMiniTerminalArguments(options), {
     cwd: projectRoot,

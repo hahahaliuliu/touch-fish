@@ -37,7 +37,12 @@ export function startReadMiniHostSession(
 
   render();
   if (openWindow) {
-    void controller.open(book.id);
+    const settings = loadReadSettings();
+    void controller.open(book.id, {
+      columns: settings.miniWindowColumns,
+      rows: settings.miniWindowRows,
+      fontSize: settings.miniWindowFontSize,
+    });
   }
 
   if (process.stdin.isTTY) {

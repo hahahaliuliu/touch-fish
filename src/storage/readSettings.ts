@@ -31,6 +31,9 @@ function getDefaultReadSettings(): ReadSettings {
     contentWidth: 0,
     pageLineCount: 10,
     chapterSectionCount: 0,
+    miniWindowColumns: 64,
+    miniWindowRows: 22,
+    miniWindowFontSize: 8,
     interfaceLanguage,
     theme,
     keyBindings: cloneKeyBindings(DEFAULT_KEY_BINDINGS),
@@ -50,6 +53,9 @@ export function loadReadSettings(): ReadSettings {
       contentWidth: isValidWidth(value.contentWidth) ? value.contentWidth : defaults.contentWidth,
       pageLineCount: isValidLineCount(value.pageLineCount) ? value.pageLineCount : defaults.pageLineCount,
       chapterSectionCount: isValidSectionCount(value.chapterSectionCount) ? value.chapterSectionCount : defaults.chapterSectionCount,
+      miniWindowColumns: isValidMiniWindowColumns(value.miniWindowColumns) ? value.miniWindowColumns : defaults.miniWindowColumns,
+      miniWindowRows: isValidMiniWindowRows(value.miniWindowRows) ? value.miniWindowRows : defaults.miniWindowRows,
+      miniWindowFontSize: isValidMiniWindowFontSize(value.miniWindowFontSize) ? value.miniWindowFontSize : defaults.miniWindowFontSize,
       interfaceLanguage: isInterfaceLanguage(value.interfaceLanguage) ? value.interfaceLanguage : defaults.interfaceLanguage,
       theme: isReadTheme(value.theme) ? value.theme : defaults.theme,
       keyBindings: readKeyBindings(value.keyBindings),
@@ -65,6 +71,9 @@ export function saveReadSettings(settings: ReadSettings) {
     contentWidth: isValidWidth(settings.contentWidth) ? settings.contentWidth : defaults.contentWidth,
     pageLineCount: isValidLineCount(settings.pageLineCount) ? settings.pageLineCount : defaults.pageLineCount,
     chapterSectionCount: isValidSectionCount(settings.chapterSectionCount) ? settings.chapterSectionCount : defaults.chapterSectionCount,
+    miniWindowColumns: isValidMiniWindowColumns(settings.miniWindowColumns) ? settings.miniWindowColumns : defaults.miniWindowColumns,
+    miniWindowRows: isValidMiniWindowRows(settings.miniWindowRows) ? settings.miniWindowRows : defaults.miniWindowRows,
+    miniWindowFontSize: isValidMiniWindowFontSize(settings.miniWindowFontSize) ? settings.miniWindowFontSize : defaults.miniWindowFontSize,
     interfaceLanguage: isInterfaceLanguage(settings.interfaceLanguage) ? settings.interfaceLanguage : defaults.interfaceLanguage,
     theme: isReadTheme(settings.theme) ? settings.theme : defaults.theme,
     keyBindings: readKeyBindings(settings.keyBindings),
@@ -94,6 +103,18 @@ function isValidSectionCount(value: unknown): value is number {
   return typeof value === "number"
     && Number.isInteger(value)
     && (value === 0 || (value >= 2 && value <= 20));
+}
+
+function isValidMiniWindowColumns(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 20 && value <= 500;
+}
+
+function isValidMiniWindowRows(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 5 && value <= 200;
+}
+
+function isValidMiniWindowFontSize(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 5 && value <= 72;
 }
 
 function readKeyBindings(value: unknown): ReadKeyBindings {
