@@ -196,7 +196,10 @@ for (const mouseMode of ["page", "scroll"] as const) {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), `touchfish-read-mini-${mouseMode}-`));
     const readingDirectory = path.join(root, "reading");
     const vocabularyDirectory = path.join(root, "vocabulary");
-    const content = ["第一行", "第二行", "第三行", "第四行", "第五行", "第六行"].join("\n");
+    const content = [
+      "第一行", "第二行", "第三行", "第四行", "第五行", "第六行",
+      "第七行", "第八行", "第九行", "第十行", "第十一行", "第十二行",
+    ].join("\n");
     const token = `mini-${mouseMode}-token`;
     const server = net.createServer((socket) => {
       socket.setEncoding("utf8");
@@ -222,7 +225,9 @@ for (const mouseMode of ["page", "scroll"] as const) {
     try {
       const result = await runReadSession(
         root,
-        ["\u001b[<65;1;1M", "q"],
+        mouseMode === "scroll"
+          ? ["\u001b[<65;1;1M", "\u001b[<65;1;1M", "\u001b[<65;1;1M", "\u001b[<64;1;1M", "q"]
+          : ["\u001b[<65;1;1M", "q"],
         [
           "read", "--mini-child", "--mini-port", String(port),
           "--mini-token", token, "--mini-book", "wheel",
@@ -231,10 +236,15 @@ for (const mouseMode of ["page", "scroll"] as const) {
       const progress = JSON.parse(
         fs.readFileSync(path.join(root, "read-progress", "wheel.json"), "utf8")
       ) as { characterOffset: number };
-      const expectedOffset = content.indexOf(mouseMode === "page" ? "第五行" : "第三行");
+      const expectedOffset = content.indexOf("第五行");
 
       assert.equal(result.code, 0, result.output);
       assert.equal(progress.characterOffset, expectedOffset);
+      if (mouseMode === "scroll") {
+        assert.equal([...result.output.matchAll(/\n> 第五行/g)].length >= 3, true, result.output);
+      } else {
+        assert.doesNotMatch(result.output, /\n> /);
+      }
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));
       fs.rmSync(root, { recursive: true, force: true });

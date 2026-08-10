@@ -48,6 +48,16 @@ let scrollLines = paginateReadingText("", 20, 1);
 let sections: ReadingSection[] = [];
 let currentPageIndex = 0;
 let currentScrollLineIndex = 0;
+let scrollResumeLineIndex: number | undefined;
+let scrollResumeDistance: { direction: "above" | "below"; lineCount: number } | undefined;
+const scrollResumeHistory = new Map<number, number | null>();
+const CONTINUOUS_SCROLL_DELAY = 500;
+const SCROLL_RESUME_CLEAR_DELAY = 2000;
+let scrollGestureDirection: -1 | 1 | undefined;
+let scrollGestureAnchor: number | null | undefined;
+let restoringScrollHistory = false;
+let lastScrollTime = 0;
+let scrollResumeClearTimer: NodeJS.Timeout | undefined;
 let theme: ThemeName = "build-log";
 let interfaceLanguage: InterfaceLanguage = "english";
 let showHelp = false;
@@ -239,14 +249,41 @@ function movePage(direction: -1 | 1) {
 }
 
 function moveScrollLine(direction: -1 | 1) {
+  const previousIndex = currentScrollLineIndex;
   const nextIndex = Math.min(
     Math.max(currentScrollLineIndex + direction * mouseScrollStep, 0),
-    Math.max(0, scrollLines.length - 1)
+    Math.max(0, scrollLines.length - pageLineCount)
   );
   if (nextIndex === currentScrollLineIndex) {
     return;
   }
+
+  const now = Date.now();
+  const isContinuousScroll = scrollGestureDirection === direction
+    && now - lastScrollTime <= CONTINUOUS_SCROLL_DELAY
+    && scrollGestureAnchor !== undefined;
+  let resumeAnchor: number | null;
+  const directionChanged = scrollGestureDirection !== undefined
+    && scrollGestureDirection !== direction;
+  if ((directionChanged || restoringScrollHistory) && scrollResumeHistory.has(nextIndex)) {
+    resumeAnchor = scrollResumeHistory.get(nextIndex) ?? null;
+    restoringScrollHistory = true;
+  } else if (isContinuousScroll) {
+    resumeAnchor = scrollGestureAnchor ?? null;
+  } else {
+    resumeAnchor = direction === 1
+      ? Math.min(scrollLines.length - 1, previousIndex + pageLineCount)
+      : previousIndex;
+    restoringScrollHistory = false;
+  }
+
   currentScrollLineIndex = nextIndex;
+  scrollResumeHistory.set(nextIndex, resumeAnchor);
+  scrollGestureDirection = direction;
+  scrollGestureAnchor = resumeAnchor;
+  lastScrollTime = now;
+  updateScrollResumeMarker(resumeAnchor);
+  scheduleScrollResumeClear();
   const offset = scrollLines[currentScrollLineIndex]?.startOffset ?? 0;
   currentPageIndex = findReadingPageIndex(pages, offset);
   saveAndRender();
@@ -362,6 +399,8 @@ function renderSession() {
     keyBindings,
     mouseWheelMode,
     mouseScrollStep,
+    scrollResumeLineIndex,
+    scrollResumeDistance,
     showHelp,
   };
 
@@ -373,6 +412,7 @@ function renderSession() {
 }
 
 function quitReadSession() {
+  clearScrollResumeTimer();
   saveCurrentProgress();
   process.stdin.off("data", handleKeyPress);
   setReadMouseTracking(false);
@@ -403,11 +443,62 @@ function rebuildScrollLines(contentWidth: number, offset: number) {
     sections.map((section) => section.startOffset)
   );
   currentScrollLineIndex = findReadingPageIndex(scrollLines, offset);
+  resetScrollResumeState();
 }
 
 function syncScrollLineToOffset(offset: number) {
   if (scrollLines.length > 0) {
     currentScrollLineIndex = findReadingPageIndex(scrollLines, offset);
+  }
+  resetScrollResumeState();
+}
+
+function resetScrollResumeState() {
+  clearScrollResumeTimer();
+  scrollResumeLineIndex = undefined;
+  scrollResumeDistance = undefined;
+  scrollResumeHistory.clear();
+  scrollResumeHistory.set(currentScrollLineIndex, null);
+  scrollGestureDirection = undefined;
+  scrollGestureAnchor = undefined;
+  restoringScrollHistory = false;
+  lastScrollTime = 0;
+}
+
+function scheduleScrollResumeClear() {
+  clearScrollResumeTimer();
+  scrollResumeClearTimer = setTimeout(() => {
+    scrollResumeClearTimer = undefined;
+    resetScrollResumeState();
+    renderSession();
+  }, SCROLL_RESUME_CLEAR_DELAY);
+}
+
+function clearScrollResumeTimer() {
+  if (scrollResumeClearTimer) {
+    clearTimeout(scrollResumeClearTimer);
+    scrollResumeClearTimer = undefined;
+  }
+}
+
+function updateScrollResumeMarker(resumeAnchor: number | null) {
+  scrollResumeLineIndex = undefined;
+  scrollResumeDistance = undefined;
+  if (resumeAnchor === null) {
+    return;
+  }
+
+  const relativeIndex = resumeAnchor - currentScrollLineIndex;
+  const visibleLineCount = Math.min(pageLineCount, scrollLines.length - currentScrollLineIndex);
+  if (relativeIndex < 0) {
+    scrollResumeDistance = { direction: "above", lineCount: -relativeIndex };
+  } else if (relativeIndex >= visibleLineCount) {
+    scrollResumeDistance = {
+      direction: "below",
+      lineCount: relativeIndex - visibleLineCount + 1,
+    };
+  } else {
+    scrollResumeLineIndex = relativeIndex;
   }
 }
 

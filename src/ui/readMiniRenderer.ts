@@ -22,6 +22,8 @@ export interface RenderReadMiniSessionOptions {
   keyBindings: ReadKeyBindings;
   mouseWheelMode: ReadMouseWheelMode;
   mouseScrollStep: number;
+  scrollResumeLineIndex?: number | undefined;
+  scrollResumeDistance?: { direction: "above" | "below"; lineCount: number } | undefined;
   showHelp: boolean;
 }
 
@@ -51,12 +53,32 @@ export function renderReadMiniSession(options: RenderReadMiniSessionOptions) {
   const section = options.sectionNavigationEnabled
     ? ` | ${options.sectionIndex ?? 1}/${options.sectionTotal ?? 1}`
     : "";
-  const progress = `${options.pageIndex + 1}/${options.pageTotal}${section}`;
+  const resumeStatus = formatResumeDistance(options.scrollResumeDistance, options.interfaceLanguage);
+  const progress = `${options.pageIndex + 1}/${options.pageTotal}${section}${resumeStatus}`;
   const terminalWidth = Math.max(1, getTerminalColumns() - 2);
   const progressWidth = getTerminalWidth(progress) + 3;
   const compactHeading = truncateTerminalText(heading, Math.max(1, terminalWidth - progressWidth));
   console.log(`${compactHeading} | ${progress}`);
-  process.stdout.write(options.page.lines.join("\n"));
+  const contentLines = options.mouseWheelMode === "scroll"
+    ? options.page.lines.map((line, index) => `${index === options.scrollResumeLineIndex ? "> " : "  "}${line}`)
+    : options.page.lines;
+  process.stdout.write(contentLines.join("\n"));
+}
+
+function formatResumeDistance(
+  distance: RenderReadMiniSessionOptions["scrollResumeDistance"],
+  language: InterfaceLanguage
+) {
+  if (!distance) {
+    return "";
+  }
+
+  const arrow = distance.direction === "above" ? "↑" : "↓";
+  if (language === "chinese") {
+    const direction = distance.direction === "above" ? "上方" : "下方";
+    return ` | ${arrow} 上次位置在${direction} ${distance.lineCount} 行`;
+  }
+  return ` | ${arrow} last position ${distance.lineCount} lines ${distance.direction}`;
 }
 
 export function renderReadMiniQuitMessage() {
