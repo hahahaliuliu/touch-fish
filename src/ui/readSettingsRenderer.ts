@@ -28,9 +28,10 @@ const MINI_COLUMN_OPTIONS: Array<number | "custom"> = [48, 64, 80, "custom"];
 const MINI_ROW_OPTIONS: Array<number | "custom"> = [16, 22, 30, "custom"];
 const MINI_FONT_OPTIONS: Array<number | "custom"> = [6, 8, 10, "custom"];
 const MINI_MOUSE_MODES: readonly ReadMouseWheelMode[] = ["page", "scroll"];
+const MINI_SCROLL_STEP_OPTIONS: Array<number | "custom"> = [1, 2, 3, 5, "custom"];
 const INTERFACE_LANGUAGES: readonly InterfaceLanguage[] = ["english", "chinese"];
 const THEMES: readonly ThemeName[] = ["build-log", "backend-log", "git"];
-const BINDING_ACTIONS: ReadBindingAction[] = [
+const MAIN_BINDING_ACTIONS: ReadBindingAction[] = [
   "previousPage",
   "nextPage",
   "previousChapter",
@@ -45,12 +46,14 @@ const LANGUAGE_ITEM_INDEX = 3;
 const CURRENT_BOOK_ITEM_INDEX = 4;
 const IMPORT_ITEM_INDEX = 5;
 const THEME_ITEM_INDEX = 6;
-const MINI_WINDOW_ITEM_INDEX = 7;
-const MINI_COLUMNS_ITEM_INDEX = 8;
-const MINI_ROWS_ITEM_INDEX = 9;
-const MINI_FONT_ITEM_INDEX = 10;
-const MINI_MOUSE_ITEM_INDEX = 11;
-const BINDING_START_INDEX = 12;
+const MAIN_BINDING_START_INDEX = 7;
+const MINI_WINDOW_ITEM_INDEX = 13;
+const MINI_COLUMNS_ITEM_INDEX = 14;
+const MINI_ROWS_ITEM_INDEX = 15;
+const MINI_FONT_ITEM_INDEX = 16;
+const MINI_MOUSE_ITEM_INDEX = 17;
+const MINI_SCROLL_STEP_ITEM_INDEX = 18;
+const MINI_WINDOW_BINDING_ITEM_INDEX = 19;
 
 export function renderReadSettings(options: RenderReadSettingsOptions) {
   const {
@@ -132,6 +135,23 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
     settings.theme,
     formatValueOptions(THEMES, settings.theme, selectedIndex === THEME_ITEM_INDEX && isEditing, String)
   );
+
+  console.log("");
+  console.log(text.keyBindings);
+  MAIN_BINDING_ACTIONS.forEach((action, index) => {
+    const itemIndex = index + MAIN_BINDING_START_INDEX;
+    renderBindingItem(
+      getBindingLabel(text, action, settings.chapterSectionCount > 0),
+      settings.keyBindings[action],
+      itemIndex === selectedIndex,
+      selectedBindingSlot,
+      isBindingCapture && itemIndex === selectedIndex,
+      language
+    );
+  });
+
+  console.log("");
+  console.log(text.miniWindowSettings);
   renderConfigItem(
     MINI_WINDOW_ITEM_INDEX,
     selectedIndex,
@@ -177,20 +197,34 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
       (value) => formatMouseMode(value, language)
     )
   );
-
-  console.log("");
-  console.log(text.keyBindings);
-  BINDING_ACTIONS.forEach((action, index) => {
-    const itemIndex = index + BINDING_START_INDEX;
-    renderBindingItem(
-      getBindingLabel(text, action, settings.chapterSectionCount > 0),
-      settings.keyBindings[action],
-      itemIndex === selectedIndex,
-      selectedBindingSlot,
-      isBindingCapture && itemIndex === selectedIndex,
+  renderConfigItem(
+    MINI_SCROLL_STEP_ITEM_INDEX,
+    selectedIndex,
+    isEditing,
+    text.miniWindowScrollStep,
+    formatScrollStepValue(
+      settings.miniWindowScrollStep,
+      customInput,
+      selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX && isEditing,
+      selectedNumericOption,
       language
-    );
-  });
+    ),
+    formatScrollStepOptions(
+      MINI_SCROLL_STEP_OPTIONS,
+      selectedNumericOption,
+      selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX && isEditing,
+      language
+    )
+  );
+
+  renderBindingItem(
+    getBindingLabel(text, "toggleMiniWindow", settings.chapterSectionCount > 0),
+    settings.keyBindings.toggleMiniWindow,
+    MINI_WINDOW_BINDING_ITEM_INDEX === selectedIndex,
+    selectedBindingSlot,
+    isBindingCapture && MINI_WINDOW_BINDING_ITEM_INDEX === selectedIndex,
+    language
+  );
 
   console.log("");
   console.log(text.controlsFirstLine);
@@ -206,6 +240,8 @@ export function renderReadSettings(options: RenderReadSettingsOptions) {
     console.log(text.sectionHint);
   } else if (isEditing && selectedIndex >= MINI_COLUMNS_ITEM_INDEX && selectedIndex <= MINI_FONT_ITEM_INDEX) {
     console.log(text.miniWindowHint);
+  } else if (isEditing && selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX) {
+    console.log(text.scrollStepHint);
   } else if (isEditing) {
     console.log(text.editHint);
   }
@@ -266,6 +302,8 @@ function formatBinding(binding: string, language: InterfaceLanguage): string {
     "arrow-down": "Down Arrow",
     "arrow-left": "Left Arrow",
     "arrow-right": "Right Arrow",
+    "mouse-middle": "Middle Mouse",
+    "mouse-right": "Right Mouse",
   };
   const value = names[binding] ?? binding.toUpperCase();
 
@@ -279,6 +317,8 @@ function formatBinding(binding: string, language: InterfaceLanguage): string {
     "Down Arrow": "下方向键",
     "Left Arrow": "左方向键",
     "Right Arrow": "右方向键",
+    "Middle Mouse": "鼠标中键",
+    "Right Mouse": "鼠标右键",
   }[value] ?? value;
 }
 
@@ -391,6 +431,33 @@ function formatMouseMode(value: ReadMouseWheelMode, language: InterfaceLanguage)
   return value === "page" ? "page" : "scroll";
 }
 
+function formatScrollStepValue(
+  value: number,
+  customInput: string,
+  editing: boolean,
+  selectedOption: number | "custom" | undefined,
+  language: InterfaceLanguage
+): string {
+  if (editing && selectedOption === "custom") {
+    return `${customInput}${blinkingCursor()}`;
+  }
+  return language === "chinese" ? `${value} 行` : `${value} lines`;
+}
+
+function formatScrollStepOptions(
+  options: Array<number | "custom">,
+  selectedOption: number | "custom" | undefined,
+  editing: boolean,
+  language: InterfaceLanguage
+): string {
+  return `[${options.map((option) => {
+    const label = option === "custom"
+      ? language === "chinese" ? "自定义" : "custom"
+      : language === "chinese" ? `${option} 行` : `${option}`;
+    return formatOption(label, editing && option === selectedOption);
+  }).join(" / ")}]`;
+}
+
 function formatAutomatic(language: InterfaceLanguage): string {
   return language === "chinese" ? "自动适配" : "auto";
 }
@@ -422,7 +489,9 @@ function getText(language: InterfaceLanguage) {
       miniWindowHeight: "小窗口高度",
       miniWindowFont: "小窗口字体",
       miniWindowMouse: "鼠标滚轮",
+      miniWindowScrollStep: "滚动速率",
       keyBindings: "按键绑定",
+      miniWindowSettings: "小窗口设置",
       close: "[关闭]",
       bindingLabels: {
         previousPage: "上一页",
@@ -431,16 +500,18 @@ function getText(language: InterfaceLanguage) {
         nextChapter: "下一章",
         repeat: "重复操作",
         toggleHelp: "打开帮助",
+        toggleMiniWindow: "小窗口开关",
       } satisfies Record<ReadBindingAction, string>,
       previousSection: "上一小节",
       nextSection: "下一小节",
       controlsFirstLine: "操作  W/S 移动 | A/D 修改设置或切换键位 | Enter 编辑 | Backspace 清空",
       controlsSecondLine: "      Esc 取消编辑 / 返回阅读 | Ctrl+O 返回阅读 | Q 退出",
-      bindingHint: "[绑定] 请按英文键、符号、空格、Tab 或方向键；已占用的键会自动清空原位置",
+      bindingHint: "[绑定] 请按英文键、符号、空格、Tab、方向键、中键或右键；已占用的键会自动清空原位置",
       widthHint: "[编辑] A/D 移动选项光标；自动适配会按终端宽度和当前主题计算正文宽度",
       lineHint: "[自定义] 输入 1 到 100 的整数后按 Enter 保存；A/D 可切换预设和自定义",
       sectionHint: "[编辑] 关闭时 W/S 跳章节；开启后按自然段分为阅读小节，输入 2 到 20 的整数可自定义份数",
       miniWindowHint: "[编辑] 宽度和高度使用终端列数与行数；拖动小窗口后会自动保存实际尺寸",
+      scrollStepHint: "[自定义] 输入 1 到 100 的整数，表示每次滚轮移动的正文行数",
       editHint: "[编辑] 修改后按 Enter 保存",
       warningPrefix: "[警告] ",
     };
@@ -463,7 +534,9 @@ function getText(language: InterfaceLanguage) {
     miniWindowHeight: "Mini Window Height",
     miniWindowFont: "Mini Window Font",
     miniWindowMouse: "Mouse Wheel",
+    miniWindowScrollStep: "Scroll Speed",
     keyBindings: "Key Bindings",
+    miniWindowSettings: "Mini Window Settings",
     close: "[close]",
     bindingLabels: {
       previousPage: "Previous Page",
@@ -472,16 +545,18 @@ function getText(language: InterfaceLanguage) {
       nextChapter: "Next Chapter",
       repeat: "Repeat Action",
       toggleHelp: "Toggle Help",
+      toggleMiniWindow: "Toggle Mini Window",
     } satisfies Record<ReadBindingAction, string>,
     previousSection: "Previous Section",
     nextSection: "Next Section",
     controlsFirstLine: "Controls  W/S move | A/D setting or slot | Enter edit | Backspace clear",
     controlsSecondLine: "          Esc cancel edit / return to read | Ctrl+O return to read | Q quit",
-    bindingHint: "[BIND] English key, symbol, Space, Tab, or arrow key; occupied keys clear their previous slot",
+    bindingHint: "[BIND] English key, symbol, Space, Tab, arrow key, Middle Mouse, or Right Mouse; occupied bindings move",
     widthHint: "[EDIT] A/D moves the option cursor; auto uses the terminal width and current theme",
     lineHint: "[CUSTOM] enter a whole number from 1 to 100, then Enter; A/D cycles presets and custom",
     sectionHint: "[EDIT] off makes W/S jump chapters; enabled splits at paragraphs, with 2 to 20 custom parts",
     miniWindowHint: "[EDIT] width and height use terminal columns and rows; dragging the mini window saves its actual size",
+    scrollStepHint: "[CUSTOM] enter a whole number from 1 to 100 for lines moved by each wheel step",
     editHint: "[EDIT] change the value, then press Enter to save",
     warningPrefix: "[WARN] ",
   };

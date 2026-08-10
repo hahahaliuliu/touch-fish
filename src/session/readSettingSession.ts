@@ -1,6 +1,7 @@
 import type { ReadBindingAction, ReadingBookSummary, ReadKeyBindings, ReadMouseWheelMode, ReadSettings } from "../models/reading.js";
 import type { InterfaceLanguage, ThemeName } from "../models/settings.js";
 import { listReadingBooks, loadReadingBook } from "../services/readingLoader.js";
+import { getReadMouseBinding, ReadInputParser, setReadMouseTracking } from "../services/readInput.js";
 import { loadReadState, saveReadState } from "../storage/readProgress.js";
 import { loadReadSettings, saveReadSettings } from "../storage/readSettings.js";
 import { renderReadSettings } from "../ui/readSettingsRenderer.js";
@@ -15,9 +16,10 @@ const MINI_COLUMN_OPTIONS: Array<number | "custom"> = [48, 64, 80, "custom"];
 const MINI_ROW_OPTIONS: Array<number | "custom"> = [16, 22, 30, "custom"];
 const MINI_FONT_OPTIONS: Array<number | "custom"> = [6, 8, 10, "custom"];
 const MINI_MOUSE_MODES: readonly ReadMouseWheelMode[] = ["page", "scroll"];
+const MINI_SCROLL_STEP_OPTIONS: Array<number | "custom"> = [1, 2, 3, 5, "custom"];
 const INTERFACE_LANGUAGES: readonly InterfaceLanguage[] = ["english", "chinese"];
 const THEMES: readonly ThemeName[] = ["build-log", "backend-log", "git"];
-const BINDING_ACTIONS: ReadBindingAction[] = [
+const MAIN_BINDING_ACTIONS: ReadBindingAction[] = [
   "previousPage",
   "nextPage",
   "previousChapter",
@@ -25,6 +27,7 @@ const BINDING_ACTIONS: ReadBindingAction[] = [
   "repeat",
   "toggleHelp",
 ];
+const BINDING_ACTIONS: ReadBindingAction[] = [...MAIN_BINDING_ACTIONS, "toggleMiniWindow"];
 const WIDTH_ITEM_INDEX = 0;
 const LINE_ITEM_INDEX = 1;
 const SECTION_ITEM_INDEX = 2;
@@ -32,13 +35,15 @@ const LANGUAGE_ITEM_INDEX = 3;
 const CURRENT_BOOK_ITEM_INDEX = 4;
 const IMPORT_ITEM_INDEX = 5;
 const THEME_ITEM_INDEX = 6;
-const MINI_WINDOW_ITEM_INDEX = 7;
-const MINI_COLUMNS_ITEM_INDEX = 8;
-const MINI_ROWS_ITEM_INDEX = 9;
-const MINI_FONT_ITEM_INDEX = 10;
-const MINI_MOUSE_ITEM_INDEX = 11;
-const BINDING_START_INDEX = 12;
-const ITEM_COUNT = BINDING_START_INDEX + BINDING_ACTIONS.length;
+const MAIN_BINDING_START_INDEX = 7;
+const MINI_WINDOW_ITEM_INDEX = 13;
+const MINI_COLUMNS_ITEM_INDEX = 14;
+const MINI_ROWS_ITEM_INDEX = 15;
+const MINI_FONT_ITEM_INDEX = 16;
+const MINI_MOUSE_ITEM_INDEX = 17;
+const MINI_SCROLL_STEP_ITEM_INDEX = 18;
+const MINI_WINDOW_BINDING_ITEM_INDEX = 19;
+const ITEM_COUNT = 20;
 type BindingSlot = 0 | 1;
 
 let books: ReadingBookSummary[] = [];
@@ -57,6 +62,7 @@ let onReturnToReading: ((bookId: string) => void) | undefined;
 let onOpenMiniMode: ((bookId: string) => void) | undefined;
 let onCloseMiniMode: ((bookId: string) => void) | undefined;
 let miniModeActive = false;
+const inputParser = new ReadInputParser();
 
 interface StartReadSettingSessionOptions {
   onReturn?: (bookId: string) => void;
@@ -79,6 +85,7 @@ export function startReadSettingSession(options: StartReadSettingSessionOptions 
   selectedBindingSlot = 0;
   statusMessage = options.message ?? "";
   resetEditState();
+  inputParser.reset();
   process.stdout.on("resize", handleTerminalResize);
   render();
 
@@ -87,11 +94,12 @@ export function startReadSettingSession(options: StartReadSettingSessionOptions 
   }
   process.stdin.resume();
   process.stdin.setEncoding("utf8");
+  setReadMouseTracking(true);
   process.stdin.on("data", handleKeyPress);
 }
 
 function handleKeyPress(key: string) {
-  for (const input of parseInputs(key.toString())) {
+  for (const input of inputParser.parse(key.toString())) {
     if (!handleInput(input)) {
       return;
     }
@@ -134,6 +142,13 @@ function handleInput(input: string): boolean {
   if (isBindingCapture) {
     captureBinding(input);
     return true;
+  }
+
+  const binding = normalizeBindingInput(input);
+  if (binding && settings.keyBindings.toggleMiniWindow.includes(binding)) {
+    restoreSavedValues();
+    toggleMiniWindowMode();
+    return false;
   }
 
   if (isEditing && selectedNumericOption === "custom" && /^\d$/.test(input)) {
@@ -323,7 +338,8 @@ function isNumericSettingSelected(): boolean {
     || selectedIndex === SECTION_ITEM_INDEX
     || selectedIndex === MINI_COLUMNS_ITEM_INDEX
     || selectedIndex === MINI_ROWS_ITEM_INDEX
-    || selectedIndex === MINI_FONT_ITEM_INDEX;
+    || selectedIndex === MINI_FONT_ITEM_INDEX
+    || selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX;
 }
 
 function getSelectedNumericOptions(): Array<number | "custom"> {
@@ -341,6 +357,9 @@ function getSelectedNumericOptions(): Array<number | "custom"> {
   }
   if (selectedIndex === MINI_FONT_ITEM_INDEX) {
     return MINI_FONT_OPTIONS;
+  }
+  if (selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX) {
+    return MINI_SCROLL_STEP_OPTIONS;
   }
   return LINE_OPTIONS;
 }
@@ -361,6 +380,9 @@ function getSelectedNumericValue(): number {
   if (selectedIndex === MINI_FONT_ITEM_INDEX) {
     return settings.miniWindowFontSize;
   }
+  if (selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX) {
+    return settings.miniWindowScrollStep;
+  }
   return settings.pageLineCount;
 }
 
@@ -379,6 +401,9 @@ function applySelectedNumericValue(value: number): ReadSettings {
   }
   if (selectedIndex === MINI_FONT_ITEM_INDEX) {
     return { ...settings, miniWindowFontSize: value };
+  }
+  if (selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX) {
+    return { ...settings, miniWindowScrollStep: value };
   }
   return { ...settings, pageLineCount: value };
 }
@@ -412,6 +437,12 @@ function getNumericValidationError(value: number): string {
     return Number.isInteger(value) && value >= 5 && value <= 72
       ? ""
       : localize("Mini-window font size must be a whole number from 5 to 72", "小窗口字体必须是 5 到 72 的整数");
+  }
+
+  if (selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX) {
+    return Number.isInteger(value) && value >= 1 && value <= 100
+      ? ""
+      : localize("Scroll speed must be a whole number from 1 to 100", "滚动速率必须是 1 到 100 的整数");
   }
 
   return Number.isInteger(value) && value >= 1 && value <= 100
@@ -513,7 +544,9 @@ function normalizeBindingInput(input: string): string | undefined {
     "？": "?",
   };
 
-  return specialBindings[input] ?? (/^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined);
+  return getReadMouseBinding(input)
+    ?? specialBindings[input]
+    ?? (/^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined);
 }
 
 function isBackspace(input: string): boolean {
@@ -521,11 +554,16 @@ function isBackspace(input: string): boolean {
 }
 
 function isBindingItemSelected(): boolean {
-  return selectedIndex >= BINDING_START_INDEX;
+  return (selectedIndex >= MAIN_BINDING_START_INDEX
+      && selectedIndex < MAIN_BINDING_START_INDEX + MAIN_BINDING_ACTIONS.length)
+    || selectedIndex === MINI_WINDOW_BINDING_ITEM_INDEX;
 }
 
 function getSelectedBindingAction(): ReadBindingAction | undefined {
-  return BINDING_ACTIONS[selectedIndex - BINDING_START_INDEX];
+  if (selectedIndex === MINI_WINDOW_BINDING_ITEM_INDEX) {
+    return "toggleMiniWindow";
+  }
+  return MAIN_BINDING_ACTIONS[selectedIndex - MAIN_BINDING_START_INDEX];
 }
 
 function openReadingImport() {
@@ -535,6 +573,7 @@ function openReadingImport() {
   const wasMiniModeActive = miniModeActive;
   process.stdin.off("data", handleKeyPress);
   process.stdout.off("resize", handleTerminalResize);
+  setReadMouseTracking(false);
   startReadingImportSession({
     interfaceLanguage: settings.interfaceLanguage,
     onReturn: () => startReadSettingSession({
@@ -556,6 +595,7 @@ function toggleMiniWindowMode() {
   saveReadState({ activeBookId: selectedBookId });
   process.stdin.off("data", handleKeyPress);
   process.stdout.off("resize", handleTerminalResize);
+  setReadMouseTracking(false);
 
   if (miniModeActive) {
     onCloseMiniMode?.(selectedBookId);
@@ -578,6 +618,7 @@ function localize(english: string, chinese: string): string {
 function quit() {
   process.stdin.off("data", handleKeyPress);
   process.stdout.off("resize", handleTerminalResize);
+  setReadMouseTracking(false);
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(false);
   }
@@ -595,6 +636,7 @@ function openReadingSession() {
   saveReadState({ activeBookId: selectedBookId });
   process.stdin.off("data", handleKeyPress);
   process.stdout.off("resize", handleTerminalResize);
+  setReadMouseTracking(false);
   startReadSession(loadReadingBook(selectedBookId));
 }
 
@@ -602,6 +644,7 @@ function returnToReading() {
   if (onReturnToReading && activeBookId) {
     process.stdin.off("data", handleKeyPress);
     process.stdout.off("resize", handleTerminalResize);
+    setReadMouseTracking(false);
     onReturnToReading(activeBookId);
     return;
   }
@@ -616,22 +659,4 @@ function returnToReadingOrQuit() {
   }
 
   quit();
-}
-
-function parseInputs(input: string): string[] {
-  const values: string[] = [];
-  let index = 0;
-  while (index < input.length) {
-    if (input[index] === "\u001b" && input[index + 1] === "[" && input[index + 2]) {
-      values.push(input.slice(index, index + 3));
-      index += 3;
-    } else if (input[index] === "\r" && input[index + 1] === "\n") {
-      values.push("\r");
-      index += 2;
-    } else {
-      values.push(input[index]!);
-      index += 1;
-    }
-  }
-  return values;
 }

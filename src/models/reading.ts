@@ -31,6 +31,7 @@ export interface ReadSettings {
   miniWindowRows: number;
   miniWindowFontSize: number;
   miniWindowMouseMode: ReadMouseWheelMode;
+  miniWindowScrollStep: number;
   interfaceLanguage: InterfaceLanguage;
   theme: ThemeName;
   keyBindings: ReadKeyBindings;
@@ -44,7 +45,8 @@ export type ReadBindingAction =
   | "previousChapter"
   | "nextChapter"
   | "repeat"
-  | "toggleHelp";
+  | "toggleHelp"
+  | "toggleMiniWindow";
 
 export type ReadKeyBindings = Record<ReadBindingAction, [string, string]>;
 

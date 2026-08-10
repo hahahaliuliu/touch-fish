@@ -156,6 +156,41 @@ test("Read mini child renders plain text and Q closes only the child session", a
   }
 });
 
+test("Read mini child closes immediately with the right mouse binding", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-mini-middle-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+  const token = "mini-middle-token";
+  const server = net.createServer((socket) => {
+    socket.setEncoding("utf8");
+    socket.on("data", () => undefined);
+  });
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "middle.txt"), "小窗口正文。", "utf8");
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  const port = typeof address === "object" && address ? address.port : 0;
+
+  try {
+    const result = await runReadSession(
+      root,
+      ["\u001b[<2;1;1M"],
+      [
+        "read", "--mini-child", "--mini-port", String(port),
+        "--mini-token", token, "--mini-book", "middle",
+      ]
+    );
+
+    assert.equal(result.code, 0, result.output);
+    assert.equal(fs.existsSync(path.join(root, "read-progress", "middle.json")), true);
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 for (const mouseMode of ["page", "scroll"] as const) {
   test(`Read mini child uses the mouse wheel in ${mouseMode} mode`, async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), `touchfish-read-mini-${mouseMode}-`));
@@ -173,7 +208,11 @@ for (const mouseMode of ["page", "scroll"] as const) {
     fs.writeFileSync(path.join(readingDirectory, "wheel.txt"), content, "utf8");
     fs.writeFileSync(
       path.join(root, "read-settings.json"),
-      JSON.stringify({ miniWindowRows: 5, miniWindowMouseMode: mouseMode }),
+      JSON.stringify({
+        miniWindowRows: 5,
+        miniWindowMouseMode: mouseMode,
+        miniWindowScrollStep: mouseMode === "scroll" ? 2 : 1,
+      }),
       "utf8"
     );
     await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -192,7 +231,7 @@ for (const mouseMode of ["page", "scroll"] as const) {
       const progress = JSON.parse(
         fs.readFileSync(path.join(root, "read-progress", "wheel.json"), "utf8")
       ) as { characterOffset: number };
-      const expectedOffset = content.indexOf(mouseMode === "page" ? "第五行" : "第二行");
+      const expectedOffset = content.indexOf(mouseMode === "page" ? "第五行" : "第三行");
 
       assert.equal(result.code, 0, result.output);
       assert.equal(progress.characterOffset, expectedOffset);
@@ -329,7 +368,7 @@ test("Read settings bind a custom next-page key", async () => {
   );
 
   try {
-    const result = await runReadSession(root, ["s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "\r", "f", "\u000f", "f", "q"], ["read", "-s"]);
+    const result = await runReadSession(root, ["s", "s", "s", "s", "s", "s", "s", "s", "\r", "f", "\u000f", "f", "q"], ["read", "-s"]);
 
     assert.equal(result.code, 0, result.output);
     assert.equal(result.output.includes("page 2 / 2"), true, result.output);
@@ -354,7 +393,7 @@ test("Read settings select and edit either key-binding slot", async () => {
   try {
     const result = await runReadSession(
       root,
-      ["s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "d", "\r", "f", "q"],
+      ["s", "s", "s", "s", "s", "s", "s", "s", "d", "\r", "f", "q"],
       ["read", "-s"]
     );
 
@@ -380,7 +419,7 @@ test("Read settings move occupied bindings and clear slots with Backspace", asyn
   try {
     const moved = await runReadSession(
       root,
-      ["s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "\r", "d", "q"],
+      ["s", "s", "s", "s", "s", "s", "s", "\r", "d", "q"],
       ["read", "-s"]
     );
     assert.equal(moved.code, 0, moved.output);
@@ -393,7 +432,7 @@ test("Read settings move occupied bindings and clear slots with Backspace", asyn
 
     const cleared = await runReadSession(
       root,
-      ["s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "d", "\r", "\u007f", "q"],
+      ["s", "s", "s", "s", "s", "s", "s", "d", "\r", "\u007f", "q"],
       ["read", "-s"]
     );
     assert.equal(cleared.code, 0, cleared.output);
@@ -450,7 +489,7 @@ test("Read settings save mini-window width, height, and font size", async () => 
     const result = await runReadSession(
       root,
       [
-        ...Array.from({ length: 8 }, () => "s"),
+        ...Array.from({ length: 14 }, () => "s"),
         "\r", "d", "\r",
         "s", "\r", "d", "\r",
         "s", "\r", "d", "\r",
@@ -485,7 +524,7 @@ test("Read settings save the mini-window mouse wheel mode", async () => {
   try {
     const result = await runReadSession(
       root,
-      [...Array.from({ length: 11 }, () => "s"), "\r", "d", "\r", "q"],
+      [...Array.from({ length: 17 }, () => "s"), "\r", "d", "\r", "q"],
       ["read", "-s"]
     );
     const settings = JSON.parse(fs.readFileSync(path.join(root, "read-settings.json"), "utf8")) as {
@@ -494,6 +533,32 @@ test("Read settings save the mini-window mouse wheel mode", async () => {
 
     assert.equal(result.code, 0, result.output);
     assert.equal(settings.miniWindowMouseMode, "scroll");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Read settings save the mini-window scroll speed", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-mini-scroll-speed-"));
+  const readingDirectory = path.join(root, "reading");
+  const vocabularyDirectory = path.join(root, "vocabulary");
+
+  fs.mkdirSync(readingDirectory, { recursive: true });
+  fs.mkdirSync(vocabularyDirectory, { recursive: true });
+  fs.writeFileSync(path.join(readingDirectory, "scroll-speed.txt"), "正文。", "utf8");
+
+  try {
+    const result = await runReadSession(
+      root,
+      [...Array.from({ length: 18 }, () => "s"), "\r", "d", "\r", "q"],
+      ["read", "-s"]
+    );
+    const settings = JSON.parse(fs.readFileSync(path.join(root, "read-settings.json"), "utf8")) as {
+      miniWindowScrollStep: number;
+    };
+
+    assert.equal(result.code, 0, result.output);
+    assert.equal(settings.miniWindowScrollStep, 2);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

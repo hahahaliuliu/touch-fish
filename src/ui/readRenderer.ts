@@ -155,6 +155,7 @@ function renderReadHelp(options: RenderReadSessionOptions) {
   console.log("");
   console.log(text.actions);
   renderHelpRow("Ctrl+O", text.openSettings);
+  renderHelpBinding(keyBindings.toggleMiniWindow, text.toggleMiniWindow);
   renderHelpBinding(keyBindings.toggleHelp, text.closeHelp);
   renderHelpRow("Esc", text.returnToReading);
   renderHelpRow("Q / Ctrl+C", text.quit);
@@ -192,6 +193,8 @@ function formatHelpBinding(binding: string): string {
     "arrow-down": "↓",
     "arrow-left": "←",
     "arrow-right": "→",
+    "mouse-middle": "Middle Mouse",
+    "mouse-right": "Right Mouse",
     space: "Space",
   };
 
@@ -212,6 +215,7 @@ function getReadHelpText(language: InterfaceLanguage) {
       repeat: "重复上次操作",
       actions: "操作",
       openSettings: "打开阅读设置",
+      toggleMiniWindow: "打开或关闭小窗口",
       closeHelp: "关闭帮助",
       returnToReading: "返回阅读",
       quit: "保存进度并退出",
@@ -241,6 +245,7 @@ function getReadHelpText(language: InterfaceLanguage) {
     repeat: "repeat last action",
     actions: "Actions",
     openSettings: "open Read settings",
+    toggleMiniWindow: "open or close mini window",
     closeHelp: "close help",
     returnToReading: "return to reading",
     quit: "save progress and quit",

@@ -1,5 +1,6 @@
 import type { ReadingBook } from "../models/reading.js";
 import { loadReadingBook } from "../services/readingLoader.js";
+import { getReadMouseBinding, ReadInputParser, setReadMouseTracking } from "../services/readInput.js";
 import {
   ReadMiniWindowController,
   type ReadMiniWindowState,
@@ -16,6 +17,7 @@ let state: ReadMiniWindowState = { status: "closed" };
 let showHelp = false;
 let removeStateListener: (() => void) | undefined;
 let hostActive = false;
+const inputParser = new ReadInputParser();
 
 export function startReadMiniHostSession(
   nextBook: ReadingBook,
@@ -27,6 +29,7 @@ export function startReadMiniHostSession(
   state = controller.getState();
   showHelp = false;
   hostActive = true;
+  inputParser.reset();
   removeStateListener?.();
   removeStateListener = controller.onStateChange((nextState) => {
     state = nextState;
@@ -50,11 +53,12 @@ export function startReadMiniHostSession(
   }
   process.stdin.resume();
   process.stdin.setEncoding("utf8");
+  setReadMouseTracking(true);
   process.stdin.on("data", handleKeyPress);
 }
 
 function handleKeyPress(key: string) {
-  for (const input of parseInputs(key.toString())) {
+  for (const input of inputParser.parse(key.toString())) {
     if (input === "\u0003" || input.toLowerCase() === "q") {
       quit();
       return;
@@ -71,7 +75,12 @@ function handleKeyPress(key: string) {
     }
 
     const binding = normalizeBindingInput(input);
-    const helpBindings = loadReadSettings().keyBindings.toggleHelp;
+    const settings = loadReadSettings();
+    if (binding && settings.keyBindings.toggleMiniWindow.includes(binding)) {
+      toggleMiniWindow();
+      return;
+    }
+    const helpBindings = settings.keyBindings.toggleHelp;
     if (binding && helpBindings.includes(binding)) {
       showHelp = !showHelp;
       render();
@@ -85,12 +94,27 @@ function handleKeyPress(key: string) {
   }
 }
 
+function toggleMiniWindow() {
+  if (state.status === "open" || state.status === "opening") {
+    controller.closeMode();
+    return;
+  }
+
+  const settings = loadReadSettings();
+  void controller.open(book.id, {
+    columns: settings.miniWindowColumns,
+    rows: settings.miniWindowRows,
+    fontSize: settings.miniWindowFontSize,
+  });
+}
+
 function render() {
   const settings = loadReadSettings();
   renderReadMiniHost(
     settings.theme,
     settings.interfaceLanguage,
     settings.keyBindings.toggleHelp,
+    settings.keyBindings.toggleMiniWindow,
     showHelp,
     state
   );
@@ -129,21 +153,7 @@ function quit() {
 
 function stopInput() {
   process.stdin.off("data", handleKeyPress);
-}
-
-function parseInputs(input: string) {
-  const values: string[] = [];
-  let index = 0;
-  while (index < input.length) {
-    if (input[index] === "\u001b" && input[index + 1] === "[" && input[index + 2]) {
-      values.push(input.slice(index, index + 3));
-      index += 3;
-    } else {
-      values.push(input[index]!);
-      index += 1;
-    }
-  }
-  return values;
+  setReadMouseTracking(false);
 }
 
 function normalizeBindingInput(input: string) {
@@ -155,5 +165,7 @@ function normalizeBindingInput(input: string) {
     " ": "space",
     "？": "?",
   };
-  return specialBindings[input] ?? (/^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined);
+  return getReadMouseBinding(input)
+    ?? specialBindings[input]
+    ?? (/^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined);
 }

@@ -17,6 +17,12 @@ import {
   getNextReadingSectionIndex,
   getPreviousReadingSectionIndex,
 } from "../services/readingSections.js";
+import {
+  getReadMouseBinding,
+  getReadMouseWheelDirection,
+  ReadInputParser,
+  setReadMouseTracking,
+} from "../services/readInput.js";
 import { loadReadProgress, saveReadProgress } from "../storage/readProgress.js";
 import { loadReadSettings } from "../storage/readSettings.js";
 import type { InterfaceLanguage, ThemeName } from "../models/settings.js";
@@ -49,14 +55,12 @@ let keyBindings: ReadKeyBindings;
 let sectionNavigationEnabled = false;
 let pageLineCount = 10;
 let mouseWheelMode: ReadMouseWheelMode = "page";
+let mouseScrollStep = 1;
 type LastNavigation = "previous-page" | "next-page" | "previous-chapter" | "next-chapter";
 let lastNavigation: LastNavigation = "next-page";
 let sessionMode: "disguised" | "mini" = "disguised";
 let onSessionQuit: (() => void) | undefined;
-let pendingInput = "";
-
-const ENABLE_MOUSE_TRACKING = "\u001b[?1000h\u001b[?1006h";
-const DISABLE_MOUSE_TRACKING = "\u001b[?1000l\u001b[?1006l";
+const inputParser = new ReadInputParser();
 
 interface StartReadSessionOptions {
   mode?: "disguised" | "mini";
@@ -72,6 +76,7 @@ export function startReadSession(nextBook: ReadingBook, options: StartReadSessio
   interfaceLanguage = readSettings.interfaceLanguage;
   keyBindings = readSettings.keyBindings;
   mouseWheelMode = readSettings.miniWindowMouseMode;
+  mouseScrollStep = readSettings.miniWindowScrollStep;
   pageLineCount = sessionMode === "mini"
     ? getReadMiniPageLineCount(readSettings.miniWindowRows)
     : getReadPageLineCount(readSettings.pageLineCount);
@@ -97,15 +102,13 @@ export function startReadSession(nextBook: ReadingBook, options: StartReadSessio
     progress.characterOffset
   );
   lastNavigation = "next-page";
-  pendingInput = "";
+  inputParser.reset();
   renderSession();
 
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(true);
   }
-  if (sessionMode === "mini" && process.stdout.isTTY) {
-    process.stdout.write(ENABLE_MOUSE_TRACKING);
-  }
+  setReadMouseTracking(true);
   process.stdin.resume();
   process.stdin.setEncoding("utf8");
   process.stdin.on("data", handleKeyPress);
@@ -117,56 +120,11 @@ export function startReadSession(nextBook: ReadingBook, options: StartReadSessio
 }
 
 function handleKeyPress(key: string) {
-  for (const input of parseInputs(key.toString())) {
+  for (const input of inputParser.parse(key.toString())) {
     if (!handleInput(input)) {
       return;
     }
   }
-}
-
-function parseInputs(input: string): string[] {
-  const inputs: string[] = [];
-  input = `${pendingInput}${input}`;
-  pendingInput = "";
-  let index = 0;
-
-  while (index < input.length) {
-    const current = input[index];
-    const next = input[index + 1];
-    const third = input[index + 2];
-
-    if (current === "\u001b" && next === "[" && third === "<") {
-      const remaining = input.slice(index);
-      const mouseInput = remaining.match(/^\u001b\[<\d+;\d+;\d+[mM]/)?.[0];
-      if (mouseInput) {
-        inputs.push(mouseInput);
-        index += mouseInput.length;
-        continue;
-      }
-
-      pendingInput = remaining;
-      break;
-    }
-
-    if (current === "\u001b" && next === "[" && third) {
-      inputs.push(`${current}${next}${third}`);
-      index += 3;
-      continue;
-    }
-
-    if (current === "\r" && next === "\n") {
-      inputs.push("\r");
-      index += 2;
-      continue;
-    }
-
-    if (current) {
-      inputs.push(current);
-    }
-    index += 1;
-  }
-
-  return inputs;
 }
 
 function handleInput(input: string): boolean {
@@ -187,6 +145,15 @@ function handleInput(input: string): boolean {
   }
 
   const binding = normalizeBindingInput(input);
+
+  if (matchesBinding(binding, "toggleMiniWindow")) {
+    if (sessionMode === "mini") {
+      quitReadSession();
+    } else {
+      openMiniWindow();
+    }
+    return false;
+  }
 
   if (matchesBinding(binding, "toggleHelp")) {
     showHelp = !showHelp;
@@ -253,7 +220,9 @@ function normalizeBindingInput(input: string): string | undefined {
     " ": "space",
   };
 
-  return specialBindings[input] ?? (/^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined);
+  return getReadMouseBinding(input)
+    ?? specialBindings[input]
+    ?? (/^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined);
 }
 
 function matchesBinding(binding: string | undefined, action: keyof ReadKeyBindings): boolean {
@@ -271,7 +240,7 @@ function movePage(direction: -1 | 1) {
 
 function moveScrollLine(direction: -1 | 1) {
   const nextIndex = Math.min(
-    Math.max(currentScrollLineIndex + direction, 0),
+    Math.max(currentScrollLineIndex + direction * mouseScrollStep, 0),
     Math.max(0, scrollLines.length - 1)
   );
   if (nextIndex === currentScrollLineIndex) {
@@ -392,6 +361,7 @@ function renderSession() {
     interfaceLanguage,
     keyBindings,
     mouseWheelMode,
+    mouseScrollStep,
     showHelp,
   };
 
@@ -405,10 +375,8 @@ function renderSession() {
 function quitReadSession() {
   saveCurrentProgress();
   process.stdin.off("data", handleKeyPress);
+  setReadMouseTracking(false);
   if (sessionMode === "mini") {
-    if (process.stdout.isTTY) {
-      process.stdout.write(DISABLE_MOUSE_TRACKING);
-    }
     renderReadMiniQuitMessage();
   } else {
     renderReadQuitMessage(theme);
@@ -461,24 +429,19 @@ function getCurrentReadingPage(): ReadingPage | undefined {
   };
 }
 
-export function getReadMouseWheelDirection(input: string): -1 | 1 | undefined {
-  const match = input.match(/^\u001b\[<(\d+);\d+;\d+[mM]$/);
-  if (!match) {
-    return undefined;
-  }
-  const button = Number(match[1]);
-  if (button === 64) {
-    return -1;
-  }
-  if (button === 65) {
-    return 1;
-  }
-  return undefined;
+export { getReadMouseWheelDirection } from "../services/readInput.js";
+
+function openMiniWindow() {
+  saveCurrentProgress();
+  process.stdin.off("data", handleKeyPress);
+  setReadMouseTracking(false);
+  startReadMiniHostSession(book, true);
 }
 
 function openReadSettings() {
   saveCurrentProgress();
   process.stdin.off("data", handleKeyPress);
+  setReadMouseTracking(false);
   startReadSettingSession({
     onReturn: (bookId) => startReadSession(loadReadingBook(bookId)),
     onOpenMiniMode: (bookId) => startReadMiniHostSession(loadReadingBook(bookId), true),

@@ -30,6 +30,7 @@ export class ReadMiniWindowController {
   private state: ReadMiniWindowState = { status: "closed" };
   private readonly listeners = new Set<StateListener>();
   private token = "";
+  private operationId = 0;
 
   getState(): ReadMiniWindowState {
     return { ...this.state };
@@ -50,13 +51,18 @@ export class ReadMiniWindowController {
       return;
     }
 
+    const operationId = ++this.operationId;
+    this.setState({ status: "opening" });
     this.token = crypto.randomUUID();
     this.server = net.createServer((socket) => this.acceptConnection(socket));
 
     try {
       const port = await listenOnLocalhost(this.server);
+      if (operationId !== this.operationId) {
+        this.closeServer();
+        return;
+      }
       writeReadMiniTerminalProfile(preferences.fontSize);
-      this.setState({ status: "opening" });
       const child = launchReadMiniTerminal({
         port,
         token: this.token,
@@ -78,6 +84,7 @@ export class ReadMiniWindowController {
   }
 
   closeMode() {
+    this.operationId += 1;
     if (this.socket && !this.socket.destroyed) {
       this.socket.end("close\n");
     }
@@ -87,6 +94,10 @@ export class ReadMiniWindowController {
   }
 
   private acceptConnection(socket: Socket) {
+    if (this.state.status !== "opening") {
+      socket.destroy();
+      return;
+    }
     let buffer = "";
     socket.setEncoding("utf8");
     socket.on("data", (chunk) => {
@@ -117,7 +128,11 @@ export class ReadMiniWindowController {
   }
 
   private closeServer() {
-    this.server?.close();
+    try {
+      this.server?.close();
+    } catch {
+      // The listener may be cancelled before it starts accepting connections.
+    }
     this.server = undefined;
   }
 

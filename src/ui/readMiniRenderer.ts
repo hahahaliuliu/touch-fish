@@ -21,6 +21,7 @@ export interface RenderReadMiniSessionOptions {
   interfaceLanguage: InterfaceLanguage;
   keyBindings: ReadKeyBindings;
   mouseWheelMode: ReadMouseWheelMode;
+  mouseScrollStep: number;
   showHelp: boolean;
 }
 
@@ -87,6 +88,13 @@ function renderHelp(options: RenderReadMiniSessionOptions) {
       ? options.mouseWheelMode === "page" ? "左右翻页" : "上下逐行滚动"
       : options.mouseWheelMode === "page" ? "page navigation" : "line scrolling"
   );
+  if (options.mouseWheelMode === "scroll") {
+    renderRow(
+      chinese ? "滚动速率" : "Scroll Speed",
+      chinese ? `${options.mouseScrollStep} 行` : `${options.mouseScrollStep} lines`
+    );
+  }
+  renderBinding(options.keyBindings.toggleMiniWindow, chinese ? "关闭小窗口" : "close mini window");
   renderBinding(options.keyBindings.toggleHelp, chinese ? "关闭帮助" : "close help");
   renderRow("Esc", chinese ? "返回阅读" : "return to reading");
   renderRow("Q / Ctrl+C", chinese ? "保存并关闭小窗口" : "save and close mini window");
@@ -110,6 +118,8 @@ function formatBinding(binding: string) {
     "arrow-down": "↓",
     "arrow-left": "←",
     "arrow-right": "→",
+    "mouse-middle": "Middle Mouse",
+    "mouse-right": "Right Mouse",
     space: "Space",
   }[binding] ?? binding.toUpperCase();
 }

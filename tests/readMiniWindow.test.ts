@@ -10,6 +10,7 @@ import {
 } from "../src/services/readMiniWindow.js";
 import { persistReadMiniWindowSize } from "../src/session/readMiniSession.js";
 import { getReadMouseWheelDirection } from "../src/session/readSession.js";
+import { getReadMouseBinding } from "../src/services/readInput.js";
 import { getReadMiniPageLineCount } from "../src/ui/readMiniRenderer.js";
 import type { ReadSettings } from "../src/models/reading.js";
 
@@ -63,6 +64,7 @@ test("dragged mini-window dimensions replace the saved size", () => {
     miniWindowRows: 22,
     miniWindowFontSize: 8,
     miniWindowMouseMode: "page",
+    miniWindowScrollStep: 1,
     interfaceLanguage: "english",
     theme: "build-log",
     keyBindings: {
@@ -72,6 +74,7 @@ test("dragged mini-window dimensions replace the saved size", () => {
       nextChapter: ["s", "arrow-down"],
       repeat: ["space", ""],
       toggleHelp: ["?", ""],
+      toggleMiniWindow: ["mouse-right", ""],
     },
   };
   let saved: ReadSettings | undefined;
@@ -93,6 +96,13 @@ test("Read mini-window recognizes wheel-up and wheel-down input", () => {
   assert.equal(getReadMouseWheelDirection("\u001b[<64;10;5M"), -1);
   assert.equal(getReadMouseWheelDirection("\u001b[<65;10;5M"), 1);
   assert.equal(getReadMouseWheelDirection("\u001b[<0;10;5M"), undefined);
+});
+
+test("Read recognizes middle- and right-mouse press bindings", () => {
+  assert.equal(getReadMouseBinding("\u001b[<1;10;5M"), "mouse-middle");
+  assert.equal(getReadMouseBinding("\u001b[<2;10;5M"), "mouse-right");
+  assert.equal(getReadMouseBinding("\u001b[<1;10;5m"), undefined);
+  assert.equal(getReadMouseBinding("\u001b[<0;10;5M"), undefined);
 });
 
 test("Read mini-window fills the available terminal height", () => {

@@ -17,6 +17,7 @@ const settings: ReadSettings = {
   miniWindowRows: 22,
   miniWindowFontSize: 8,
   miniWindowMouseMode: "page",
+  miniWindowScrollStep: 1,
   interfaceLanguage: "chinese",
   theme: "build-log",
   keyBindings: {
@@ -26,14 +27,18 @@ const settings: ReadSettings = {
     nextChapter: ["s", "arrow-down"],
     repeat: ["space", ""],
     toggleHelp: ["?", ""],
+    toggleMiniWindow: ["mouse-right", ""],
   },
 };
 
 test("Read settings order mirrors the corresponding Word settings", () => {
-  const lines = captureRender({});
+  const lines = captureRender({
+    settings: { ...settings, interfaceLanguage: "english" },
+  });
   const indexes = [
-    "正文宽度", "每页行数", "章节切分", "界面语言", "当前小说", "导入 TXT 小说",
-    "伪装主题", "小窗口阅读", "小窗口宽度", "小窗口高度", "小窗口字体", "鼠标滚轮",
+    "Content Width", "Page Lines", "Chapter Sections", "Interface Language", "Current Book", "Import TXT Novel",
+    "Disguise Theme", "Key Bindings", "Previous Page", "Toggle Help", "Mini Window Settings", "Mini Window Reading",
+    "Mini Window Width", "Mini Window Height", "Mini Window Font", "Mouse Wheel", "Scroll Speed", "Toggle Mini Window",
   ]
     .map((label) => lines.findIndex((line) => line.includes(label)));
 
@@ -69,7 +74,7 @@ test("Read settings shows cursors for custom numeric input and key capture", () 
     selectedNumericOption: "custom",
   });
   const bindingLines = captureRender({
-    selectedIndex: 12,
+    selectedIndex: 7,
     isEditing: false,
     isBindingCapture: true,
   });
@@ -82,7 +87,7 @@ test("Read settings shows cursors for custom numeric input and key capture", () 
 
 test("Read settings highlights one binding slot without hiding the other", () => {
   const lines = captureRender({
-    selectedIndex: 12,
+    selectedIndex: 7,
     selectedBindingSlot: 1,
   });
   const bindingLine = lines.find((line) => line.includes("上一页")) ?? "";
@@ -111,7 +116,7 @@ test("Read settings shows whether mini-window mode can be opened or closed", () 
 
 test("Read settings edits mini-window dimensions with the same option cursor", () => {
   const lines = captureRender({
-    selectedIndex: 8,
+    selectedIndex: 14,
     isEditing: true,
     selectedNumericOption: 64,
   });

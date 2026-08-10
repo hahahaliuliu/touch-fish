@@ -5,12 +5,13 @@ export function renderReadMiniHost(
   theme: ThemeName,
   language: InterfaceLanguage,
   helpBindings: [string, string],
+  miniWindowBindings: [string, string],
   showHelp: boolean,
   state: ReadMiniWindowState
 ) {
   console.clear();
   if (showHelp) {
-    renderHelp(language, helpBindings, state);
+    renderHelp(language, helpBindings, miniWindowBindings, state);
     return;
   }
 
@@ -68,12 +69,15 @@ function renderGit() {
 function renderHelp(
   language: InterfaceLanguage,
   helpBindings: [string, string],
+  miniWindowBindings: [string, string],
   state: ReadMiniWindowState
 ) {
   const chinese = language === "chinese";
   console.log(chinese ? "Touch Fish 小窗口模式帮助" : "Touch Fish Mini Mode Help");
   console.log("");
   console.log(`  Ctrl+O             ${chinese ? "打开阅读设置" : "open Read settings"}`);
+  const miniWindowKeys = miniWindowBindings.filter(Boolean).map(formatBinding).join(" / ") || "-";
+  console.log(`  ${miniWindowKeys.padEnd(19, " ")}${chinese ? "打开或关闭小窗口" : "open or close mini window"}`);
   const helpKeys = helpBindings.filter(Boolean).map(formatBinding).join(" / ") || "-";
   console.log(`  ${helpKeys.padEnd(19, " ")}${chinese ? "关闭帮助" : "close help"}`);
   console.log(`  Esc                ${chinese ? "返回伪装界面" : "return to disguise"}`);
@@ -96,5 +100,7 @@ function formatBinding(binding: string) {
     "arrow-left": "Left Arrow",
     "arrow-right": "Right Arrow",
     space: "Space",
+    "mouse-middle": "Middle Mouse",
+    "mouse-right": "Right Mouse",
   }[binding] ?? binding.toUpperCase();
 }

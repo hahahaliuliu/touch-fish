@@ -13,6 +13,7 @@ const DEFAULT_KEY_BINDINGS: ReadKeyBindings = {
   nextChapter: ["s", "arrow-down"],
   repeat: ["space", ""],
   toggleHelp: ["?", ""],
+  toggleMiniWindow: ["mouse-right", ""],
 };
 
 function getDefaultReadSettings(): ReadSettings {
@@ -35,6 +36,7 @@ function getDefaultReadSettings(): ReadSettings {
     miniWindowRows: 22,
     miniWindowFontSize: 8,
     miniWindowMouseMode: "page",
+    miniWindowScrollStep: 1,
     interfaceLanguage,
     theme,
     keyBindings: cloneKeyBindings(DEFAULT_KEY_BINDINGS),
@@ -58,6 +60,7 @@ export function loadReadSettings(): ReadSettings {
       miniWindowRows: isValidMiniWindowRows(value.miniWindowRows) ? value.miniWindowRows : defaults.miniWindowRows,
       miniWindowFontSize: isValidMiniWindowFontSize(value.miniWindowFontSize) ? value.miniWindowFontSize : defaults.miniWindowFontSize,
       miniWindowMouseMode: isReadMouseWheelMode(value.miniWindowMouseMode) ? value.miniWindowMouseMode : defaults.miniWindowMouseMode,
+      miniWindowScrollStep: isValidScrollStep(value.miniWindowScrollStep) ? value.miniWindowScrollStep : defaults.miniWindowScrollStep,
       interfaceLanguage: isInterfaceLanguage(value.interfaceLanguage) ? value.interfaceLanguage : defaults.interfaceLanguage,
       theme: isReadTheme(value.theme) ? value.theme : defaults.theme,
       keyBindings: readKeyBindings(value.keyBindings),
@@ -77,6 +80,7 @@ export function saveReadSettings(settings: ReadSettings) {
     miniWindowRows: isValidMiniWindowRows(settings.miniWindowRows) ? settings.miniWindowRows : defaults.miniWindowRows,
     miniWindowFontSize: isValidMiniWindowFontSize(settings.miniWindowFontSize) ? settings.miniWindowFontSize : defaults.miniWindowFontSize,
     miniWindowMouseMode: isReadMouseWheelMode(settings.miniWindowMouseMode) ? settings.miniWindowMouseMode : defaults.miniWindowMouseMode,
+    miniWindowScrollStep: isValidScrollStep(settings.miniWindowScrollStep) ? settings.miniWindowScrollStep : defaults.miniWindowScrollStep,
     interfaceLanguage: isInterfaceLanguage(settings.interfaceLanguage) ? settings.interfaceLanguage : defaults.interfaceLanguage,
     theme: isReadTheme(settings.theme) ? settings.theme : defaults.theme,
     keyBindings: readKeyBindings(settings.keyBindings),
@@ -124,6 +128,10 @@ function isReadMouseWheelMode(value: unknown): value is ReadMouseWheelMode {
   return value === "page" || value === "scroll";
 }
 
+function isValidScrollStep(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 100;
+}
+
 function readKeyBindings(value: unknown): ReadKeyBindings {
   const defaults = DEFAULT_KEY_BINDINGS;
 
@@ -139,6 +147,7 @@ function readKeyBindings(value: unknown): ReadKeyBindings {
     nextChapter: readBinding(partial.nextChapter, defaults.nextChapter),
     repeat: readBinding(partial.repeat, defaults.repeat),
     toggleHelp: readBinding(partial.toggleHelp, defaults.toggleHelp),
+    toggleMiniWindow: readBinding(partial.toggleMiniWindow, defaults.toggleMiniWindow),
   };
 }
 

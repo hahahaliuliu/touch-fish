@@ -20,6 +20,7 @@ const keyBindings: ReadKeyBindings = {
   nextChapter: ["s", "arrow-down"],
   repeat: ["space", ""],
   toggleHelp: ["?", ""],
+  toggleMiniWindow: ["mouse-right", ""],
 };
 
 for (const [theme, expected] of [
@@ -110,6 +111,7 @@ test("read help displays the configured key bindings", () => {
         ...keyBindings,
         nextPage: ["f", "arrow-right"],
         toggleHelp: ["h", ""],
+        toggleMiniWindow: ["mouse-right", ""],
       },
       showHelp: true,
     });
