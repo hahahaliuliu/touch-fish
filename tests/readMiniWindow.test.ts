@@ -8,7 +8,12 @@ import {
   createReadMiniTerminalFragment,
   writeReadMiniTerminalProfile,
 } from "../src/services/readMiniWindow.js";
-import { persistReadMiniWindowSize } from "../src/session/readMiniSession.js";
+import {
+  convertReadMiniWindowSizeToLaunchSize,
+  createReadMiniWindowSizeSaver,
+  persistReadMiniWindowSize,
+} from "../src/session/readMiniSession.js";
+import { handleReadSettingsMiniWindowShortcut } from "../src/session/readSettingSession.js";
 import { getReadMouseWheelDirection } from "../src/session/readSession.js";
 import { getReadMouseBinding } from "../src/services/readInput.js";
 import { getReadMiniPageLineCount } from "../src/ui/readMiniRenderer.js";
@@ -90,6 +95,42 @@ test("dragged mini-window dimensions replace the saved size", () => {
   assert.equal(saved?.miniWindowColumns, 73);
   assert.equal(saved?.miniWindowRows, 27);
   assert.equal(saved?.miniWindowFontSize, 8);
+});
+
+test("mini-window size ignores startup resizes and saves later user resizes", () => {
+  let saveCount = 0;
+  const saver = createReadMiniWindowSizeSaver(() => { saveCount += 1; }, 60_000);
+
+  saver.schedule();
+  saver.flush();
+  assert.equal(saveCount, 0);
+
+  saver.activate();
+  saver.schedule();
+  saver.flush();
+  assert.equal(saveCount, 1);
+
+  saver.flush();
+  assert.equal(saveCount, 1);
+});
+
+test("dragged mini-window cells are converted back to Windows Terminal launch units", () => {
+  assert.deepEqual(
+    convertReadMiniWindowSizeToLaunchSize(113, 42, 113, 42, 173, 65),
+    { columns: 74, rows: 27 }
+  );
+});
+
+test("right mouse toggles only the child window while mini-mode settings stay open", () => {
+  const actions: string[] = [];
+  const keepSettingsOpen = handleReadSettingsMiniWindowShortcut(
+    true,
+    () => actions.push("window"),
+    () => actions.push("mode")
+  );
+
+  assert.equal(keepSettingsOpen, true);
+  assert.deepEqual(actions, ["window"]);
 });
 
 test("Read mini-window recognizes wheel-up and wheel-down input", () => {

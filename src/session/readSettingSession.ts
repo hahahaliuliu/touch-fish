@@ -61,6 +61,7 @@ let statusMessage = "";
 let onReturnToReading: ((bookId: string) => void) | undefined;
 let onOpenMiniMode: ((bookId: string) => void) | undefined;
 let onCloseMiniMode: ((bookId: string) => void) | undefined;
+let onToggleMiniWindow: (() => void) | undefined;
 let miniModeActive = false;
 const inputParser = new ReadInputParser();
 
@@ -68,6 +69,7 @@ interface StartReadSettingSessionOptions {
   onReturn?: (bookId: string) => void;
   onOpenMiniMode?: (bookId: string) => void;
   onCloseMiniMode?: (bookId: string) => void;
+  onToggleMiniWindow?: () => void;
   miniModeActive?: boolean;
   selectedIndex?: number;
   message?: string;
@@ -77,6 +79,7 @@ export function startReadSettingSession(options: StartReadSettingSessionOptions 
   onReturnToReading = options.onReturn;
   onOpenMiniMode = options.onOpenMiniMode;
   onCloseMiniMode = options.onCloseMiniMode;
+  onToggleMiniWindow = options.onToggleMiniWindow;
   miniModeActive = options.miniModeActive ?? false;
   books = listReadingBooks();
   activeBookId = loadReadState().activeBookId ?? books[0]?.id;
@@ -147,8 +150,15 @@ function handleInput(input: string): boolean {
   const binding = normalizeBindingInput(input);
   if (binding && settings.keyBindings.toggleMiniWindow.includes(binding)) {
     restoreSavedValues();
-    toggleMiniWindowMode();
-    return false;
+    const keepSettingsOpen = handleReadSettingsMiniWindowShortcut(
+      miniModeActive,
+      onToggleMiniWindow,
+      toggleMiniWindowMode
+    );
+    if (keepSettingsOpen) {
+      render();
+    }
+    return keepSettingsOpen;
   }
 
   if (isEditing && selectedNumericOption === "custom" && /^\d$/.test(input)) {
@@ -188,6 +198,20 @@ function handleInput(input: string): boolean {
   }
 
   return true;
+}
+
+export function handleReadSettingsMiniWindowShortcut(
+  isMiniModeActive: boolean,
+  toggleWindow: (() => void) | undefined,
+  toggleMode: () => void
+) {
+  if (isMiniModeActive && toggleWindow) {
+    toggleWindow();
+    return true;
+  }
+
+  toggleMode();
+  return false;
 }
 
 function moveSelection(direction: -1 | 1) {
@@ -570,6 +594,7 @@ function openReadingImport() {
   const returnCallback = onReturnToReading;
   const openMiniCallback = onOpenMiniMode;
   const closeMiniCallback = onCloseMiniMode;
+  const toggleMiniCallback = onToggleMiniWindow;
   const wasMiniModeActive = miniModeActive;
   process.stdin.off("data", handleKeyPress);
   process.stdout.off("resize", handleTerminalResize);
@@ -580,6 +605,7 @@ function openReadingImport() {
       ...(returnCallback ? { onReturn: returnCallback } : {}),
       ...(openMiniCallback ? { onOpenMiniMode: openMiniCallback } : {}),
       ...(closeMiniCallback ? { onCloseMiniMode: closeMiniCallback } : {}),
+      ...(toggleMiniCallback ? { onToggleMiniWindow: toggleMiniCallback } : {}),
       miniModeActive: wasMiniModeActive,
       selectedIndex: IMPORT_ITEM_INDEX,
     }),

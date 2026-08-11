@@ -5,26 +5,40 @@ import { loadReadSettings, saveReadSettings } from "../storage/readSettings.js";
 import { startReadSession } from "./readSession.js";
 
 const RESIZE_SAVE_DELAY = 500;
+const RESIZE_SAVE_ACTIVATION_DELAY = 1000;
 
 export function startReadMiniChildSession(
   book: ReadingBook,
   options: ReadMiniChildCommandOptions
 ) {
   let closing = false;
-  let resizeTimer: NodeJS.Timeout | undefined;
   let control: ReturnType<typeof startReadSession> | undefined;
+  const launchSettings = loadReadSettings();
+  let launchActualColumns: number | undefined;
+  let launchActualRows: number | undefined;
   const saveWindowSize = () => {
-    persistReadMiniWindowSize(process.stdout.columns, process.stdout.rows);
+    const launchSize = convertReadMiniWindowSizeToLaunchSize(
+      process.stdout.columns,
+      process.stdout.rows,
+      launchSettings.miniWindowColumns,
+      launchSettings.miniWindowRows,
+      launchActualColumns,
+      launchActualRows
+    );
+    persistReadMiniWindowSize(launchSize.columns, launchSize.rows);
   };
-  const scheduleWindowSizeSave = () => {
-    if (resizeTimer) {
-      clearTimeout(resizeTimer);
-    }
-    resizeTimer = setTimeout(saveWindowSize, RESIZE_SAVE_DELAY);
-  };
+  const sizeSaver = createReadMiniWindowSizeSaver(saveWindowSize);
+  const resizeActivationTimer = setTimeout(
+    () => {
+      launchActualColumns = process.stdout.columns;
+      launchActualRows = process.stdout.rows;
+      sizeSaver.activate();
+    },
+    RESIZE_SAVE_ACTIVATION_DELAY
+  );
   const handleWindowResize = () => {
     control?.resize();
-    scheduleWindowSizeSave();
+    sizeSaver.schedule();
   };
   const close = () => {
     if (closing) {
@@ -34,19 +48,77 @@ export function startReadMiniChildSession(
     control?.close();
   };
   process.stdout.on("resize", handleWindowResize);
-  scheduleWindowSizeSave();
   const socket = connectToReadMiniHost(options.port, options.token, close);
   control = startReadSession(book, {
     mode: "mini",
     onQuit: () => {
-      if (resizeTimer) {
-        clearTimeout(resizeTimer);
-      }
+      clearTimeout(resizeActivationTimer);
       process.stdout.off("resize", handleWindowResize);
-      saveWindowSize();
+      sizeSaver.flush();
       socket.destroy();
     },
   });
+}
+
+export function convertReadMiniWindowSizeToLaunchSize(
+  actualColumns: number | undefined,
+  actualRows: number | undefined,
+  launchColumns: number,
+  launchRows: number,
+  launchActualColumns: number | undefined,
+  launchActualRows: number | undefined
+) {
+  return {
+    columns: convertTerminalDimension(actualColumns, launchColumns, launchActualColumns),
+    rows: convertTerminalDimension(actualRows, launchRows, launchActualRows),
+  };
+}
+
+function convertTerminalDimension(
+  actual: number | undefined,
+  launch: number,
+  launchActual: number | undefined
+) {
+  if (!Number.isInteger(actual) || actual === undefined
+    || !Number.isInteger(launchActual) || launchActual === undefined
+    || launchActual <= 0) {
+    return actual;
+  }
+  return Math.round(actual * launch / launchActual);
+}
+
+export function createReadMiniWindowSizeSaver(
+  save: () => void,
+  delay = RESIZE_SAVE_DELAY
+) {
+  let timer: NodeJS.Timeout | undefined;
+  let active = false;
+
+  return {
+    activate() {
+      active = true;
+    },
+    schedule() {
+      if (!active) {
+        return;
+      }
+      if (timer) {
+        clearTimeout(timer);
+      }
+      timer = setTimeout(() => {
+        timer = undefined;
+        save();
+      }, delay);
+    },
+    flush() {
+      if (!timer) {
+        return;
+      }
+      clearTimeout(timer);
+      timer = undefined;
+      save();
+    },
+  };
 }
 
 export function persistReadMiniWindowSize(

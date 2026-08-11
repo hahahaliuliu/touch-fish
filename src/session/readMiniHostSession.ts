@@ -130,6 +130,7 @@ function openSettings() {
       false,
       controller
     ),
+    onToggleMiniWindow: toggleMiniWindow,
     onCloseMiniMode: (bookId) => {
       controller.closeMode();
       removeStateListener?.();
