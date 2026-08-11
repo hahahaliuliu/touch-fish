@@ -95,7 +95,7 @@ touchfish setting
 - 版本计划全部完成。
 - 建立 Read Session、阅读进度和章节导航的集成测试。
 
-### v0.4 — Read Settings（开发中）
+### v0.4 — Read Settings（已完成开发）
 
 #### 版本计划
 
@@ -128,9 +128,10 @@ touchfish setting
 
 #### 开发记录
 
-- v0.4 继续开发中。
+- 版本计划基本完成。
 - 增加阅读进度、设置和小说数据保护。
-- 补充 Read 自动测试和 Session 集成测试。
+- 在现有自动测试和 Node.js CI 基础上，扩充 Read 与小窗口相关测试。
+- 完成 npm 安装包和 Windows Terminal 小窗口实际运行验证。
 
 - 小窗口自定义隐蔽页和 Word 小窗口模式暂缓。
 - 书签、搜索、段落收藏和更多小说格式暂缓。
