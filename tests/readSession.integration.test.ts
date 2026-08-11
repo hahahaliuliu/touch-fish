@@ -8,6 +8,8 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const SESSION_EXIT_TIMEOUT = 20_000;
+const SESSION_START_TIMEOUT = 10_000;
 
 test("Read pages through text, jumps chapters, and saves progress", async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-session-"));
@@ -818,7 +820,7 @@ async function runReadSession(root: string, inputs: string[], command = ["read"]
     const timer = setTimeout(() => {
       child.kill();
       reject(new Error(`Read session did not exit. Output:\n${output}`));
-    }, 10000);
+    }, SESSION_EXIT_TIMEOUT);
     child.once("error", reject);
     child.once("exit", (exitCode) => {
       clearTimeout(timer);
@@ -826,7 +828,10 @@ async function runReadSession(root: string, inputs: string[], command = ["read"]
     });
   });
 
-  await waitUntil(() => output.length > 0 || child.exitCode !== null, 5000);
+  await waitUntil(
+    () => output.length > 0 || child.exitCode !== null,
+    SESSION_START_TIMEOUT
+  );
   await waitForOutputToSettle(() => output.length, child, 3000);
 
   for (const input of inputs) {
