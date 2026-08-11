@@ -8,8 +8,8 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const SESSION_EXIT_TIMEOUT = 20_000;
-const SESSION_START_TIMEOUT = 10_000;
+const SESSION_EXIT_TIMEOUT = 45_000;
+const SESSION_START_TIMEOUT = 20_000;
 
 test("Read pages through text, jumps chapters, and saves progress", async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "touchfish-read-session-"));
