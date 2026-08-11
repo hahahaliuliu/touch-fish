@@ -1,6 +1,11 @@
 import { Command, Option } from "commander";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const packageMetadata = require("../package.json") as { version: string };
 
 export interface TouchFishCommandHandlers {
+  startGlobalSettings: () => void | Promise<void>;
   startWord: () => void | Promise<void>;
   startWordSettings: () => void | Promise<void>;
   startWordFavorites: () => void | Promise<void>;
@@ -21,18 +26,25 @@ export function createTouchFishProgram(handlers: TouchFishCommandHandlers) {
 
   program
     .name("touchfish")
-    .description("A stealth terminal learning tool.")
-    .version("0.2.0")
+    .description("适合开发间隙使用的终端学习工具。")
+    .version(packageMetadata.version, "-V, --version", "显示当前版本")
+    .helpOption("-h, --help", "显示命令帮助")
+    .helpCommand("help [command]", "显示指定命令的帮助")
     .showHelpAfterError();
 
   program
+    .command("setting")
+    .description("打开 Touch Fish 全局设置")
+    .action(() => handlers.startGlobalSettings());
+
+  program
     .command("word")
-    .description("Learn words in a disguised terminal workspace")
+    .description("开始背单词")
     .addOption(
-      new Option("-s, --settings", "Open Word settings").conflicts("favorite")
+      new Option("-s, --settings", "打开 Word 设置").conflicts("favorite")
     )
     .addOption(
-      new Option("-f, --favorite", "Browse favorite words").conflicts("settings")
+      new Option("-f, --favorite", "查看收藏词汇").conflicts("settings")
     )
     .action(async (options: { settings?: boolean; favorite?: boolean }) => {
       if (options.settings) {
@@ -50,12 +62,12 @@ export function createTouchFishProgram(handlers: TouchFishCommandHandlers) {
 
   program
     .command("read")
-    .description("Read novels in a disguised terminal workspace")
+    .description("继续阅读小说")
     .addOption(
-      new Option("-s, --settings", "Open Read settings").conflicts("mini")
+      new Option("-s, --settings", "打开 Read 设置").conflicts("mini")
     )
     .addOption(
-      new Option("-m, --mini", "Open Read in a small independent window").conflicts("settings")
+      new Option("-m, --mini", "打开 Read 小窗口").conflicts("settings")
     )
     .addOption(new Option("--mini-child", "Internal small-window reader").hideHelp())
     .addOption(new Option("--mini-port <port>", "Internal host port").hideHelp().argParser(Number))
@@ -94,12 +106,7 @@ export function createTouchFishProgram(handlers: TouchFishCommandHandlers) {
       await handlers.startRead();
     });
 
-  // Keep the v0.2 commands working during the v0.3 transition, but do not
-  // advertise them as top-level commands. They can be removed in v0.4.
-  program
-    .command("setting", { hidden: true })
-    .action(() => handlers.startWordSettings());
-
+  // Keep the old favorite command working as a hidden compatibility alias.
   program
     .command("favorite", { hidden: true })
     .action(() => handlers.startWordFavorites());
