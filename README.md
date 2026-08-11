@@ -20,7 +20,7 @@ Touch Fish 是一个适合开发间隙使用的终端学习工具。
 
 > Learn in the gaps. Stay in the terminal.
 
-当前正式发布版本为 `v0.2.0`；v0.4 正在开发中，目前已完成 Read 核心、Read 设置和小说管理等功能，后续仍会继续增加功能。
+当前正式发布版本为 `v0.2.0`；v0.4 已完成开发和测试，尚未正式发布。
 
 ## 安装与启动
 
@@ -144,6 +144,7 @@ touchfish word -s
 ```shell
 touchfish read
 touchfish read -s
+touchfish read -m
 ```
 
 `touchfish favorite` 和 `touchfish setting` 仅作为 v0.2 兼容别名保留，不再显示为一级命令。
@@ -172,19 +173,6 @@ assets/vocabulary/ielts.example.json
 
 词书下载说明见 [docs/vocabulary-downloads.md](docs/vocabulary-downloads.md)，自定义词书格式见 [docs/vocabulary-format.md](docs/vocabulary-format.md)。
 
-## 第一次使用 Read
-
-仓库自带一篇 UTF-8 TXT 示例小说。运行 `touchfish read` 会继续上次阅读；运行 `touchfish read -s` 可以：
-
-- 切换当前小说；
-- 从任意本地路径导入 UTF-8 TXT 小说；导入成功后原文件可以移动或删除；
-- 查看和删除已经导入的小说，并同步清理对应阅读进度；
-- 设置正文宽度、每页行数和章节切分份数；
-- 切换中英文界面和 Build Log、Backend Log、Git 伪装主题；
-- 自定义翻页、章节或小节导航、重复操作和 Help 按键。
-
-章节切分只在自然段开头建立小节边界，不会从一段话中间切开。开启后，W/S 与上下方向键按小节导航。
-
 ## Word 常用快捷键
 
 | 按键 | 作用 |
@@ -207,6 +195,37 @@ assets/vocabulary/ielts.example.json
 
 快捷键可以在 Settings 中修改。
 
+## Word 功能
+
+- CLI 入口：`touchfish word`、`touchfish word -s`、`touchfish word -f`
+- 终端 Word Session 和键盘交互
+- 自定义每页单词数量
+- 可选学习分组和自定义组大小
+- 分组内循环与整本词书连续浏览
+- 顺序、倒序和随机学习模式，并分别保存进度
+- 英文、中文、英文 + 中文显示模式
+- 当前学习组测试，支持双向测试
+- 测试结果页显示用户答案、标准答案，并支持重新测试错题
+- Build Log、Backend Log 和 Git 终端主题
+- Word Settings、Help 和词书管理界面的中英文切换
+- 单词备注的隐藏、显示和本地编辑
+- 本地学习进度、用户设置和收藏保存
+- 词书自动发现、下载、卸载和本地导入
+- Word 设置页的响应式三列布局和安全退出清屏
+
+## 第一次使用 Read
+
+仓库自带一篇 UTF-8 TXT 示例小说。运行 `touchfish read` 会继续上次阅读；运行 `touchfish read -s` 可以：
+
+- 切换当前小说；
+- 从任意本地路径导入 UTF-8 TXT 小说；导入成功后原文件可以移动或删除；
+- 查看和删除已经导入的小说，并同步清理对应阅读进度；
+- 设置正文宽度、每页行数和章节切分份数；
+- 切换中英文界面和 Build Log、Backend Log、Git 伪装主题；
+- 自定义翻页、章节或小节导航、重复操作和 Help 按键。
+
+章节切分只在自然段开头建立小节边界，不会从一段话中间切开。开启后，W/S 与上下方向键按小节导航。
+
 ## Read 常用快捷键
 
 | 按键 | 作用 |
@@ -220,29 +239,30 @@ assets/vocabulary/ielts.example.json
 | `?` | 打开或关闭 Help |
 | `Esc` | 从 Help 返回；在设置中取消编辑或返回阅读；阅读页中保存并退出 |
 | `Q` / `Ctrl+C` | 保存阅读进度并退出 |
+| `鼠标右键` | 默认打开或关闭小窗口；可在设置中修改 |
 
 除 `Ctrl+O`、Esc、Q 和 Ctrl+C 外，阅读快捷键可以在 Read 设置中修改。
 
-## 当前功能
+## Read 功能
 
-- CLI 入口：`touchfish word`、`touchfish word -s`、`touchfish word -f`、`touchfish read`、`touchfish read -s`
-- 终端 Word Session 和键盘交互
-- 自定义每页单词数量
-- 可选学习分组和自定义组大小
-- 分组内循环与整本词书连续浏览
-- 顺序、倒序和随机学习模式，并分别保存进度
-- 英文、中文、英文 + 中文显示模式
-- 当前学习组测试，支持双向测试
-- 测试结果页显示用户答案、标准答案，并支持重新测试错题
-- Build Log、Backend Log 和 Git 终端主题
-- Settings、Help 和词书管理界面的中英文切换
-- 单词备注的隐藏、显示和本地编辑
-- 本地学习进度和用户设置保存
-- 词书自动发现、下载、卸载和本地导入
+- CLI 入口：`touchfish read`、`touchfish read -s`、`touchfish read -m`
 - 本地 UTF-8 TXT 小说导入、切换、删除和每本小说独立阅读进度
 - 中英文宽度适配分页、章节识别和按自然段边界进行章节切分
 - Read 独立设置、快捷键、Help 和三种终端伪装主题
-- Word 与 Read 设置页的响应式三列布局和安全退出清屏
+- Windows Terminal 小窗口阅读、尺寸与字体设置、边框拖动保存和两种鼠标滚轮模式
+- Read 设置页的响应式三列布局和安全退出清屏
+
+### 小窗口阅读
+
+在 Windows Terminal 中运行 `touchfish read -m`，会打开独立的小窗口显示小说正文，原窗口保留伪装内容并继续作为程序宿主运行。
+
+Read 设置支持调整小窗口宽度、高度、字体大小、滚轮模式和逐行滚动速率。拖动小窗口边框改变尺寸后，实际尺寸会自动保存并用于下次启动。
+
+鼠标滚轮可以设置为左右翻页或上下逐行滚动。逐行滚动时会临时标记上次位置，停止滚动后自动隐藏，并且不会改变正文排版。
+
+默认使用鼠标右键快速打开或关闭小窗口，也可以在按键绑定中修改。小说导入页面不响应小窗口右键，右键仍可用于粘贴文件路径。
+
+在小窗口中按 `Q`、`Ctrl+C` 或小窗口开关键，只关闭小窗口并保存进度，原窗口中的程序继续运行；在原窗口中按 `Q` 或 `Ctrl+C` 才会退出整个程序。
 
 ## 开发与测试
 
@@ -252,7 +272,7 @@ assets/vocabulary/ielts.example.json
 npm test
 ```
 
-当前自动测试共 108 项，覆盖 Word、Read、渲染、进度存储、素材管理和 CLI Session 交互。
+当前自动测试共 128 项，覆盖 Word、Read、小窗口、渲染、进度存储、素材管理和 CLI Session 交互，并在 Ubuntu 与 Windows 上运行 Node.js CI。
 
 不使用全局链接时打开模块设置：
 
@@ -281,16 +301,3 @@ assets/
 
 docs/         格式说明和开发计划
 ```
-
-## 当前不做
-
-- Electron
-- 登录
-- 云同步
-- AI 功能
-- 数据库
-- 全局 `touchfish setting`（计划在 v0.5 重新设计）
-- 云端小说或内容库
-- EPUB 等非 TXT 小说格式
-
-这些功能不属于当前阶段目标。
