@@ -1,7 +1,19 @@
 const FALLBACK_TERMINAL_COLUMNS = 100;
 
 export function getTerminalColumns(): number {
-  const columns = process.stdout.columns;
+  let windowColumns: number | undefined;
+
+  try {
+    windowColumns = typeof process.stdout.getWindowSize === "function"
+      ? process.stdout.getWindowSize()[0]
+      : undefined;
+  } catch {
+    windowColumns = undefined;
+  }
+
+  const environmentColumns = Number(process.env.COLUMNS);
+  const columns = [windowColumns, process.stdout.columns, environmentColumns]
+    .find((value) => typeof value === "number" && Number.isFinite(value) && value > 0);
 
   return columns && columns > 0 ? columns : FALLBACK_TERMINAL_COLUMNS;
 }
@@ -67,6 +79,53 @@ export function wrapTerminalText(value: string, maxWidth: number): string[] {
 
 export function getTerminalWidth(value: string): number {
   return [...value].reduce((width, character) => width + getCharacterWidth(character), 0);
+}
+
+export function wrapTerminalTextWithAnsi(value: string, maxWidth: number): string[] {
+  if (!value || maxWidth <= 0) {
+    return value ? [value] : [""];
+  }
+
+  if (getTerminalWidth(stripAnsi(value)) <= maxWidth) {
+    return [value];
+  }
+
+  const tokens = value.match(/\u001b\[[0-?]*[ -/]*[@-~]|./gu) ?? [];
+  const lines: string[] = [];
+  let line = "";
+  let width = 0;
+  let activeSgr = "";
+
+  tokens.forEach((token) => {
+    if (token.startsWith("\u001b[")) {
+      line += token;
+      if (token.endsWith("m")) {
+        activeSgr = token === "\u001b[0m" ? "" : token;
+      }
+      return;
+    }
+
+    const tokenWidth = getTerminalWidth(token);
+    if (width > 0 && width + tokenWidth > maxWidth) {
+      lines.push(`${line}${activeSgr ? "\u001b[0m" : ""}`);
+      line = `${activeSgr}${token}`;
+      width = tokenWidth;
+      return;
+    }
+
+    line += token;
+    width += tokenWidth;
+  });
+
+  if (line || lines.length === 0) {
+    lines.push(line);
+  }
+
+  return lines;
+}
+
+function stripAnsi(value: string): string {
+  return value.replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, "");
 }
 
 function getCharacterWidth(character: string): number {

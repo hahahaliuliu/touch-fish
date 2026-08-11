@@ -1,272 +1,155 @@
 # Touch Fish - Project State / 项目状态
 
-> Last updated: 2026-08-03
+> Last updated: 2026-08-07
 
 ## Product Position / 产品定位
 
-Touch Fish 是一个 Terminal Learning Tool。
-
-它是一个适合开发间隙使用的低调终端学习工具。
-
-典型使用场景是：等待构建、等待工具响应、等待任务执行、上下文切换之间，顺手背几个单词，同时保持在终端工作流里。
+Touch Fish 是一个适合开发间隙使用的低调终端学习工具，将学习内容伪装成开发日志、构建输出和 Git 等终端内容。
 
 核心理念：
 
 > Learn in the gaps. Stay in the terminal.
 
-中文理解：
+长期保留两个核心模块：
 
-> 在开发间隙学习，不离开终端。
+- Word：隐藏着背单词。
+- Read：隐藏着看小说。
 
 ## Current Stage / 当前阶段
 
-当前里程碑：
-
-```txt
-v0.2 Product Experience
-```
-
-当前优先级：
-
-1. 先保证项目稳定运行。
-2. 优化 Word Workspace 的伪装效果。
-3. 主界面尽量保持低调，不像传统学习软件。
-4. 保持 Renderer 和 Theme 的职责分离。
-5. Settings、多词库、词书导入和词书管理已完成，Read Mode 放到后续版本。
-6. 核心设置、随机顺序和词书导入应保持自动测试覆盖。
-7. 当前学习组测试已支持双向答题、错题详情和错题重新测试；历史记录与 Review 后续再做。
-
-## Current Architecture / 当前架构
-
-```txt
-src/
-  commands/   CLI 命令入口
-  session/    Session 生命周期
-  ui/         终端渲染和主题
-  services/   业务逻辑
-  storage/    本地存储
-  models/     数据模型
-  config/     默认配置和项目路径
-
-assets/
-  vocabulary/ 词库
-  progress/   本地进度
-
-docs/         说明文档和未来计划
-```
-
-v0.2 阶段不要重写架构。保持小步修改，一个文件只负责一种职责。
+- 正式发布版本：`v0.2.0`。
+- 当前开发阶段：v0.4 Read Setup & Module Settings 正在开发，现有 Read 设置与管理功能已完成，但 v0.4 仍有新功能待增加。
+- 当前分支：`feature/read-settings`。
+- 当前分支尚未推送；推送、合并和发布需要用户明确确认。
+- 当前工作区只有 `tmp/` 为未跟踪测试素材，不应提交。
 
 ## Run Commands / 运行命令
 
-开发时：
-
 ```powershell
 npm run dev -- word
+npm run dev -- word -s
+npm run dev -- word -f
+npm run dev -- read
+npm run dev -- read -s
 ```
 
-本地 CLI：
+执行一次 `npm link` 后，也可以在任意目录使用：
 
 ```powershell
 touchfish word
+touchfish word -s
+touchfish word -f
+touchfish read
+touchfish read -s
 ```
 
-第一次使用本地 CLI，需要在项目目录执行：
+旧的 `touchfish setting` 和 `touchfish favorite` 只作为 v0.2 隐藏兼容别名保留。
 
-```powershell
-cd "D:\Touch Fish"
-npm link
+## Current Architecture / 当前架构
+
+```text
+src/
+  commands/   CLI 命令入口
+  session/    交互 Session 生命周期
+  ui/         终端渲染、主题和通用布局
+  services/   业务逻辑
+  storage/    本地设置与进度
+  models/     数据模型
+  config/     默认配置与项目路径
+
+assets/
+  vocabulary/     词书
+  progress/       Word 进度
+  notes/          本地单词备注
+  reading/        本地 TXT 小说
+  read-progress/  每本小说的阅读进度
 ```
 
-执行后，`touchfish word` 可以在其他目录使用。词库和进度路径会从项目根目录解析，不会跟着当前终端目录跑偏。
+继续保持 Renderer、Session、Service 和 Storage 的职责分离，不为新增功能重写现有架构。
 
 ## Completed Features / 已完成功能
 
-### CLI
+### Word
 
-- [x] `npm run dev -- word`
-- [x] `touchfish word`
-- [x] `touchfish favorite` 浏览跨词书收藏
-- [x] 无参数时显示帮助信息
+- 分页、学习分组、分组循环，以及顺序、倒序、随机和重新随机学习。
+- 多词书切换和每本词书独立进度。
+- 中英文界面及多种单词显示方式。
+- 当前学习组测试、错题详情和错题重测。
+- 单词备注、收藏和收藏预览。
+- JSON、TXT、CSV、PDF 词书导入，以及词书下载和卸载。
+- Build Log、Backend Log、Git 伪装主题。
+- Help、Word Settings 和可自定义双键位快捷键。
 
-### Word Session
+### Read
 
-- [x] 启动 Session
-- [x] 退出 Session
-- [x] 终端支持时使用 raw keyboard input
-- [x] 支持简单管道输入，方便测试
+- `touchfish read` 继续阅读当前小说。
+- 本地 UTF-8 TXT 阅读、中英文宽度适配分页、章节识别和每本小说独立进度。
+- 损坏进度安全回退与临时文件替换写入。
+- A/D 翻页、W/S 跳章、空格重复上次操作；开启章节切分后 W/S 按小节导航。
+- 章节切分支持关闭、2/3/5 份和 2–20 自定义份数；边界只吸附到自然段开头。
+- Build Log、Backend Log、Git 阅读伪装主题。
+- Read Help 显示导航、操作、当前小说、页面、章节和小节状态。
 
-### Keyboard / 快捷键
+### Read Settings 与小说管理
 
-- [x] `A` 上一组
-- [x] `D` 下一组
-- [x] `Space` 重复上一次导航
-- [x] `Tab` 切换显示模式
-- [x] `?` 打开或关闭 Help 视图
-- [x] `Q` 退出
+- 切换当前小说，设置正文宽度、每页行数和章节切分。
+- Read 独立的界面语言、伪装主题和双键位快捷键。
+- 从任意本地路径导入 UTF-8 TXT，导入后复制到 Touch Fish 本地阅读目录。
+- 同名导入支持替换、保留两本或取消。
+- 小说管理页列出全部已导入小说和示例小说。
+- 删除小说前二次确认，同时删除对应进度；删除当前小说后自动选择下一本。
 
-### Vocabulary / 词库
+### Shared UI and Safety / 共用界面与安全性
 
-- [x] JSON 词库格式
-- [x] 本地词库 `assets/vocabulary/ielts-luran.json`
-- [x] 示例词库 `assets/vocabulary/ielts.example.json`
-- [x] 词库格式校验
-- [x] 本地大词库不提交到 Git
-- [x] 自动扫描 `assets/vocabulary/` 中的本地词书
-- [x] Settings 中切换当前词书
-- [x] Settings 中打开在线词库下载列表
-- [x] 下载词书后校验并原子安装到本地词库目录
-- [x] 下载列表统一管理已安装、可下载和手动导入词书
-- [x] 卸载词书时删除本地文件和该书独立学习进度
-- [x] 从导入页面读取 JSON、TXT、CSV、PDF 词书文件
+- Read 设置遵循 Word 设置的选中、编辑、光标、按键捕获和操作提示规范。
+- Word 与 Read 设置使用同一套响应式三列布局；列内容独立换行，窗口缩放后自动重排。
+- `Ctrl+O`、Esc、Q 和 Ctrl+C 为固定控制键，不允许被普通快捷键占用。
+- 从设置和素材管理页面直接退出时，清除当前画面和终端滚动历史。
 
-### Progress / 进度
+## Local Data / 本地数据
 
-- [x] 保存当前单词位置
-- [x] 恢复当前单词位置
-- [x] 从项目根目录解析进度文件路径
-- [x] 每本词书分别保存顺序、倒序、随机和显示模式进度
-- [x] 兼容迁移旧版唯一进度文件
-- [x] 损坏进度 JSON 回退为空进度
-- [x] 进度写入使用临时文件后替换
-- [x] 进度索引按当前词书长度限制范围
+以下用户数据均被 Git 忽略：
 
-### Settings / 设置
+- `assets/settings.json`
+- `assets/read-settings.json`
+- `assets/progress/*.json`
+- `assets/read-progress/*.json`
+- `assets/notes/*.json`
+- `assets/favorites.json`
+- 用户导入的 `assets/vocabulary/*.json`
+- 用户导入的 `assets/reading/*.txt`
 
-- [x] Settings model
-- [x] 默认设置 `DEFAULT_SETTINGS`
-- [x] 本地 `assets/settings.json` 读取
-- [x] 没有本地 settings 时自动使用默认设置
-- [x] 示例设置文件 `assets/settings.example.json`
-- [x] Word Session 使用 settings 中的 `workspaceSize`
-- [x] Word Session 使用 settings 中的默认 `displayMode`
-- [x] `touchfish setting` 只读设置视图
-- [x] `touchfish setting` 支持编辑并保存 `workspaceSize`
-- [x] `touchfish setting` 支持自定义 `workspaceSize`
-- [x] `touchfish setting` 支持开关学习分组 `studyGroupEnabled`
-- [x] `touchfish setting` 支持编辑学习组大小 `dailyWordCount`
-- [x] `touchfish setting` 支持自定义学习组大小
-- [x] `touchfish setting` 支持 `navigationLoop`
-- [x] `touchfish setting` 支持 `studyOrder`：顺序 / 倒序 / 随机
-- [x] `touchfish setting` 支持选择 `activeVocabularyBook`
+仓库只保留 `.example.json` 和 `.example.txt` 示例素材。
 
-### Workspace
+## Testing / 测试
 
-- [x] 备注可设为隐藏、显示或可编辑
-- [x] 可编辑模式下按 `E` 选择当前页单词，并将个人备注保存到本地
-
-- [x] 默认一页显示 3 个单词
-- [x] 按组切换
-- [x] `[` / `]` 或 `↑` / `↓` 切换学习组
-- [x] `A` / `D` 或 `←` / `→` 在当前范围内翻页
-- [x] 可关闭分组，连续浏览整本词书
-- [x] 分组内或整本词书循环导航
-- [x] 顺序、倒序与随机模式分别保存进度
-- [x] 倒序模式从当前词书最后一个单词开始学习
-- [x] 随机模式保存稳定的整本词书随机顺序
-- [x] 英文 / 中文 / 英文 + 中文显示模式
-- [x] 默认英文显示，增强伪装效果
-
-### UI
-
-- [x] Build Log 风格默认主题
-- [x] 主界面像缓存构建输出
-- [x] Help 视图覆盖主界面，而不是追加在下面
-- [x] Help 视图清楚显示快捷键和当前 Workspace 状态
-- [x] 学习组测试结果显示用户答案和标准答案
-- [x] 学习组测试支持重新测试错误单词
-
-### Testing / 测试
-
-- [x] 核心服务和渲染逻辑自动测试
-- [x] Word、Settings 和词书管理 CLI Session 集成测试
-- [x] 空词书、损坏进度和快捷键交互测试
-
-## Current Vocabulary Format / 当前词库格式
-
-当前真正必填的单词字段只有：
-
-- `english`
-- `chinese`
-
-可选字段：
-
-- `phonetic`
-- `example`
-- `note`
-- `tags`
-
-这些字段可以留空。当前已支持 `note` 的隐藏、显示和本地编辑；音标、例句和标签仍只保留在词书数据中。
-
-详细说明见：
-
-```txt
-docs/vocabulary-format.md
+```powershell
+npx tsc --noEmit
+npm test
 ```
+
+当前共 108 项自动测试，覆盖 CLI、Word、Read、设置渲染、响应式布局、快捷键、导入与删除、分页、章节与小节、进度容错和 Session 交互。
 
 ## Design Decisions / 设计决策
 
-### Terminal First
+- Terminal first：不做 Electron，不模拟完整 IDE，不制作装饰性学习软件界面。
+- 模块专属功能放在 `word` 或 `read` 参数中，不继续增加一级命令。
+- Word 与 Read 可以拥有独立的界面语言、主题、布局和快捷键。
+- 未来 `touchfish setting` 只处理真正跨模块的全局设置。
+- Read v0.4 的界面和操作默认参考 Word v0.2；只有小说特有交互才单独设计。
+- 较大功能先讨论交互，再实现。
 
-Touch Fish 始终运行在终端里。
+## Next Steps / 下一步
 
-不要画假的应用窗口，不要模拟完整 IDE，不要做 VS Code 侧边栏。终端本身已经是窗口，Touch Fish 只负责生成像开发工具一样的终端内容。
+1. 与用户讨论并记录 v0.4 剩余功能及交互方案。
+2. 继续在 `feature/read-settings` 上小步实现并进行实际界面检查。
+3. 用户明确确认 v0.4 功能完成后，再做完整人工验收、分支整合和发布准备。
+4. v0.4 完成前不提前进入 v0.5 全局 `touchfish setting`。
 
-已实现主题：
+## Development Rules / 开发规则
 
-- build-log
-- backend-log
-- git
-
-后续适合的 Theme 方向：
-
-- CLI Build Log
-- Git output
-- Cargo output
-- Docker output
-- Backend service logs
-- Claude Code style terminal output
-- Python REPL
-- SQL console
-
-避免：
-
-- Electron
-- 模拟 IDE 窗口
-- 模拟 VS Code 侧边栏
-- 装饰性 UI 卡片
-
-### Workspace
-
-当前 workspace size：
-
-```txt
-3 words by default; configurable in Settings
-```
-
-当前 Settings 已支持每页 `1 / 3 / 5 / custom` 个单词，
-并支持学习分组、组大小、首尾循环和学习顺序。
-
-### Help View
-
-主界面应尽量保持低调。
-
-`?` 视图可以显示进度、模式和快捷键等信息。当前阶段优先保证清楚易用。
-
-## Next Milestone Candidates / 下一步候选
-
-推荐顺序：
-
-1. 手动检查 538 词书中跨行释义和替换词的终端排版。
-2. 继续根据实际使用反馈优化 Word Workspace 和测试结果页。
-3. 后续实现 Read Mode。
-
-## Development Principles / 开发原则
-
-- 小步修改。
-- 每次只完成一个明确目标。
-- 不提前实现后续阶段功能。
-- 不重写架构。
-- 一个文件只负责一种职责。
-- 修改后运行项目。
-- 稳定后及时 commit。
+- 小步修改，一次完成一个明确目标。
+- 不提前实现未经确认的后续版本功能。
+- 不重写架构，保留现有用户数据兼容性。
+- 修改后运行类型检查和相应测试；稳定后及时提交。
+- 本地提交可由助手执行；推送、合并和发布必须由用户明确提出。

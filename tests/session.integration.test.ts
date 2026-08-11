@@ -343,6 +343,7 @@ async function runSession(fixture: Fixture, inputs: string[], command = "word"):
   });
 
   await waitUntil(() => output.length > 0 || child.exitCode !== null, 5000);
+  await waitForOutputToSettle(() => output.length, child, 3000);
 
   for (const input of inputs) {
     const previousOutputLength = output.length;
@@ -351,6 +352,7 @@ async function runSession(fixture: Fixture, inputs: string[], command = "word"):
       () => output.length > previousOutputLength || child.exitCode !== null,
       3000
     );
+    await waitForOutputToSettle(() => output.length, child, 3000);
   }
 
   const code = await exitPromise;
@@ -371,5 +373,34 @@ async function waitUntil(condition: () => boolean, timeoutMilliseconds: number) 
     }
 
     await wait(10);
+  }
+}
+
+async function waitForOutputToSettle(
+  getOutputLength: () => number,
+  child: ChildProcessWithoutNullStreams,
+  timeoutMilliseconds: number,
+) {
+  const deadline = Date.now() + timeoutMilliseconds;
+  let previousLength = getOutputLength();
+  let stableSince = Date.now();
+
+  while (child.exitCode === null) {
+    await wait(10);
+
+    const currentLength = getOutputLength();
+    if (currentLength !== previousLength) {
+      previousLength = currentLength;
+      stableSince = Date.now();
+      continue;
+    }
+
+    if (Date.now() - stableSince >= 50) {
+      return;
+    }
+
+    if (Date.now() >= deadline) {
+      throw new Error("Timed out waiting for session output to settle");
+    }
   }
 }

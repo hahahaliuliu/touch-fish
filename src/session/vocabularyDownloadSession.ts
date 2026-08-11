@@ -12,6 +12,7 @@ import {
 } from "../services/vocabularyDownload.js";
 import { listVocabularyBooks } from "../services/vocabularyLoader.js";
 import { renderVocabularyDownloadSession } from "../ui/vocabularyDownloadRenderer.js";
+import { clearTerminalForExit } from "../ui/terminalScreen.js";
 
 interface StartVocabularyDownloadSessionOptions {
   onReturn: () => void;
@@ -337,12 +338,10 @@ function returnToSettings() {
 }
 
 function quit() {
-  console.clear();
-  console.log(getSessionText().sessionClosed);
-
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(false);
   }
+  clearTerminalForExit();
   process.stdin.pause();
   process.exit(0);
 }

@@ -1,5 +1,9 @@
 import type { InterfaceLanguage, KeyBindings, Settings } from "../models/settings.js";
-import { getTerminalColumns } from "./terminalText.js";
+import {
+  BINDING_SETTING_COLUMNS,
+  formatSettingColumns,
+  STANDARD_SETTING_COLUMNS,
+} from "./settingColumns.js";
 
 interface ConfigItem {
   kind: "setting";
@@ -61,9 +65,9 @@ export function renderSettingSession(options: RenderSettingSessionOptions) {
   let hasRenderedBindings = false;
 
   console.clear();
-  console.log(text.title);
-  console.log("");
   console.log(text.ready);
+  console.log("");
+  console.log(text.title);
   console.log("");
 
   items.forEach((item, index) => {
@@ -126,7 +130,8 @@ export function renderSettingSession(options: RenderSettingSessionOptions) {
 
 function renderActionItem(item: ActionItem, selected: boolean) {
   const mark = selected ? ">" : " ";
-  console.log(`${mark} ${padTerminal(item.label, 20)} ${"[open]"}`);
+  formatSettingColumns(mark, item.label, "[open]", "", STANDARD_SETTING_COLUMNS)
+    .forEach((line) => console.log(line));
 }
 
 function renderConfigItem(
@@ -162,7 +167,13 @@ function renderConfigItem(
     return;
   }
 
-  console.log(`${editMark} ${padTerminal(item.label, 20)} ${formatSettingCell(value, isNumericCursor)} ${optionText}`);
+  formatSettingColumns(
+    editMark,
+    item.label,
+    formatSettingCell(value, isNumericCursor).trimEnd(),
+    optionText,
+    STANDARD_SETTING_COLUMNS
+  ).forEach((line) => console.log(line));
 }
 
 function renderVocabularyBookItem(
@@ -172,42 +183,16 @@ function renderVocabularyBookItem(
   editingSettings: Settings | undefined,
   language: InterfaceLanguage
 ) {
-  const valuePrefix = `${editMark} ${padTerminal(item.label, 20)} `;
-  const continuationPrefix = " ".repeat(getTerminalWidth(valuePrefix));
-  const availableWidth = Math.max(1, getTerminalColumns() - getTerminalWidth(continuationPrefix));
   const selectedValue = editingSettings?.activeVocabularyBook;
   const options = (item.options ?? []).map((option) => {
     const optionValue = String(option);
     return formatOption(formatOptionValue(optionValue, language), optionValue === selectedValue);
   });
 
-  console.log(`${valuePrefix}${value}`);
-  wrapCompleteOptions(options, availableWidth)
-    .forEach((line) => console.log(`${continuationPrefix}${line}`));
-}
+  const optionText = options.length > 0 ? `[${options.join(" / ")}]` : "[]";
 
-function wrapCompleteOptions(options: string[], availableWidth: number): string[] {
-  if (options.length === 0) {
-    return ["[]"];
-  }
-
-  const lines: string[] = [];
-  let current = `[${options[0]}`;
-
-  options.slice(1).forEach((option) => {
-    const candidate = `${current} / ${option}`;
-
-    if (getTerminalWidth(`${candidate}]`) <= availableWidth) {
-      current = candidate;
-      return;
-    }
-
-    lines.push(`${current} /`);
-    current = option;
-  });
-
-  lines.push(`${current}]`);
-  return lines;
+  formatSettingColumns(editMark, item.label, value, optionText, STANDARD_SETTING_COLUMNS)
+    .forEach((line) => console.log(line));
 }
 
 function renderBindingItem(
@@ -223,7 +208,8 @@ function renderBindingItem(
   const second = formatBindingSlot(bindings[1], selected && selectedSlot === 1, isCapturing && selectedSlot === 1, language);
   const mark = selected && isCapturing ? "*" : selected ? ">" : " ";
 
-  console.log(`${mark} ${padTerminal(item.label, 20)} ${padTerminal(first, 17)} ${second}`);
+  formatSettingColumns(mark, item.label, first, second, BINDING_SETTING_COLUMNS)
+    .forEach((line) => console.log(line));
 }
 
 function formatBindingSlot(
@@ -233,19 +219,19 @@ function formatBindingSlot(
   language: InterfaceLanguage = "english"
 ): string {
   if (isCapturing) {
-    return padTerminal(blinkingCursor(), 17);
+    return blinkingCursor();
   }
 
-  const value = padTerminal(formatBinding(binding, language), 17);
+  const value = formatBinding(binding, language);
   return selected ? formatOption(value, true) : value;
 }
 
 function formatSettingCell(value: string, isNumericCursor: boolean): string {
   if (!isNumericCursor) {
-    return padTerminal(value, 10);
+    return value;
   }
 
-  return padTerminal(`${value}${blinkingCursor()}`, 10);
+  return `${value}${blinkingCursor()}`;
 }
 
 function blinkingCursor(): string {
@@ -399,20 +385,4 @@ function getSettingsText(language: InterfaceLanguage) {
 
 function formatOption(option: string, selected: boolean): string {
   return selected ? `\u001b[7m${option}\u001b[0m` : option;
-}
-
-function padTerminal(value: string, targetWidth: number): string {
-  return `${value}${" ".repeat(Math.max(0, targetWidth - getTerminalWidth(value)))}`;
-}
-
-function getTerminalWidth(value: string): number {
-  return [...stripAnsi(value)].reduce((width, character) => width + (isWideCharacter(character) ? 2 : 1), 0);
-}
-
-function stripAnsi(value: string): string {
-  return value.replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, "");
-}
-
-function isWideCharacter(character: string): boolean {
-  return /[\u1100-\u115f\u2e80-\ua4cf\uac00-\ud7a3\uf900-\ufaff\ufe10-\ufe19\ufe30-\ufe6f\uff00-\uff60\uffe0-\uffe6]/.test(character);
 }

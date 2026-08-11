@@ -42,3 +42,9 @@ assets/settings.json
 # Local vocabulary data
 assets/vocabulary/*.json
 !assets/vocabulary/*.example.json
+
+# Local reading data
+assets/reading/*.txt
+!assets/reading/*.example.txt
+assets/read-progress/*.json
+assets/read-settings.json

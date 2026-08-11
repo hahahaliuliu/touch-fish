@@ -1,12 +1,21 @@
 {
   "name": "touch-fish",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "A low-key terminal learning tool for development breaks.",
   "type": "module",
   "main": "src/index.ts",
   "bin": {
     "touchfish": "bin/touchfish.js"
   },
+  "files": [
+    "bin/",
+    "src/",
+    "assets/catalog.json",
+    "assets/downloads/",
+    "assets/reading/*.example.txt",
+    "assets/vocabulary/*.example.json",
+    "assets/settings.example.json"
+  ],
   "directories": {
     "doc": "docs"
   },
@@ -26,11 +35,11 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^26.1.0",
-    "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   },
   "dependencies": {
     "commander": "^15.0.0",
-    "pdf-parse": "^2.4.5"
+    "pdf-parse": "^2.4.5",
+    "tsx": "^4.22.4"
   }
 }
