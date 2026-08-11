@@ -7,7 +7,7 @@
 
 <p align="center">
   <a href="https://github.com/hahahaliuliu/touch-fish/actions/workflows/ci.yml"><img alt="Node.js CI" src="https://github.com/hahahaliuliu/touch-fish/actions/workflows/ci.yml/badge.svg"></a>
-  <img alt="Version v0.2.0" src="https://img.shields.io/badge/version-v0.2.0-444444">
+  <img alt="Version v0.4.0" src="https://img.shields.io/badge/version-v0.4.0-444444">
   <img alt="Node.js 22.12 or newer" src="https://img.shields.io/badge/node-%3E%3D22.12-444444">
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-444444"></a>
 </p>
@@ -20,7 +20,7 @@ Touch Fish 是一个适合开发间隙使用的终端学习工具。
 
 > Learn in the gaps. Stay in the terminal.
 
-当前正式发布版本为 `v0.2.0`；v0.4 已完成开发和测试，尚未正式发布。
+当前正式发布版本为 `v0.4.0`。
 
 ## 安装与启动
 
