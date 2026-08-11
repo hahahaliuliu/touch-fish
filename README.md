@@ -147,7 +147,16 @@ touchfish read -s
 touchfish read -m
 ```
 
-`touchfish favorite` 和 `touchfish setting` 仅作为 v0.2 兼容别名保留，不再显示为一级命令。
+查看核心命令，或打开独立的全局设置入口：
+
+```shell
+touchfish
+touchfish setting
+```
+
+当前版本的全局设置入口暂无可配置项。Word 和 Read 的设置仍分别通过 `touchfish word -s` 与 `touchfish read -s` 打开。
+
+`touchfish favorite` 仅作为 v0.2 兼容别名保留，不再显示为一级命令。
 
 `npm link` 通常只需执行一次。请不要移动或删除项目目录；如果通过 nvm 更换了 Node.js 版本，可能需要重新执行 `npm link`。
 
@@ -272,7 +281,7 @@ Read 设置支持调整小窗口宽度、高度、字体大小、滚轮模式和
 npm test
 ```
 
-当前自动测试共 128 项，覆盖 Word、Read、小窗口、渲染、进度存储、素材管理和 CLI Session 交互，并在 Ubuntu 与 Windows 上运行 Node.js CI。
+当前自动测试共 131 项，覆盖 Word、Read、全局设置入口、小窗口、渲染、进度存储、素材管理和 CLI Session 交互，并在 Ubuntu 与 Windows 上运行 Node.js CI。
 
 不使用全局链接时打开模块设置：
 
