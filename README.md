@@ -124,34 +124,19 @@ npm run dev -- read
 npm link
 ```
 
-之后可以在当前系统的任意目录启动：
+之后可以在当前系统的任意目录使用以下命令：
 
 ```shell
-touchfish word
+touchfish                  # 查看版本和全部命令
+
+touchfish word             # 开始背单词
+touchfish word -s          # 打开 Word 设置
+touchfish word -f          # 查看收藏词汇
+
+touchfish read             # 继续阅读小说
+touchfish read -s          # 打开 Read 设置和小说管理
+touchfish read -m          # 打开 Read 小窗口
 ```
-
-浏览收藏单词或打开 Word 设置：
-
-```shell
-touchfish word -f
-touchfish word -s
-```
-
-启动阅读或打开 Read 设置：
-
-```shell
-touchfish read
-touchfish read -s
-touchfish read -m
-```
-
-查看核心命令：
-
-```shell
-touchfish
-```
-
-`touchfish` 会显示当前版本和核心命令。Word 和 Read 的设置分别通过 `touchfish word -s` 与 `touchfish read -s` 打开。
 
 `npm link` 通常只需执行一次。请不要移动或删除项目目录；如果通过 nvm 更换了 Node.js 版本，可能需要重新执行 `npm link`。
 
