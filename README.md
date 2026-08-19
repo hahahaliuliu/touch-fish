@@ -142,25 +142,12 @@ touchfish read -m          # 打开 Read 小窗口
 
 ## 第一次使用 Word
 
-仓库自带一份 30 词示例词书：
+运行 `touchfish word` 后，会进入默认的单词学习界面。项目自带基础示例词书；没有安装其他词书时会自动使用它。
 
-```text
-assets/vocabulary/ielts.example.json
-```
+基础界面的翻页和学习组导航见下方“Word 常用快捷键”。
 
-没有安装其他词书时，Touch Fish 会自动使用它，因此第一次启动不需要手动准备词书。
-
-在 Word Session 中按 `Ctrl+O` 可以打开 Settings。Settings 支持：
-
-- 调整每页单词数量和学习组大小
-- 切换顺序、倒序或随机学习
-- 切换终端伪装主题
-- 控制备注的隐藏、显示和编辑
-- 自定义快捷键
-- 下载、切换或卸载词书
-- 导入 JSON、TXT、CSV 或带可复制文本的 PDF 词书
-
-词书下载说明见 [docs/vocabulary-downloads.md](docs/vocabulary-downloads.md)，自定义词书格式见 [docs/vocabulary-format.md](docs/vocabulary-format.md)。
+- 按 `?` 打开 Help，随时查看当前界面的操作说明。
+- 按 `Ctrl+O` 打开 Word 设置；在设置中可以调整学习方式、管理词书、切换主题和修改快捷键。
 
 ## Word 常用快捷键
 
@@ -204,16 +191,12 @@ assets/vocabulary/ielts.example.json
 
 ## 第一次使用 Read
 
-仓库自带一篇 UTF-8 TXT 示例小说。运行 `touchfish read` 会继续上次阅读；运行 `touchfish read -s` 可以：
+运行 `touchfish read` 后，会打开当前小说并继续上次阅读的位置。项目自带一篇 UTF-8 TXT 示例小说；没有导入其他小说时会自动使用它。
 
-- 切换当前小说；
-- 从任意本地路径导入 UTF-8 TXT 小说；导入成功后原文件可以移动或删除；
-- 查看和删除已经导入的小说，并同步清理对应阅读进度；
-- 设置正文宽度、每页行数和章节切分份数；
-- 切换中英文界面和 Build Log、Backend Log、Git 伪装主题；
-- 自定义翻页、章节或小节导航、重复操作和 Help 按键。
+基础界面的翻页、章节或小节导航见下方“Read 常用快捷键”。
 
-章节切分只在自然段开头建立小节边界，不会从一段话中间切开。开启后，W/S 与上下方向键按小节导航。
+- 按 `?` 打开 Help，随时查看当前界面的操作说明。
+- 按 `Ctrl+O` 打开 Read 设置；在设置中可以管理小说、调整阅读版式、切换主题和修改快捷键。
 
 ## Read 常用快捷键
 
