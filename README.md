@@ -151,10 +151,9 @@ touchfish read -m
 
 ```shell
 touchfish
-touchfish --help
 ```
 
-`touchfish` 与 `touchfish --help` 显示相同的核心命令帮助。Word 和 Read 的设置分别通过 `touchfish word -s` 与 `touchfish read -s` 打开。
+`touchfish` 会显示当前版本和核心命令。Word 和 Read 的设置分别通过 `touchfish word -s` 与 `touchfish read -s` 打开。
 
 `npm link` 通常只需执行一次。请不要移动或删除项目目录；如果通过 nvm 更换了 Node.js 版本，可能需要重新执行 `npm link`。
 

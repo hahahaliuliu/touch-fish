@@ -34,18 +34,24 @@ function createProgramWithCalls() {
   return { program, calls };
 }
 
-test("top-level help focuses on Word and Read", () => {
+test("top-level output shows the version, Word, and Read", () => {
   const { program } = createProgramWithCalls();
   const help = program.helpInformation();
 
+  assert.match(help, /Touch Fish v0\.4\.0/);
   assert.match(help, /word \[options\]\s+开始背单词/);
   assert.match(help, /read \[options\]\s+继续阅读小说/);
   assert.doesNotMatch(help, /^\s+setting\s/m);
   assert.doesNotMatch(help, /^\s+favorite\s/m);
 });
-test("CLI version follows the package version", () => {
+
+test("top-level help and version options are not registered", () => {
   const { program } = createProgramWithCalls();
-  assert.equal(program.version(), "0.4.0");
+  const optionFlags = program.options.map((option) => option.flags).join(" ");
+  const commandNames = program.commands.map((command) => command.name());
+
+  assert.doesNotMatch(optionFlags, /--help|--version/);
+  assert.doesNotMatch(commandNames.join(" "), /\bhelp\b/);
 });
 
 test("removed top-level aliases are not registered", () => {

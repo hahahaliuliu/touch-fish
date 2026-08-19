@@ -25,11 +25,9 @@ export function createTouchFishProgram(handlers: TouchFishCommandHandlers) {
 
   program
     .name("touchfish")
-    .description("适合开发间隙使用的终端学习工具。")
-    .version(packageMetadata.version, "-V, --version", "显示当前版本")
-    .helpOption("-h, --help", "显示命令帮助")
-    .helpCommand("help [command]", "显示指定命令的帮助")
-    .showHelpAfterError();
+    .description(`Touch Fish v${packageMetadata.version}\n适合开发间隙使用的终端学习工具。`)
+    .helpOption(false)
+    .addHelpCommand(false);
 
   program
     .command("word")
