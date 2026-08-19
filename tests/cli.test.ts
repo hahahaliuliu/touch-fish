@@ -1,15 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createTouchFishProgram } from "../src/cli.js";
+import { createTouchFishProgram, getTouchFishOverview } from "../src/cli.js";
 
-type HandlerName = "global-settings" | "word" | "word-settings" | "word-favorites" | "read" | "read-settings" | "read-mini" | "read-mini-child";
+type HandlerName = "word" | "word-settings" | "word-favorites" | "read" | "read-settings" | "read-mini" | "read-mini-child";
 
 function createProgramWithCalls() {
   const calls: HandlerName[] = [];
   const program = createTouchFishProgram({
-    startGlobalSettings: () => {
-      calls.push("global-settings");
-    },
     startWord: () => {
       calls.push("word");
     },
@@ -37,25 +34,34 @@ function createProgramWithCalls() {
   return { program, calls };
 }
 
-test("top-level help shows global settings, Word, and Read", () => {
-  const { program } = createProgramWithCalls();
-  const help = program.helpInformation();
+test("top-level output shows the version and all public commands", () => {
+  const help = getTouchFishOverview();
 
-  assert.match(help, /setting\s+打开 Touch Fish 全局设置/);
-  assert.match(help, /word \[options\]\s+开始背单词/);
-  assert.match(help, /read \[options\]\s+继续阅读小说/);
-  assert.doesNotMatch(help, /^\s+favorite\s/m);
+  assert.match(help, /Touch Fish v0\.4\.0/);
+  assert.match(help, /touchfish word\s+开始背单词/);
+  assert.match(help, /touchfish word -s\s+打开 Word 设置/);
+  assert.match(help, /touchfish word -f\s+查看收藏词汇/);
+  assert.match(help, /touchfish read\s+继续阅读小说/);
+  assert.match(help, /touchfish read -s\s+打开 Read 设置/);
+  assert.match(help, /touchfish read -m\s+打开小窗口阅读/);
+  assert.doesNotMatch(help, /Usage:|Commands:|\[options\]/);
 });
 
-test("CLI version follows the package version", () => {
+test("top-level help and version options are not registered", () => {
   const { program } = createProgramWithCalls();
-  assert.equal(program.version(), "0.4.0");
+  const optionFlags = program.options.map((option) => option.flags).join(" ");
+  const commandNames = program.commands.map((command) => command.name());
+
+  assert.doesNotMatch(optionFlags, /--help|--version/);
+  assert.doesNotMatch(commandNames.join(" "), /\bhelp\b/);
 });
 
-test("global settings command has its own route", async () => {
-  const globalSettingsRun = createProgramWithCalls();
-  await globalSettingsRun.program.parseAsync(["node", "touchfish", "setting"]);
-  assert.deepEqual(globalSettingsRun.calls, ["global-settings"]);
+test("removed top-level aliases are not registered", () => {
+  const { program } = createProgramWithCalls();
+  const commandNames = program.commands.map((command) => command.name());
+
+  assert.doesNotMatch(commandNames.join(" "), /\bsetting\b/);
+  assert.doesNotMatch(commandNames.join(" "), /\bfavorite\b/);
 });
 
 test("Word command routes its default and module options", async () => {
@@ -91,10 +97,4 @@ test("Read command routes its default, settings, and mini-window options", async
     "--mini-token", "token", "--mini-book", "alpha",
   ]);
   assert.deepEqual(childRun.calls, ["read-mini-child"]);
-});
-
-test("legacy favorite command remains available as a hidden alias", async () => {
-  const favoritesRun = createProgramWithCalls();
-  await favoritesRun.program.parseAsync(["node", "touchfish", "favorite"]);
-  assert.deepEqual(favoritesRun.calls, ["word-favorites"]);
 });

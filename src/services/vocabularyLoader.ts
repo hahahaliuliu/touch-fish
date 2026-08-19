@@ -23,7 +23,7 @@ export function loadVocabularyBook(bookId: string): VocabularyBook {
       [
         "No vocabulary books are installed.",
         "",
-        "Open `touchfish setting` and choose Download Vocabulary.",
+        "Open `touchfish word -s` and choose Download or Import Vocabulary.",
       ].join("\n")
     );
   }

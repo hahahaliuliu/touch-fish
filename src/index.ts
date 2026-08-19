@@ -7,11 +7,9 @@ import {
   startReadMiniCommand,
   startReadSettingsCommand,
 } from "./commands/read.js";
-import { createTouchFishProgram } from "./cli.js";
-import { startGlobalSettingsCommand } from "./commands/globalSettings.js";
+import { createTouchFishProgram, getTouchFishOverview } from "./cli.js";
 
 const program = createTouchFishProgram({
-  startGlobalSettings: startGlobalSettingsCommand,
   startWord: startWordCommand,
   startWordSettings: startSettingCommand,
   startWordFavorites: startFavoriteCommand,
@@ -22,7 +20,7 @@ const program = createTouchFishProgram({
 });
 
 if (process.argv.length <= 2) {
-  program.outputHelp();
+  console.log(getTouchFishOverview());
 } else {
   program.parse();
 }
