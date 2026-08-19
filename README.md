@@ -12,8 +12,6 @@
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-444444"></a>
 </p>
 
-![Touch Fish terminal preview](docs/images/touch-fish-preview.png)
-
 Touch Fish 是一个适合开发间隙使用的终端学习工具。
 
 它把背单词和小说阅读呈现成开发日志、构建输出等终端内容，让用户在等待构建、工具响应或上下文切换时，顺手学习或阅读。
