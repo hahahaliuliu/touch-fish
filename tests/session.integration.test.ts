@@ -179,7 +179,7 @@ test("favorite preview keeps a canceled word until selection mode exits", async 
   const fixture = createFixture({ workspaceSize: 1, favorites: ["alpha-1"] });
 
   try {
-    const result = await runSession(fixture, ["e", "f", "e", "q"], "favorite");
+    const result = await runSession(fixture, ["e", "f", "e", "q"], ["word", "-f"]);
 
     assert.equal(result.code, 0);
     assert.match(result.output, /alpha-1/);
@@ -193,7 +193,7 @@ test("favorite preview supports the configured Tab display shortcut", async () =
   const fixture = createFixture({ workspaceSize: 1, favorites: ["alpha-1"] });
 
   try {
-    const result = await runSession(fixture, ["\t", "q"], "favorite");
+    const result = await runSession(fixture, ["\t", "q"], ["word", "-f"]);
 
     assert.equal(result.code, 0);
     assert.match(result.output, /alpha-1.*alpha meaning 1/s);
@@ -319,8 +319,13 @@ function removeFixture(fixture: Fixture) {
   fs.rmSync(fixture.root, { recursive: true, force: true });
 }
 
-async function runSession(fixture: Fixture, inputs: string[], command = "word"): Promise<SessionResult> {
-  const child = spawn(process.execPath, ["--import", "tsx", "src/index.ts", command], {
+async function runSession(
+  fixture: Fixture,
+  inputs: string[],
+  command: string | string[] = "word",
+): Promise<SessionResult> {
+  const commandArguments = Array.isArray(command) ? command : [command];
+  const child = spawn(process.execPath, ["--import", "tsx", "src/index.ts", ...commandArguments], {
     cwd: projectRoot,
     env: { ...process.env, TOUCHFISH_ASSET_DIR: fixture.root },
     stdio: ["pipe", "pipe", "pipe"],

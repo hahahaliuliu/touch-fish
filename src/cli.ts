@@ -5,7 +5,6 @@ const require = createRequire(import.meta.url);
 const packageMetadata = require("../package.json") as { version: string };
 
 export interface TouchFishCommandHandlers {
-  startGlobalSettings: () => void | Promise<void>;
   startWord: () => void | Promise<void>;
   startWordSettings: () => void | Promise<void>;
   startWordFavorites: () => void | Promise<void>;
@@ -31,11 +30,6 @@ export function createTouchFishProgram(handlers: TouchFishCommandHandlers) {
     .helpOption("-h, --help", "显示命令帮助")
     .helpCommand("help [command]", "显示指定命令的帮助")
     .showHelpAfterError();
-
-  program
-    .command("setting")
-    .description("打开 Touch Fish 全局设置")
-    .action(() => handlers.startGlobalSettings());
 
   program
     .command("word")
@@ -105,11 +99,6 @@ export function createTouchFishProgram(handlers: TouchFishCommandHandlers) {
 
       await handlers.startRead();
     });
-
-  // Keep the old favorite command working as a hidden compatibility alias.
-  program
-    .command("favorite", { hidden: true })
-    .action(() => handlers.startWordFavorites());
 
   return program;
 }

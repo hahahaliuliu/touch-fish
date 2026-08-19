@@ -8,10 +8,8 @@ import {
   startReadSettingsCommand,
 } from "./commands/read.js";
 import { createTouchFishProgram } from "./cli.js";
-import { startGlobalSettingsCommand } from "./commands/globalSettings.js";
 
 const program = createTouchFishProgram({
-  startGlobalSettings: startGlobalSettingsCommand,
   startWord: startWordCommand,
   startWordSettings: startSettingCommand,
   startWordFavorites: startFavoriteCommand,

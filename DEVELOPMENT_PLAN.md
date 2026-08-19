@@ -17,7 +17,6 @@ touchfish word -f
 touchfish read
 touchfish read -s
 touchfish read -m
-touchfish setting
 ```
 
 - `touchfish`：显示核心命令和简要帮助。
@@ -27,7 +26,6 @@ touchfish setting
 - `touchfish read`：继续阅读上一次阅读的小说。
 - `touchfish read -s / --settings`：Read 专属设置。
 - `touchfish read -m / --mini`：启动小窗口阅读模式。
-- `touchfish setting`：全局设置。
 
 ## 开发计划
 

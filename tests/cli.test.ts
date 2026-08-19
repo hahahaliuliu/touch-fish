@@ -2,14 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createTouchFishProgram } from "../src/cli.js";
 
-type HandlerName = "global-settings" | "word" | "word-settings" | "word-favorites" | "read" | "read-settings" | "read-mini" | "read-mini-child";
+type HandlerName = "word" | "word-settings" | "word-favorites" | "read" | "read-settings" | "read-mini" | "read-mini-child";
 
 function createProgramWithCalls() {
   const calls: HandlerName[] = [];
   const program = createTouchFishProgram({
-    startGlobalSettings: () => {
-      calls.push("global-settings");
-    },
     startWord: () => {
       calls.push("word");
     },
@@ -37,25 +34,26 @@ function createProgramWithCalls() {
   return { program, calls };
 }
 
-test("top-level help shows global settings, Word, and Read", () => {
+test("top-level help focuses on Word and Read", () => {
   const { program } = createProgramWithCalls();
   const help = program.helpInformation();
 
-  assert.match(help, /setting\s+打开 Touch Fish 全局设置/);
   assert.match(help, /word \[options\]\s+开始背单词/);
   assert.match(help, /read \[options\]\s+继续阅读小说/);
+  assert.doesNotMatch(help, /^\s+setting\s/m);
   assert.doesNotMatch(help, /^\s+favorite\s/m);
 });
-
 test("CLI version follows the package version", () => {
   const { program } = createProgramWithCalls();
   assert.equal(program.version(), "0.4.0");
 });
 
-test("global settings command has its own route", async () => {
-  const globalSettingsRun = createProgramWithCalls();
-  await globalSettingsRun.program.parseAsync(["node", "touchfish", "setting"]);
-  assert.deepEqual(globalSettingsRun.calls, ["global-settings"]);
+test("removed top-level aliases are not registered", () => {
+  const { program } = createProgramWithCalls();
+  const commandNames = program.commands.map((command) => command.name());
+
+  assert.doesNotMatch(commandNames.join(" "), /\bsetting\b/);
+  assert.doesNotMatch(commandNames.join(" "), /\bfavorite\b/);
 });
 
 test("Word command routes its default and module options", async () => {
@@ -91,10 +89,4 @@ test("Read command routes its default, settings, and mini-window options", async
     "--mini-token", "token", "--mini-book", "alpha",
   ]);
   assert.deepEqual(childRun.calls, ["read-mini-child"]);
-});
-
-test("legacy favorite command remains available as a hidden alias", async () => {
-  const favoritesRun = createProgramWithCalls();
-  await favoritesRun.program.parseAsync(["node", "touchfish", "favorite"]);
-  assert.deepEqual(favoritesRun.calls, ["word-favorites"]);
 });
