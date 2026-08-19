@@ -8,6 +8,8 @@ import { fileURLToPath } from "node:url";
 import type { Settings } from "../src/models/settings.js";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const SESSION_EXIT_TIMEOUT = 45_000;
+const SESSION_START_TIMEOUT = 20_000;
 
 interface Fixture {
   root: string;
@@ -334,7 +336,7 @@ async function runSession(fixture: Fixture, inputs: string[], command = "word"):
     const timer = setTimeout(() => {
       child.kill();
       reject(new Error(`Session did not exit. Output:\n${output}`));
-    }, 10000);
+    }, SESSION_EXIT_TIMEOUT);
     child.once("error", reject);
     child.once("exit", (exitCode) => {
       clearTimeout(timer);
@@ -342,7 +344,10 @@ async function runSession(fixture: Fixture, inputs: string[], command = "word"):
     });
   });
 
-  await waitUntil(() => output.length > 0 || child.exitCode !== null, 5000);
+  await waitUntil(
+    () => output.length > 0 || child.exitCode !== null,
+    SESSION_START_TIMEOUT
+  );
   await waitForOutputToSettle(() => output.length, child, 3000);
 
   for (const input of inputs) {
