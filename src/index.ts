@@ -7,7 +7,7 @@ import {
   startReadMiniCommand,
   startReadSettingsCommand,
 } from "./commands/read.js";
-import { createTouchFishProgram } from "./cli.js";
+import { createTouchFishProgram, getTouchFishOverview } from "./cli.js";
 
 const program = createTouchFishProgram({
   startWord: startWordCommand,
@@ -20,7 +20,7 @@ const program = createTouchFishProgram({
 });
 
 if (process.argv.length <= 2) {
-  program.outputHelp();
+  console.log(getTouchFishOverview());
 } else {
   program.parse();
 }

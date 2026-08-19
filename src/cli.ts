@@ -4,6 +4,22 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const packageMetadata = require("../package.json") as { version: string };
 
+export function getTouchFishOverview(): string {
+  return [
+    `Touch Fish v${packageMetadata.version}`,
+    "",
+    "可用命令",
+    "",
+    "  touchfish word       开始背单词",
+    "  touchfish word -s    打开 Word 设置",
+    "  touchfish word -f    查看收藏词汇",
+    "",
+    "  touchfish read       继续阅读小说",
+    "  touchfish read -s    打开 Read 设置",
+    "  touchfish read -m    打开小窗口阅读",
+  ].join("\n");
+}
+
 export interface TouchFishCommandHandlers {
   startWord: () => void | Promise<void>;
   startWordSettings: () => void | Promise<void>;
@@ -25,7 +41,7 @@ export function createTouchFishProgram(handlers: TouchFishCommandHandlers) {
 
   program
     .name("touchfish")
-    .description(`Touch Fish v${packageMetadata.version}\n适合开发间隙使用的终端学习工具。`)
+    .description("Touch Fish terminal learning tool")
     .helpOption(false)
     .addHelpCommand(false);
 

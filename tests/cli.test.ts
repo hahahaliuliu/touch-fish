@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createTouchFishProgram } from "../src/cli.js";
+import { createTouchFishProgram, getTouchFishOverview } from "../src/cli.js";
 
 type HandlerName = "word" | "word-settings" | "word-favorites" | "read" | "read-settings" | "read-mini" | "read-mini-child";
 
@@ -34,15 +34,17 @@ function createProgramWithCalls() {
   return { program, calls };
 }
 
-test("top-level output shows the version, Word, and Read", () => {
-  const { program } = createProgramWithCalls();
-  const help = program.helpInformation();
+test("top-level output shows the version and all public commands", () => {
+  const help = getTouchFishOverview();
 
   assert.match(help, /Touch Fish v0\.4\.0/);
-  assert.match(help, /word \[options\]\s+开始背单词/);
-  assert.match(help, /read \[options\]\s+继续阅读小说/);
-  assert.doesNotMatch(help, /^\s+setting\s/m);
-  assert.doesNotMatch(help, /^\s+favorite\s/m);
+  assert.match(help, /touchfish word\s+开始背单词/);
+  assert.match(help, /touchfish word -s\s+打开 Word 设置/);
+  assert.match(help, /touchfish word -f\s+查看收藏词汇/);
+  assert.match(help, /touchfish read\s+继续阅读小说/);
+  assert.match(help, /touchfish read -s\s+打开 Read 设置/);
+  assert.match(help, /touchfish read -m\s+打开小窗口阅读/);
+  assert.doesNotMatch(help, /Usage:|Commands:|\[options\]/);
 });
 
 test("top-level help and version options are not registered", () => {
