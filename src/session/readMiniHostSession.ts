@@ -10,6 +10,7 @@ import { clearTerminalForExit } from "../ui/terminalScreen.js";
 import { renderReadMiniHost } from "../ui/readMiniHostRenderer.js";
 import { startReadSession } from "./readSession.js";
 import { startReadSettingSession } from "./readSettingSession.js";
+import { normalizeSettingBinding } from "./settingFormInput.js";
 
 interface ReadMiniHostSessionState {
   book: ReadingBook;
@@ -189,16 +190,7 @@ function stopInput() {
   setReadMouseTracking(false);
 }
 
-function normalizeBindingInput(input: string) {
-  const specialBindings: Record<string, string> = {
-    "\u001b[A": "arrow-up",
-    "\u001b[B": "arrow-down",
-    "\u001b[C": "arrow-right",
-    "\u001b[D": "arrow-left",
-    " ": "space",
-    "？": "?",
-  };
-  return getReadMouseBinding(input)
-    ?? specialBindings[input]
-    ?? (/^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined);
+function normalizeBindingInput(input: string): string | undefined {
+  return getReadMouseBinding(input) ?? normalizeSettingBinding(input);
 }
+
