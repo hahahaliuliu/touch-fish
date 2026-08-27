@@ -1,24 +1,31 @@
-import type { InterfaceLanguage, KeyBindings, NoteMode, Settings, ThemeName } from "../models/settings.js";
+import type { KeyBindings, Settings } from "../models/settings.js";
 import { reshuffleRandomOrder } from "../services/randomOrder.js";
 import { loadSettings, saveSettings } from "../services/settingsLoader.js";
 import { listVocabularyBooks } from "../services/vocabularyLoader.js";
 import { renderSettingSession } from "../ui/settingsRenderer.js";
 import { clearTerminalForExit } from "../ui/terminalScreen.js";
-import { startVocabularyDownloadSession } from "./vocabularyDownloadSession.js";
+import {
+  AVAILABLE_THEMES,
+  createSettingItems,
+  INTERFACE_LANGUAGES,
+  NOTE_MODES,
+  STUDY_GROUP_SIZES,
+  STUDY_ORDERS,
+  WORKSPACE_SIZES,
+  type ActionItem,
+  type BindingItem,
+  type ConfigItem,
+  type SettingItem,
+} from "./settingItems.js";
 import {
   getNextValue,
   isBackspace,
   normalizeSettingBinding,
   parseTerminalInputs,
 } from "./settingFormInput.js";
+import { startVocabularyDownloadSession } from "./vocabularyDownloadSession.js";
 
 const RETURN_TO_WORD_KEY = "\u000f";
-const WORKSPACE_SIZES = [1, 3, 5];
-const STUDY_GROUP_SIZES = [10, 20, 30];
-const STUDY_ORDERS: Array<Settings["studyOrder"]> = ["sequential", "reverse", "random"];
-const AVAILABLE_THEMES: readonly ThemeName[] = ["build-log", "backend-log", "git"];
-const INTERFACE_LANGUAGES: readonly InterfaceLanguage[] = ["english", "chinese"];
-const NOTE_MODES: readonly NoteMode[] = ["hidden", "visible", "editable"];
 type NumericOption = number | "custom";
 type StudyOrderOption = Settings["studyOrder"] | "reshuffle";
 type BindingSlot = 0 | 1;
@@ -29,31 +36,10 @@ interface StartSettingSessionOptions {
   selectedIndex?: number;
 }
 
-interface ConfigItem {
-  kind: "setting";
-  key: keyof Settings;
-  label: string;
-  options?: readonly unknown[];
-  acceptsNumber?: boolean;
-}
-
-interface BindingItem {
-  kind: "binding";
-  key: keyof KeyBindings;
-  label: string;
-}
-
-interface ActionItem {
-  kind: "action";
-  id: "download-vocabulary" | "view-favorites";
-  label: string;
-}
-
-type SettingItem = ConfigItem | BindingItem | ActionItem;
 
 let onReturnToPreviousSession: (() => void) | undefined;
 let settings = loadSettings();
-let settingItems = createSettingItems();
+let settingItems = createSettingItems(settings.interfaceLanguage);
 let selectedIndex = 0;
 let selectedBindingSlot: BindingSlot = 0;
 let isEditing = false;
@@ -68,7 +54,7 @@ let isReshuffleArmed = false;
 export function startSettingSession(options: StartSettingSessionOptions = {}) {
   onReturnToPreviousSession = options.onReturn;
   settings = loadSettings();
-  settingItems = createSettingItems();
+  settingItems = createSettingItems(settings.interfaceLanguage);
   selectedIndex = Math.min(
     Math.max(options.selectedIndex ?? 0, 0),
     Math.max(settingItems.length - 1, 0)
@@ -495,82 +481,6 @@ function render() {
     editError,
     isReshuffleArmed,
   });
-}
-
-function createSettingItems(language: InterfaceLanguage = settings.interfaceLanguage): SettingItem[] {
-  const vocabularyBookIds = listVocabularyBooks().map((book) => book.id);
-  const labels = getSettingLabels(language);
-
-  return [
-    { kind: "setting", key: "studyGroupEnabled", label: labels.groupVocabulary, options: [false, true] },
-    { kind: "setting", key: "workspaceSize", label: labels.pageSize, options: WORKSPACE_SIZES, acceptsNumber: true },
-    { kind: "setting", key: "dailyWordCount", label: labels.groupSize, options: STUDY_GROUP_SIZES, acceptsNumber: true },
-    { kind: "setting", key: "navigationLoop", label: labels.navigationLoop, options: [false, true] },
-    { kind: "setting", key: "interfaceLanguage", label: labels.interfaceLanguage, options: INTERFACE_LANGUAGES },
-    { kind: "setting", key: "noteMode", label: labels.notes, options: NOTE_MODES },
-    { kind: "setting", key: "studyOrder", label: labels.studyOrder, options: STUDY_ORDERS },
-    { kind: "setting", key: "activeVocabularyBook", label: labels.vocabularyBook, options: vocabularyBookIds },
-    { kind: "action", id: "view-favorites", label: language === "chinese" ? "查看收藏" : "View Favorites" },
-    { kind: "action", id: "download-vocabulary", label: labels.downloadVocabulary },
-    { kind: "setting", key: "theme", label: labels.theme, options: AVAILABLE_THEMES },
-    { kind: "binding", key: "previous", label: labels.previousPage },
-    { kind: "binding", key: "next", label: labels.nextPage },
-    { kind: "binding", key: "previousGroup", label: labels.previousGroup },
-    { kind: "binding", key: "nextGroup", label: labels.nextGroup },
-    { kind: "binding", key: "repeat", label: labels.repeatNavigation },
-    { kind: "binding", key: "switchDisplayMode", label: labels.switchDisplay },
-    { kind: "binding", key: "startQuiz", label: labels.startQuiz },
-    { kind: "binding", key: "editNote", label: labels.editNote },
-    { kind: "binding", key: "toggleHelp", label: labels.toggleHelp },
-  ];
-}
-
-function getSettingLabels(language: InterfaceLanguage) {
-  if (language === "chinese") {
-    return {
-      groupVocabulary: "单词分组",
-      pageSize: "每页数量",
-      groupSize: "分组大小",
-      navigationLoop: "翻页循环",
-      interfaceLanguage: "界面语言",
-      notes: "备注",
-      studyOrder: "学习顺序",
-      vocabularyBook: "当前词书",
-      downloadVocabulary: "下载或导入词书",
-      theme: "伪装主题",
-      previousPage: "上一页",
-      nextPage: "下一页",
-      previousGroup: "上一组",
-      nextGroup: "下一组",
-      repeatNavigation: "重复翻页",
-      switchDisplay: "切换单词显示",
-      startQuiz: "开始组内测试",
-      editNote: "编辑备注",
-      toggleHelp: "打开帮助",
-    };
-  }
-
-  return {
-    groupVocabulary: "Group Vocabulary",
-    pageSize: "Page Size",
-    groupSize: "Group Size",
-    navigationLoop: "Navigation Loop",
-    interfaceLanguage: "Interface Language",
-    notes: "Notes",
-    studyOrder: "Study Order",
-    vocabularyBook: "Vocabulary Book",
-    downloadVocabulary: "Download Vocabulary",
-    theme: "Theme",
-    previousPage: "Previous Page",
-    nextPage: "Next Page",
-    previousGroup: "Previous Group",
-    nextGroup: "Next Group",
-    repeatNavigation: "Repeat Navigation",
-    switchDisplay: "Switch Display",
-    startQuiz: "Start Group Quiz",
-    editNote: "Edit Notes",
-    toggleHelp: "Toggle Help",
-  };
 }
 
 function openVocabularyDownloadSession() {

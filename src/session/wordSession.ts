@@ -23,6 +23,7 @@ import { loadSettings } from "../services/settingsLoader.js";
 import type { NoteMode } from "../models/settings.js";
 import { startSettingSession } from "./settingSession.js";
 import { startGroupQuizSession } from "./groupQuizSession.js";
+import { normalizeSettingBinding, parseTerminalInputs } from "./settingFormInput.js";
 
 type LastNavigation = "next" | "previous";
 type NoteState =
@@ -52,44 +53,13 @@ export function startWordSession() {
 }
 
 function handleKeyPress(key: string) {
-  for (const input of parseInputs(key.toString())) {
+  for (const input of parseTerminalInputs(key.toString())) {
     const shouldContinue = handleInput(input);
 
     if (!shouldContinue) {
       return;
     }
   }
-}
-
-function parseInputs(input: string): string[] {
-  const inputs: string[] = [];
-  let index = 0;
-
-  while (index < input.length) {
-    const current = input[index];
-    const next = input[index + 1];
-    const third = input[index + 2];
-
-    if (current === "\u001b" && next === "[" && third) {
-      inputs.push(`${current}${next}${third}`);
-      index += 3;
-      continue;
-    }
-
-    if (current === "\r" && next === "\n") {
-      inputs.push("\r");
-      index += 2;
-      continue;
-    }
-
-    if (current) {
-      inputs.push(current);
-    }
-
-    index += 1;
-  }
-
-  return inputs;
 }
 
 function handleInput(input: string): boolean {
@@ -118,7 +88,7 @@ function handleInput(input: string): boolean {
     return false;
   }
 
-  const binding = normalizeBindingInput(input);
+  const binding = normalizeSettingBinding(input);
 
   if (matchesBinding(binding, "previous")) {
     previousWord();
@@ -381,24 +351,6 @@ function openGroupQuiz() {
       startWordSession();
     },
   });
-}
-
-function normalizeBindingInput(input: string): string | undefined {
-  const specialBindings: Record<string, string> = {
-    "\u001b[A": "arrow-up",
-    "\u001b[B": "arrow-down",
-    "\u001b[C": "arrow-right",
-    "\u001b[D": "arrow-left",
-    "\t": "tab",
-    " ": "space",
-    "？": "?",
-  };
-
-  if (specialBindings[input]) {
-    return specialBindings[input];
-  }
-
-  return /^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined;
 }
 
 function matchesBinding(binding: string | undefined, action: keyof typeof keyBindings): boolean {

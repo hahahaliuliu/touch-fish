@@ -41,6 +41,7 @@ import {
 } from "../ui/readMiniRenderer.js";
 import { startReadSettingSession } from "./readSettingSession.js";
 import { startReadMiniHostSession } from "./readMiniHostSession.js";
+import { normalizeSettingBinding } from "./settingFormInput.js";
 
 let book: ReadingBook;
 let pages = paginateReadingText("", 20, 1);
@@ -222,17 +223,7 @@ function handleInput(input: string): boolean {
 }
 
 function normalizeBindingInput(input: string): string | undefined {
-  const specialBindings: Record<string, string> = {
-    "\u001b[A": "arrow-up",
-    "\u001b[B": "arrow-down",
-    "\u001b[C": "arrow-right",
-    "\u001b[D": "arrow-left",
-    " ": "space",
-  };
-
-  return getReadMouseBinding(input)
-    ?? specialBindings[input]
-    ?? (/^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined);
+  return getReadMouseBinding(input) ?? normalizeSettingBinding(input);
 }
 
 function matchesBinding(binding: string | undefined, action: keyof ReadKeyBindings): boolean {

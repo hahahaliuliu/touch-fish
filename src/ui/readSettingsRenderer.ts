@@ -1,5 +1,33 @@
 import type { ReadBindingAction, ReadingBookSummary, ReadMouseWheelMode, ReadSettings } from "../models/reading.js";
-import type { InterfaceLanguage, ThemeName } from "../models/settings.js";
+import type { InterfaceLanguage } from "../models/settings.js";
+import {
+  CURRENT_BOOK_ITEM_INDEX,
+  IMPORT_ITEM_INDEX,
+  INTERFACE_LANGUAGES,
+  LANGUAGE_ITEM_INDEX,
+  LINE_ITEM_INDEX,
+  MAIN_BINDING_ACTIONS,
+  MAIN_BINDING_START_INDEX,
+  MINI_COLUMNS_ITEM_INDEX,
+  MINI_FONT_ITEM_INDEX,
+  MINI_MOUSE_ITEM_INDEX,
+  MINI_MOUSE_MODES,
+  MINI_ROWS_ITEM_INDEX,
+  MINI_SCROLL_STEP_ITEM_INDEX,
+  MINI_WINDOW_BINDING_ITEM_INDEX,
+  MINI_WINDOW_ITEM_INDEX,
+  SECTION_ITEM_INDEX,
+  THEME_ITEM_INDEX,
+  THEMES,
+  WIDTH_ITEM_INDEX,
+  WIDTH_OPTIONS,
+  LINE_OPTIONS,
+  SECTION_OPTIONS,
+  MINI_COLUMN_OPTIONS,
+  MINI_ROW_OPTIONS,
+  MINI_FONT_OPTIONS,
+  MINI_SCROLL_STEP_OPTIONS,
+} from "../session/readSettingLayout.js";
 import {
   BINDING_SETTING_COLUMNS,
   formatSettingColumns,
@@ -20,40 +48,6 @@ export interface RenderReadSettingsOptions {
   statusMessage: string;
   miniModeActive: boolean;
 }
-
-const WIDTH_OPTIONS: Array<number | "custom"> = [0, 30, 50, "custom"];
-const LINE_OPTIONS: Array<number | "custom"> = [5, 10, 15, "custom"];
-const SECTION_OPTIONS: Array<number | "custom"> = [0, 2, 3, 5, "custom"];
-const MINI_COLUMN_OPTIONS: Array<number | "custom"> = [48, 64, 80, "custom"];
-const MINI_ROW_OPTIONS: Array<number | "custom"> = [16, 22, 30, "custom"];
-const MINI_FONT_OPTIONS: Array<number | "custom"> = [6, 8, 10, "custom"];
-const MINI_MOUSE_MODES: readonly ReadMouseWheelMode[] = ["page", "scroll"];
-const MINI_SCROLL_STEP_OPTIONS: Array<number | "custom"> = [1, 2, 3, 5, "custom"];
-const INTERFACE_LANGUAGES: readonly InterfaceLanguage[] = ["english", "chinese"];
-const THEMES: readonly ThemeName[] = ["build-log", "backend-log", "git"];
-const MAIN_BINDING_ACTIONS: ReadBindingAction[] = [
-  "previousPage",
-  "nextPage",
-  "previousChapter",
-  "nextChapter",
-  "repeat",
-  "toggleHelp",
-];
-const WIDTH_ITEM_INDEX = 0;
-const LINE_ITEM_INDEX = 1;
-const SECTION_ITEM_INDEX = 2;
-const LANGUAGE_ITEM_INDEX = 3;
-const CURRENT_BOOK_ITEM_INDEX = 4;
-const IMPORT_ITEM_INDEX = 5;
-const THEME_ITEM_INDEX = 6;
-const MAIN_BINDING_START_INDEX = 7;
-const MINI_WINDOW_ITEM_INDEX = 13;
-const MINI_COLUMNS_ITEM_INDEX = 14;
-const MINI_ROWS_ITEM_INDEX = 15;
-const MINI_FONT_ITEM_INDEX = 16;
-const MINI_MOUSE_ITEM_INDEX = 17;
-const MINI_SCROLL_STEP_ITEM_INDEX = 18;
-const MINI_WINDOW_BINDING_ITEM_INDEX = 19;
 
 export function renderReadSettings(options: RenderReadSettingsOptions) {
   const {
