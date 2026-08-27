@@ -13,48 +13,75 @@ import {
 import { listVocabularyBooks } from "../services/vocabularyLoader.js";
 import { renderVocabularyDownloadSession } from "../ui/vocabularyDownloadRenderer.js";
 import { clearTerminalForExit } from "../ui/terminalScreen.js";
+import { parseTerminalInputs } from "./settingFormInput.js";
 
 interface StartVocabularyDownloadSessionOptions {
   onReturn: () => void;
 }
 
-let onReturnToSettings: (() => void) | undefined;
-let catalogBooks: DownloadableVocabularyBook[] = [];
-let books: ManagedVocabularyBook[] = [];
-let installedBookIds = new Set<string>();
-let selectedIndex = 0;
-let isLoading = true;
-let isDownloading = false;
-let isConfirmingUninstall = false;
-let isImporting = false;
-let importPath = "";
-let message = "";
-let interfaceLanguage: InterfaceLanguage = "english";
+interface VocabularyDownloadState {
+  onReturnToSettings: (() => void) | undefined;
+  catalogBooks: DownloadableVocabularyBook[];
+  books: ManagedVocabularyBook[];
+  installedBookIds: Set<string>;
+  selectedIndex: number;
+  isLoading: boolean;
+  isDownloading: boolean;
+  isConfirmingUninstall: boolean;
+  isImporting: boolean;
+  importPath: string;
+  message: string;
+  interfaceLanguage: InterfaceLanguage;
+}
+
+function createVocabularyDownloadState(
+  options: StartVocabularyDownloadSessionOptions
+): VocabularyDownloadState {
+  return {
+    onReturnToSettings: options.onReturn,
+    catalogBooks: [],
+    books: [],
+    installedBookIds: new Set<string>(),
+    selectedIndex: 0,
+    isLoading: true,
+    isDownloading: false,
+    isConfirmingUninstall: false,
+    isImporting: false,
+    importPath: "",
+    message: "",
+    interfaceLanguage: loadSettings().interfaceLanguage,
+  };
+}
+
+let state: VocabularyDownloadState = {
+  onReturnToSettings: undefined,
+  catalogBooks: [],
+  books: [],
+  installedBookIds: new Set<string>(),
+  selectedIndex: 0,
+  isLoading: true,
+  isDownloading: false,
+  isConfirmingUninstall: false,
+  isImporting: false,
+  importPath: "",
+  message: "",
+  interfaceLanguage: "english",
+};
 
 export async function startVocabularyDownloadSession(
   options: StartVocabularyDownloadSessionOptions
 ) {
-  onReturnToSettings = options.onReturn;
-  interfaceLanguage = loadSettings().interfaceLanguage;
-  catalogBooks = [];
-  books = [];
+  state = createVocabularyDownloadState(options);
   refreshBooks();
-  selectedIndex = 0;
-  isLoading = true;
-  isDownloading = false;
-  isConfirmingUninstall = false;
-  isImporting = false;
-  importPath = "";
-  message = "";
   render();
 
   try {
-    catalogBooks = await loadVocabularyCatalog();
+    state.catalogBooks = await loadVocabularyCatalog();
     refreshBooks();
   } catch (error) {
-    message = formatError(error);
+    state.message = formatError(error);
   } finally {
-    isLoading = false;
+    state.isLoading = false;
     render();
   }
 
@@ -67,13 +94,13 @@ export async function startVocabularyDownloadSession(
 }
 
 function handleKeyPress(key: string) {
-  for (const input of parseInputs(key.toString())) {
+  for (const input of parseTerminalInputs(key.toString())) {
     if (input === "\u0003") {
       quit();
       return;
     }
 
-    if (isImporting) {
+    if (state.isImporting) {
       handleImportInput(input);
       return;
     }
@@ -83,9 +110,9 @@ function handleKeyPress(key: string) {
       return;
     }
 
-    if (isConfirmingUninstall && input === "\u001b") {
-      isConfirmingUninstall = false;
-      message = getSessionText().uninstallCancelled;
+    if (state.isConfirmingUninstall && input === "\u001b") {
+      state.isConfirmingUninstall = false;
+      state.message = getSessionText().uninstallCancelled;
       render();
       return;
     }
@@ -95,11 +122,11 @@ function handleKeyPress(key: string) {
       return;
     }
 
-    if (isDownloading) {
+    if (state.isDownloading) {
       return;
     }
 
-    if (isConfirmingUninstall) {
+    if (state.isConfirmingUninstall) {
       if (input === "y" || input === "Y") {
         void uninstallSelectedBook();
       }
@@ -122,96 +149,66 @@ function handleKeyPress(key: string) {
   }
 }
 
-function parseInputs(input: string): string[] {
-  const inputs: string[] = [];
-  let index = 0;
-
-  while (index < input.length) {
-    const current = input[index];
-    const next = input[index + 1];
-    const third = input[index + 2];
-
-    if (current === "\r" && next === "\n") {
-      inputs.push("\r");
-      index += 2;
-      continue;
-    }
-
-    if (current === "\u001b" && next === "[" && third) {
-      inputs.push(`${current}${next}${third}`);
-      index += 3;
-      continue;
-    }
-
-    if (current) {
-      inputs.push(current);
-    }
-    index += 1;
-  }
-
-  return inputs;
-}
-
 function move(direction: -1 | 1) {
-  if (isConfirmingUninstall) {
+  if (state.isConfirmingUninstall) {
     return;
   }
 
-  const itemCount = books.length + 1;
-  selectedIndex = (selectedIndex + direction + itemCount) % itemCount;
-  message = "";
+  const itemCount = state.books.length + 1;
+  state.selectedIndex = (state.selectedIndex + direction + itemCount) % itemCount;
+  state.message = "";
   render();
 }
 
 async function activateSelectedBook() {
   if (isImportSelected()) {
-    isImporting = true;
-    importPath = "";
-    message = "";
+    state.isImporting = true;
+    state.importPath = "";
+    state.message = "";
     render();
     return;
   }
 
-  const selectedBook = books[selectedIndex];
+  const selectedBook = state.books[state.selectedIndex];
 
   if (!selectedBook) {
     return;
   }
 
-  if (installedBookIds.has(selectedBook.id)) {
-    isConfirmingUninstall = true;
-    message = "";
+  if (state.installedBookIds.has(selectedBook.id)) {
+    state.isConfirmingUninstall = true;
+    state.message = "";
     render();
     return;
   }
 
   if (selectedBook.availability === "coming-soon") {
-    message = getSessionText().comingSoon(selectedBook.name);
+    state.message = getSessionText().comingSoon(selectedBook.name);
     render();
     return;
   }
 
-  isDownloading = true;
-  message = "";
+  state.isDownloading = true;
+  state.message = "";
   render();
 
   try {
     await downloadVocabularyBook(selectedBook);
     refreshBooks();
-    message = getSessionText().installed(selectedBook.name);
+    state.message = getSessionText().installed(selectedBook.name);
   } catch (error) {
-    message = formatError(error);
+    state.message = formatError(error);
   } finally {
-    isDownloading = false;
+    state.isDownloading = false;
     render();
   }
 }
 
 function handleImportInput(input: string) {
   if (input === "\u001b") {
-    isImporting = false;
-    importPath = "";
-    message = getSessionText().importCancelled;
+    state.isImporting = false;
+    state.importPath = "";
+    state.message = getSessionText().importCancelled;
     render();
     return;
   }
@@ -222,37 +219,37 @@ function handleImportInput(input: string) {
   }
 
   if (input === "\b" || input === "\u007f") {
-    importPath = importPath.slice(0, -1);
+    state.importPath = state.importPath.slice(0, -1);
     render();
     return;
   }
 
   if (/^[^\u0000-\u001f\u007f]+$/.test(input)) {
-    importPath += input;
+    state.importPath += input;
     render();
   }
 }
 
 async function importSelectedFile() {
   try {
-    const importedBook = await importVocabularyBook(importPath);
+    const importedBook = await importVocabularyBook(state.importPath);
     refreshBooks();
-    selectedIndex = books.findIndex((book) => book.id === importedBook.id);
-    message = getSessionText().imported(importedBook.name);
+    state.selectedIndex = state.books.findIndex((book) => book.id === importedBook.id);
+    state.message = getSessionText().imported(importedBook.name);
   } catch (error) {
-    message = formatError(error);
+    state.message = formatError(error);
   } finally {
-    isImporting = false;
-    importPath = "";
+    state.isImporting = false;
+    state.importPath = "";
     render();
   }
 }
 
 async function uninstallSelectedBook() {
-  const selectedBook = books[selectedIndex];
+  const selectedBook = state.books[state.selectedIndex];
 
-  if (!selectedBook || !installedBookIds.has(selectedBook.id)) {
-    isConfirmingUninstall = false;
+  if (!selectedBook || !state.installedBookIds.has(selectedBook.id)) {
+    state.isConfirmingUninstall = false;
     return;
   }
 
@@ -260,19 +257,19 @@ async function uninstallSelectedBook() {
     const removedBook = uninstallVocabularyBook(selectedBook.id);
     refreshBooks();
     updateActiveBookAfterUninstall(removedBook.id);
-    message = getSessionText().uninstalled(removedBook.name);
+    state.message = getSessionText().uninstalled(removedBook.name);
   } catch (error) {
-    message = formatError(error);
+    state.message = formatError(error);
   } finally {
-    isConfirmingUninstall = false;
+    state.isConfirmingUninstall = false;
     render();
   }
 }
 
 function refreshBooks() {
   const installedBooks = listVocabularyBooks();
-  installedBookIds = new Set(installedBooks.map((book) => book.id));
-  const catalogById = new Map(catalogBooks.map((book) => [book.id, book]));
+  state.installedBookIds = new Set(installedBooks.map((book) => book.id));
+  const catalogById = new Map(state.catalogBooks.map((book) => [book.id, book]));
   const installed = installedBooks.map((book) => {
     const catalogBook = catalogById.get(book.id);
 
@@ -287,19 +284,19 @@ function refreshBooks() {
       source: "local" as const,
     };
   });
-  const downloadable = catalogBooks
-    .filter((book) => book.availability === "available" && !installedBookIds.has(book.id))
+  const downloadable = state.catalogBooks
+    .filter((book) => book.availability === "available" && !state.installedBookIds.has(book.id))
     .map((book) => ({ ...book, source: "catalog" as const }));
-  const comingSoon = catalogBooks
+  const comingSoon = state.catalogBooks
     .filter((book) => book.availability === "coming-soon")
     .map((book) => ({ ...book, source: "catalog" as const }));
 
-  books = [...installed, ...downloadable, ...comingSoon];
-  selectedIndex = Math.min(selectedIndex, Math.max(books.length - 1, 0));
+  state.books = [...installed, ...downloadable, ...comingSoon];
+  state.selectedIndex = Math.min(state.selectedIndex, Math.max(state.books.length - 1, 0));
 }
 
 function isImportSelected(): boolean {
-  return selectedIndex === books.length;
+  return state.selectedIndex === state.books.length;
 }
 
 function updateActiveBookAfterUninstall(removedBookId: string) {
@@ -317,22 +314,22 @@ function updateActiveBookAfterUninstall(removedBookId: string) {
 
 function render() {
   renderVocabularyDownloadSession({
-    books,
-    installedBookIds,
-    selectedIndex,
-    isLoading,
-    isDownloading,
-    isConfirmingUninstall,
-    isImporting,
-    importPath,
-    message,
-    interfaceLanguage,
+    books: state.books,
+    installedBookIds: state.installedBookIds,
+    selectedIndex: state.selectedIndex,
+    isLoading: state.isLoading,
+    isDownloading: state.isDownloading,
+    isConfirmingUninstall: state.isConfirmingUninstall,
+    isImporting: state.isImporting,
+    importPath: state.importPath,
+    message: state.message,
+    interfaceLanguage: state.interfaceLanguage,
   });
 }
 
 function returnToSettings() {
-  const onReturn = onReturnToSettings;
-  onReturnToSettings = undefined;
+  const onReturn = state.onReturnToSettings;
+  state.onReturnToSettings = undefined;
   process.stdin.off("data", handleKeyPress);
   onReturn?.();
 }
@@ -347,12 +344,12 @@ function quit() {
 }
 
 function formatError(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-  return `${getSessionText().warningPrefix}${message}`;
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  return `${getSessionText().warningPrefix}${errorMessage}`;
 }
 
 function getSessionText() {
-  if (interfaceLanguage === "chinese") {
+  if (state.interfaceLanguage === "chinese") {
     return {
       uninstallCancelled: "[INFO] 已取消卸载",
       comingSoon: (name: string) => `[INFO] ${name} 即将提供`,

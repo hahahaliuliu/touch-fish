@@ -41,23 +41,70 @@ import {
 
 type BindingSlot = 0 | 1;
 
-let books: ReadingBookSummary[] = [];
-let activeBookId: string | undefined;
-let settings: ReadSettings;
-let selectedIndex = 0;
-let selectedBindingSlot: BindingSlot = 0;
-let isEditing = false;
-let customInput = "";
-let numericInputTouched = false;
-let selectedNumericOption: number | "custom" | undefined;
-let isBindingCapture = false;
-let editError = "";
-let statusMessage = "";
-let onReturnToReading: ((bookId: string) => void) | undefined;
-let onOpenMiniMode: ((bookId: string) => void) | undefined;
-let onCloseMiniMode: ((bookId: string) => void) | undefined;
-let onToggleMiniWindow: (() => void) | undefined;
-let miniModeActive = false;
+interface ReadSettingState {
+  books: ReadingBookSummary[];
+  activeBookId: string | undefined;
+  settings: ReadSettings;
+  selectedIndex: number;
+  selectedBindingSlot: BindingSlot;
+  isEditing: boolean;
+  customInput: string;
+  numericInputTouched: boolean;
+  selectedNumericOption: number | "custom" | undefined;
+  isBindingCapture: boolean;
+  editError: string;
+  statusMessage: string;
+  onReturnToReading: ((bookId: string) => void) | undefined;
+  onOpenMiniMode: ((bookId: string) => void) | undefined;
+  onCloseMiniMode: ((bookId: string) => void) | undefined;
+  onToggleMiniWindow: (() => void) | undefined;
+  miniModeActive: boolean;
+}
+
+function createReadSettingState(options: StartReadSettingSessionOptions = {}): ReadSettingState {
+  const initialBooks = listReadingBooks();
+  const initialSettings = loadReadSettings();
+  return {
+    books: initialBooks,
+    activeBookId: loadReadState().activeBookId ?? initialBooks[0]?.id,
+    settings: initialSettings,
+    selectedIndex: Math.min(Math.max(options.selectedIndex ?? 0, 0), ITEM_COUNT - 1),
+    selectedBindingSlot: 0,
+    isEditing: false,
+    customInput: "",
+    numericInputTouched: false,
+    selectedNumericOption: undefined,
+    isBindingCapture: false,
+    editError: "",
+    statusMessage: options.message ?? "",
+    onReturnToReading: options.onReturn,
+    onOpenMiniMode: options.onOpenMiniMode,
+    onCloseMiniMode: options.onCloseMiniMode,
+    onToggleMiniWindow: options.onToggleMiniWindow,
+    miniModeActive: options.miniModeActive ?? false,
+  };
+}
+
+let state: ReadSettingState = {
+  books: [],
+  activeBookId: undefined,
+  settings: loadReadSettings(),
+  selectedIndex: 0,
+  selectedBindingSlot: 0,
+  isEditing: false,
+  customInput: "",
+  numericInputTouched: false,
+  selectedNumericOption: undefined,
+  isBindingCapture: false,
+  editError: "",
+  statusMessage: "",
+  onReturnToReading: undefined,
+  onOpenMiniMode: undefined,
+  onCloseMiniMode: undefined,
+  onToggleMiniWindow: undefined,
+  miniModeActive: false,
+};
+
 const inputParser = new ReadInputParser();
 
 interface StartReadSettingSessionOptions {
@@ -71,18 +118,7 @@ interface StartReadSettingSessionOptions {
 }
 
 export function startReadSettingSession(options: StartReadSettingSessionOptions = {}) {
-  onReturnToReading = options.onReturn;
-  onOpenMiniMode = options.onOpenMiniMode;
-  onCloseMiniMode = options.onCloseMiniMode;
-  onToggleMiniWindow = options.onToggleMiniWindow;
-  miniModeActive = options.miniModeActive ?? false;
-  books = listReadingBooks();
-  activeBookId = loadReadState().activeBookId ?? books[0]?.id;
-  settings = loadReadSettings();
-  selectedIndex = Math.min(Math.max(options.selectedIndex ?? 0, 0), ITEM_COUNT - 1);
-  selectedBindingSlot = 0;
-  statusMessage = options.message ?? "";
-  resetEditState();
+  state = createReadSettingState(options);
   inputParser.reset();
   process.stdout.on("resize", handleTerminalResize);
   render();
@@ -114,14 +150,14 @@ function handleInput(input: string): boolean {
     return false;
   }
 
-  if (input === "\u000f" && activeBookId) {
+  if (input === "\u000f" && state.activeBookId) {
     restoreSavedValues();
     returnToReading();
     return false;
   }
 
   if (input === "\u001b") {
-    if (isEditing || isBindingCapture) {
+    if (state.isEditing || state.isBindingCapture) {
       cancelEdit();
       return true;
     }
@@ -131,23 +167,23 @@ function handleInput(input: string): boolean {
   }
 
   if (input === "\r" || input === "\n") {
-    if (!isBindingCapture) {
+    if (!state.isBindingCapture) {
       confirmOrStartEdit();
     }
     return true;
   }
 
-  if (isBindingCapture) {
+  if (state.isBindingCapture) {
     captureBinding(input);
     return true;
   }
 
   const binding = normalizeBindingInput(input);
-  if (binding && settings.keyBindings.toggleMiniWindow.includes(binding)) {
+  if (binding && state.settings.keyBindings.toggleMiniWindow.includes(binding)) {
     restoreSavedValues();
     const keepSettingsOpen = handleReadSettingsMiniWindowShortcut(
-      miniModeActive,
-      onToggleMiniWindow,
+      state.miniModeActive,
+      state.onToggleMiniWindow,
       toggleMiniWindowMode
     );
     if (keepSettingsOpen) {
@@ -156,18 +192,18 @@ function handleInput(input: string): boolean {
     return keepSettingsOpen;
   }
 
-  if (isEditing && selectedNumericOption === "custom" && /^\d$/.test(input)) {
-    customInput = numericInputTouched ? `${customInput}${input}` : input;
-    numericInputTouched = true;
-    editError = "";
+  if (state.isEditing && state.selectedNumericOption === "custom" && /^\d$/.test(input)) {
+    state.customInput = state.numericInputTouched ? `${state.customInput}${input}` : input;
+    state.numericInputTouched = true;
+    state.editError = "";
     render();
     return true;
   }
 
-  if (isEditing && selectedNumericOption === "custom" && isBackspace(input)) {
-    customInput = numericInputTouched ? customInput.slice(0, -1) : "";
-    numericInputTouched = true;
-    editError = "";
+  if (state.isEditing && state.selectedNumericOption === "custom" && isBackspace(input)) {
+    state.customInput = state.numericInputTouched ? state.customInput.slice(0, -1) : "";
+    state.numericInputTouched = true;
+    state.editError = "";
     render();
     return true;
   }
@@ -210,48 +246,48 @@ export function handleReadSettingsMiniWindowShortcut(
 }
 
 function moveSelection(direction: -1 | 1) {
-  if (isEditing || isBindingCapture) {
+  if (state.isEditing || state.isBindingCapture) {
     return;
   }
 
-  selectedIndex = (selectedIndex + direction + ITEM_COUNT) % ITEM_COUNT;
-  selectedBindingSlot = 0;
-  statusMessage = "";
+  state.selectedIndex = (state.selectedIndex + direction + ITEM_COUNT) % ITEM_COUNT;
+  state.selectedBindingSlot = 0;
+  state.statusMessage = "";
   render();
 }
 
 function confirmOrStartEdit() {
-  if (selectedIndex === IMPORT_ITEM_INDEX) {
+  if (state.selectedIndex === IMPORT_ITEM_INDEX) {
     openReadingImport();
     return;
   }
 
-  if (selectedIndex === MINI_WINDOW_ITEM_INDEX) {
+  if (state.selectedIndex === MINI_WINDOW_ITEM_INDEX) {
     toggleMiniWindowMode();
     return;
   }
 
   if (isBindingItemSelected()) {
-    isBindingCapture = true;
-    editError = "";
+    state.isBindingCapture = true;
+    state.editError = "";
     render();
     return;
   }
 
-  if (!isEditing) {
-    if (selectedIndex === CURRENT_BOOK_ITEM_INDEX && books.length === 0) {
+  if (!state.isEditing) {
+    if (state.selectedIndex === CURRENT_BOOK_ITEM_INDEX && state.books.length === 0) {
       return;
     }
 
-    isEditing = true;
-    editError = "";
+    state.isEditing = true;
+    state.editError = "";
 
     if (isNumericSettingSelected()) {
       const options = getSelectedNumericOptions();
       const currentValue = getSelectedNumericValue();
-      selectedNumericOption = options.includes(currentValue) ? currentValue : "custom";
-      customInput = String(currentValue);
-      numericInputTouched = false;
+      state.selectedNumericOption = options.includes(currentValue) ? currentValue : "custom";
+      state.customInput = String(currentValue);
+      state.numericInputTouched = false;
     }
 
     render();
@@ -262,43 +298,43 @@ function confirmOrStartEdit() {
 }
 
 function changeCurrentValue(direction: -1 | 1) {
-  if (isBindingItemSelected() && !isBindingCapture) {
-    selectedBindingSlot = selectedBindingSlot === 0 ? 1 : 0;
+  if (isBindingItemSelected() && !state.isBindingCapture) {
+    state.selectedBindingSlot = state.selectedBindingSlot === 0 ? 1 : 0;
     render();
     return;
   }
 
-  if (!isEditing) {
+  if (!state.isEditing) {
     return;
   }
 
-  if (selectedIndex === CURRENT_BOOK_ITEM_INDEX) {
-    const currentIndex = Math.max(0, books.findIndex((book) => book.id === activeBookId));
-    const nextIndex = (currentIndex + direction + books.length) % books.length;
-    activeBookId = books[nextIndex]?.id;
+  if (state.selectedIndex === CURRENT_BOOK_ITEM_INDEX) {
+    const currentIndex = Math.max(0, state.books.findIndex((book) => book.id === state.activeBookId));
+    const nextIndex = (currentIndex + direction + state.books.length) % state.books.length;
+    state.activeBookId = state.books[nextIndex]?.id;
     render();
     return;
   }
 
-  if (selectedIndex === LANGUAGE_ITEM_INDEX) {
-    settings = {
-      ...settings,
-      interfaceLanguage: getNextValue(settings.interfaceLanguage, INTERFACE_LANGUAGES, direction),
+  if (state.selectedIndex === LANGUAGE_ITEM_INDEX) {
+    state.settings = {
+      ...state.settings,
+      interfaceLanguage: getNextValue(state.settings.interfaceLanguage, INTERFACE_LANGUAGES, direction),
     };
     render();
     return;
   }
 
-  if (selectedIndex === THEME_ITEM_INDEX) {
-    settings = { ...settings, theme: getNextValue(settings.theme, THEMES, direction) };
+  if (state.selectedIndex === THEME_ITEM_INDEX) {
+    state.settings = { ...state.settings, theme: getNextValue(state.settings.theme, THEMES, direction) };
     render();
     return;
   }
 
-  if (selectedIndex === MINI_MOUSE_ITEM_INDEX) {
-    settings = {
-      ...settings,
-      miniWindowMouseMode: getNextValue(settings.miniWindowMouseMode, MINI_MOUSE_MODES, direction),
+  if (state.selectedIndex === MINI_MOUSE_ITEM_INDEX) {
+    state.settings = {
+      ...state.settings,
+      miniWindowMouseMode: getNextValue(state.settings.miniWindowMouseMode, MINI_MOUSE_MODES, direction),
     };
     render();
     return;
@@ -310,41 +346,41 @@ function changeCurrentValue(direction: -1 | 1) {
 function changeNumericValue(direction: -1 | 1) {
   const options = getSelectedNumericOptions();
   const currentValue = getSelectedNumericValue();
-  const currentOption = selectedNumericOption ?? (options.includes(currentValue) ? currentValue : "custom");
+  const currentOption = state.selectedNumericOption ?? (options.includes(currentValue) ? currentValue : "custom");
   const currentIndex = options.indexOf(currentOption);
   const nextIndex = (currentIndex + direction + options.length) % options.length;
   const nextValue = options[nextIndex]!;
 
-  selectedNumericOption = nextValue;
-  editError = "";
+  state.selectedNumericOption = nextValue;
+  state.editError = "";
   if (typeof nextValue === "number") {
-    customInput = String(nextValue);
-    numericInputTouched = false;
-    settings = applySelectedNumericValue(nextValue);
+    state.customInput = String(nextValue);
+    state.numericInputTouched = false;
+    state.settings = applySelectedNumericValue(nextValue);
   } else {
-    customInput = "";
-    numericInputTouched = true;
+    state.customInput = "";
+    state.numericInputTouched = true;
   }
   render();
 }
 
 function saveEdit() {
-  if (selectedIndex === CURRENT_BOOK_ITEM_INDEX) {
-    if (activeBookId) {
-      saveReadState({ activeBookId });
+  if (state.selectedIndex === CURRENT_BOOK_ITEM_INDEX) {
+    if (state.activeBookId) {
+      saveReadState({ activeBookId: state.activeBookId });
     }
-  } else if (selectedNumericOption === "custom") {
-    const numericValue = Number(customInput);
+  } else if (state.selectedNumericOption === "custom") {
+    const numericValue = Number(state.customInput);
     const validationError = getNumericValidationError(numericValue);
     if (validationError) {
-      editError = validationError;
+      state.editError = validationError;
       render();
       return;
     }
-    settings = applySelectedNumericValue(numericValue);
-    saveReadSettings(settings);
+    state.settings = applySelectedNumericValue(numericValue);
+    saveReadSettings(state.settings);
   } else {
-    saveReadSettings(settings);
+    saveReadSettings(state.settings);
   }
 
   resetEditState();
@@ -352,113 +388,113 @@ function saveEdit() {
 }
 
 function isNumericSettingSelected(): boolean {
-  return selectedIndex === WIDTH_ITEM_INDEX
-    || selectedIndex === LINE_ITEM_INDEX
-    || selectedIndex === SECTION_ITEM_INDEX
-    || selectedIndex === MINI_COLUMNS_ITEM_INDEX
-    || selectedIndex === MINI_ROWS_ITEM_INDEX
-    || selectedIndex === MINI_FONT_ITEM_INDEX
-    || selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX;
+  return state.selectedIndex === WIDTH_ITEM_INDEX
+    || state.selectedIndex === LINE_ITEM_INDEX
+    || state.selectedIndex === SECTION_ITEM_INDEX
+    || state.selectedIndex === MINI_COLUMNS_ITEM_INDEX
+    || state.selectedIndex === MINI_ROWS_ITEM_INDEX
+    || state.selectedIndex === MINI_FONT_ITEM_INDEX
+    || state.selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX;
 }
 
 function getSelectedNumericOptions(): Array<number | "custom"> {
-  if (selectedIndex === WIDTH_ITEM_INDEX) {
+  if (state.selectedIndex === WIDTH_ITEM_INDEX) {
     return WIDTH_OPTIONS;
   }
-  if (selectedIndex === SECTION_ITEM_INDEX) {
+  if (state.selectedIndex === SECTION_ITEM_INDEX) {
     return SECTION_OPTIONS;
   }
-  if (selectedIndex === MINI_COLUMNS_ITEM_INDEX) {
+  if (state.selectedIndex === MINI_COLUMNS_ITEM_INDEX) {
     return MINI_COLUMN_OPTIONS;
   }
-  if (selectedIndex === MINI_ROWS_ITEM_INDEX) {
+  if (state.selectedIndex === MINI_ROWS_ITEM_INDEX) {
     return MINI_ROW_OPTIONS;
   }
-  if (selectedIndex === MINI_FONT_ITEM_INDEX) {
+  if (state.selectedIndex === MINI_FONT_ITEM_INDEX) {
     return MINI_FONT_OPTIONS;
   }
-  if (selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX) {
+  if (state.selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX) {
     return MINI_SCROLL_STEP_OPTIONS;
   }
   return LINE_OPTIONS;
 }
 
 function getSelectedNumericValue(): number {
-  if (selectedIndex === WIDTH_ITEM_INDEX) {
-    return settings.contentWidth;
+  if (state.selectedIndex === WIDTH_ITEM_INDEX) {
+    return state.settings.contentWidth;
   }
-  if (selectedIndex === SECTION_ITEM_INDEX) {
-    return settings.chapterSectionCount;
+  if (state.selectedIndex === SECTION_ITEM_INDEX) {
+    return state.settings.chapterSectionCount;
   }
-  if (selectedIndex === MINI_COLUMNS_ITEM_INDEX) {
-    return settings.miniWindowColumns;
+  if (state.selectedIndex === MINI_COLUMNS_ITEM_INDEX) {
+    return state.settings.miniWindowColumns;
   }
-  if (selectedIndex === MINI_ROWS_ITEM_INDEX) {
-    return settings.miniWindowRows;
+  if (state.selectedIndex === MINI_ROWS_ITEM_INDEX) {
+    return state.settings.miniWindowRows;
   }
-  if (selectedIndex === MINI_FONT_ITEM_INDEX) {
-    return settings.miniWindowFontSize;
+  if (state.selectedIndex === MINI_FONT_ITEM_INDEX) {
+    return state.settings.miniWindowFontSize;
   }
-  if (selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX) {
-    return settings.miniWindowScrollStep;
+  if (state.selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX) {
+    return state.settings.miniWindowScrollStep;
   }
-  return settings.pageLineCount;
+  return state.settings.pageLineCount;
 }
 
 function applySelectedNumericValue(value: number): ReadSettings {
-  if (selectedIndex === WIDTH_ITEM_INDEX) {
-    return { ...settings, contentWidth: value };
+  if (state.selectedIndex === WIDTH_ITEM_INDEX) {
+    return { ...state.settings, contentWidth: value };
   }
-  if (selectedIndex === SECTION_ITEM_INDEX) {
-    return { ...settings, chapterSectionCount: value };
+  if (state.selectedIndex === SECTION_ITEM_INDEX) {
+    return { ...state.settings, chapterSectionCount: value };
   }
-  if (selectedIndex === MINI_COLUMNS_ITEM_INDEX) {
-    return { ...settings, miniWindowColumns: value };
+  if (state.selectedIndex === MINI_COLUMNS_ITEM_INDEX) {
+    return { ...state.settings, miniWindowColumns: value };
   }
-  if (selectedIndex === MINI_ROWS_ITEM_INDEX) {
-    return { ...settings, miniWindowRows: value };
+  if (state.selectedIndex === MINI_ROWS_ITEM_INDEX) {
+    return { ...state.settings, miniWindowRows: value };
   }
-  if (selectedIndex === MINI_FONT_ITEM_INDEX) {
-    return { ...settings, miniWindowFontSize: value };
+  if (state.selectedIndex === MINI_FONT_ITEM_INDEX) {
+    return { ...state.settings, miniWindowFontSize: value };
   }
-  if (selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX) {
-    return { ...settings, miniWindowScrollStep: value };
+  if (state.selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX) {
+    return { ...state.settings, miniWindowScrollStep: value };
   }
-  return { ...settings, pageLineCount: value };
+  return { ...state.settings, pageLineCount: value };
 }
 
 function getNumericValidationError(value: number): string {
-  if (selectedIndex === WIDTH_ITEM_INDEX) {
+  if (state.selectedIndex === WIDTH_ITEM_INDEX) {
     return Number.isInteger(value) && value >= 20
       ? ""
       : localize("Content width must be a whole number of at least 20", "正文宽度必须是大于等于 20 的整数");
   }
 
-  if (selectedIndex === SECTION_ITEM_INDEX) {
+  if (state.selectedIndex === SECTION_ITEM_INDEX) {
     return Number.isInteger(value) && value >= 2 && value <= 20
       ? ""
       : localize("Chapter sections must be a whole number from 2 to 20", "章节切分必须是 2 到 20 的整数");
   }
 
-  if (selectedIndex === MINI_COLUMNS_ITEM_INDEX) {
+  if (state.selectedIndex === MINI_COLUMNS_ITEM_INDEX) {
     return Number.isInteger(value) && value >= 20 && value <= 500
       ? ""
       : localize("Mini-window width must be a whole number from 20 to 500", "小窗口宽度必须是 20 到 500 的整数");
   }
 
-  if (selectedIndex === MINI_ROWS_ITEM_INDEX) {
+  if (state.selectedIndex === MINI_ROWS_ITEM_INDEX) {
     return Number.isInteger(value) && value >= 5 && value <= 200
       ? ""
       : localize("Mini-window height must be a whole number from 5 to 200", "小窗口高度必须是 5 到 200 的整数");
   }
 
-  if (selectedIndex === MINI_FONT_ITEM_INDEX) {
+  if (state.selectedIndex === MINI_FONT_ITEM_INDEX) {
     return Number.isInteger(value) && value >= 5 && value <= 72
       ? ""
       : localize("Mini-window font size must be a whole number from 5 to 72", "小窗口字体必须是 5 到 72 的整数");
   }
 
-  if (selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX) {
+  if (state.selectedIndex === MINI_SCROLL_STEP_ITEM_INDEX) {
     return Number.isInteger(value) && value >= 1 && value <= 100
       ? ""
       : localize("Scroll speed must be a whole number from 1 to 100", "滚动速率必须是 1 到 100 的整数");
@@ -475,34 +511,34 @@ function cancelEdit() {
 }
 
 function restoreSavedValues() {
-  settings = loadReadSettings();
-  activeBookId = loadReadState().activeBookId ?? books[0]?.id;
+  state.settings = loadReadSettings();
+  state.activeBookId = loadReadState().activeBookId ?? state.books[0]?.id;
   resetEditState();
 }
 
 function resetEditState() {
-  isEditing = false;
-  isBindingCapture = false;
-  customInput = "";
-  numericInputTouched = false;
-  selectedNumericOption = undefined;
-  editError = "";
+  state.isEditing = false;
+  state.isBindingCapture = false;
+  state.customInput = "";
+  state.numericInputTouched = false;
+  state.selectedNumericOption = undefined;
+  state.editError = "";
 }
 
 function render() {
   renderReadSettings({
-    books,
-    activeBookId,
-    settings,
-    selectedIndex,
-    selectedBindingSlot,
-    isEditing,
-    customInput,
-    selectedNumericOption,
-    isBindingCapture,
-    editError,
-    statusMessage,
-    miniModeActive,
+    books: state.books,
+    activeBookId: state.activeBookId,
+    settings: state.settings,
+    selectedIndex: state.selectedIndex,
+    selectedBindingSlot: state.selectedBindingSlot,
+    isEditing: state.isEditing,
+    customInput: state.customInput,
+    selectedNumericOption: state.selectedNumericOption,
+    isBindingCapture: state.isBindingCapture,
+    editError: state.editError,
+    statusMessage: state.statusMessage,
+    miniModeActive: state.miniModeActive,
   });
 }
 
@@ -514,7 +550,7 @@ function captureBinding(input: string) {
 
   const binding = normalizeBindingInput(input);
   if (!binding) {
-    editError = localize(
+    state.editError = localize(
       "Use one English key, symbol, Space, Tab, or an arrow key",
       "请按英文键、符号、空格、Tab 或方向键"
     );
@@ -531,15 +567,15 @@ function saveBinding(binding: string) {
     return;
   }
 
-  const keyBindings = cloneKeyBindings(settings.keyBindings);
+  const keyBindings = cloneKeyBindings(state.settings.keyBindings);
   if (binding) {
     BINDING_ACTIONS.forEach((key) => {
       keyBindings[key] = keyBindings[key].map((value) => value === binding ? "" : value) as [string, string];
     });
   }
-  keyBindings[action][selectedBindingSlot] = binding;
-  settings = { ...settings, keyBindings };
-  saveReadSettings(settings);
+  keyBindings[action][state.selectedBindingSlot] = binding;
+  state.settings = { ...state.settings, keyBindings };
+  saveReadSettings(state.settings);
   resetEditState();
   render();
 }
@@ -557,29 +593,29 @@ function normalizeBindingInput(input: string): string | undefined {
 }
 
 function isBindingItemSelected(): boolean {
-  return (selectedIndex >= MAIN_BINDING_START_INDEX
-      && selectedIndex < MAIN_BINDING_START_INDEX + MAIN_BINDING_ACTIONS.length)
-    || selectedIndex === MINI_WINDOW_BINDING_ITEM_INDEX;
+  return (state.selectedIndex >= MAIN_BINDING_START_INDEX
+      && state.selectedIndex < MAIN_BINDING_START_INDEX + MAIN_BINDING_ACTIONS.length)
+    || state.selectedIndex === MINI_WINDOW_BINDING_ITEM_INDEX;
 }
 
 function getSelectedBindingAction(): ReadBindingAction | undefined {
-  if (selectedIndex === MINI_WINDOW_BINDING_ITEM_INDEX) {
+  if (state.selectedIndex === MINI_WINDOW_BINDING_ITEM_INDEX) {
     return "toggleMiniWindow";
   }
-  return MAIN_BINDING_ACTIONS[selectedIndex - MAIN_BINDING_START_INDEX];
+  return MAIN_BINDING_ACTIONS[state.selectedIndex - MAIN_BINDING_START_INDEX];
 }
 
 function openReadingImport() {
-  const returnCallback = onReturnToReading;
-  const openMiniCallback = onOpenMiniMode;
-  const closeMiniCallback = onCloseMiniMode;
-  const toggleMiniCallback = onToggleMiniWindow;
-  const wasMiniModeActive = miniModeActive;
+  const returnCallback = state.onReturnToReading;
+  const openMiniCallback = state.onOpenMiniMode;
+  const closeMiniCallback = state.onCloseMiniMode;
+  const toggleMiniCallback = state.onToggleMiniWindow;
+  const wasMiniModeActive = state.miniModeActive;
   process.stdin.off("data", handleKeyPress);
   process.stdout.off("resize", handleTerminalResize);
   setReadMouseTracking(false);
   startReadingImportSession({
-    interfaceLanguage: settings.interfaceLanguage,
+    interfaceLanguage: state.settings.interfaceLanguage,
     onReturn: () => startReadSettingSession({
       ...(returnCallback ? { onReturn: returnCallback } : {}),
       ...(openMiniCallback ? { onOpenMiniMode: openMiniCallback } : {}),
@@ -592,7 +628,7 @@ function openReadingImport() {
 }
 
 function toggleMiniWindowMode() {
-  const selectedBookId = activeBookId;
+  const selectedBookId = state.activeBookId;
   if (!selectedBookId) {
     return;
   }
@@ -602,16 +638,16 @@ function toggleMiniWindowMode() {
   process.stdout.off("resize", handleTerminalResize);
   setReadMouseTracking(false);
 
-  if (miniModeActive) {
-    onCloseMiniMode?.(selectedBookId);
+  if (state.miniModeActive) {
+    state.onCloseMiniMode?.(selectedBookId);
     return;
   }
 
-  onOpenMiniMode?.(selectedBookId);
+  state.onOpenMiniMode?.(selectedBookId);
 }
 
 function localize(english: string, chinese: string): string {
-  return settings.interfaceLanguage === "chinese" ? chinese : english;
+  return state.settings.interfaceLanguage === "chinese" ? chinese : english;
 }
 
 function quit() {
@@ -627,7 +663,7 @@ function quit() {
 }
 
 function openReadingSession() {
-  const selectedBookId = activeBookId;
+  const selectedBookId = state.activeBookId;
   if (!selectedBookId) {
     return;
   }
@@ -640,11 +676,11 @@ function openReadingSession() {
 }
 
 function returnToReading() {
-  if (onReturnToReading && activeBookId) {
+  if (state.onReturnToReading && state.activeBookId) {
     process.stdin.off("data", handleKeyPress);
     process.stdout.off("resize", handleTerminalResize);
     setReadMouseTracking(false);
-    onReturnToReading(activeBookId);
+    state.onReturnToReading(state.activeBookId);
     return;
   }
 
@@ -652,7 +688,7 @@ function returnToReading() {
 }
 
 function returnToReadingOrQuit() {
-  if (onReturnToReading) {
+  if (state.onReturnToReading) {
     returnToReading();
     return;
   }

@@ -1,4 +1,5 @@
 import type { NoteMode, Settings } from "../models/settings.js";
+import type { FavoriteEntry } from "../services/favoriteService.js";
 import { loadSettings } from "../services/settingsLoader.js";
 import {
   loadFavoriteEntries,
@@ -11,6 +12,7 @@ import {
   type DisplayMode,
 } from "../ui/wordRenderer.js";
 import { createRandomOrder } from "../services/randomOrder.js";
+import { normalizeSettingBinding, parseTerminalInputs } from "./settingFormInput.js";
 
 type SelectionState =
   | { kind: "idle" }
@@ -21,30 +23,43 @@ interface FavoriteSessionOptions {
   onReturn?: () => void;
 }
 
-let settings: Settings;
-let entries = loadFavoriteEntries();
-let currentIndex = 0;
-let displayMode: DisplayMode;
-let noteMode: NoteMode;
-let selectionState: SelectionState = { kind: "idle" };
-let order: number[] = [];
-let onReturnToPreviousSession: (() => void) | undefined;
+interface FavoriteSessionState {
+  settings: Settings;
+  entries: FavoriteEntry[];
+  currentIndex: number;
+  displayMode: DisplayMode;
+  noteMode: NoteMode;
+  selectionState: SelectionState;
+  order: number[];
+  onReturnToPreviousSession: (() => void) | undefined;
+}
+
+function createFavoriteState(options: FavoriteSessionOptions = {}): FavoriteSessionState {
+  const settings = loadSettings();
+  const entries = loadFavoriteEntries();
+  return {
+    settings,
+    entries,
+    currentIndex: 0,
+    displayMode: settings.displayMode,
+    noteMode: settings.noteMode,
+    selectionState: { kind: "idle" },
+    order: buildOrder(settings, entries),
+    onReturnToPreviousSession: options.onReturn,
+  };
+}
+
+let state: FavoriteSessionState = createFavoriteState();
 
 export function startFavoriteSession(options: FavoriteSessionOptions = {}) {
-  onReturnToPreviousSession = options.onReturn;
-  settings = loadSettings();
-  entries = loadFavoriteEntries();
+  state = createFavoriteState(options);
 
-  if (entries.length === 0) {
+  if (state.entries.length === 0) {
     console.log("[INFO] no favorite words; press Q to exit");
     options.onReturn?.();
     return;
   }
 
-  displayMode = settings.displayMode;
-  noteMode = settings.noteMode;
-  order = getOrder();
-  currentIndex = 0;
   renderSession();
 
   if (process.stdin.isTTY) {
@@ -56,60 +71,43 @@ export function startFavoriteSession(options: FavoriteSessionOptions = {}) {
 }
 
 function handleKeyPress(key: string) {
-  for (const input of parseInputs(key.toString())) {
+  for (const input of parseTerminalInputs(key.toString())) {
     if (!handleInput(input)) {
       return;
     }
   }
 }
 
-function parseInputs(input: string): string[] {
-  const result: string[] = [];
-
-  for (let index = 0; index < input.length; index += 1) {
-    if (input[index] === "\u001b" && input[index + 1] === "[" && input[index + 2]) {
-      result.push(`${input[index]}${input[index + 1]}${input[index + 2]}`);
-      index += 2;
-    } else if (input[index] === "\r" && input[index + 1] === "\n") {
-      result.push("\r");
-      index += 1;
-    } else if (input[index]) {
-      result.push(input[index]!);
-    }
-  }
-
-  return result;
-}
 
 function handleInput(input: string): boolean {
-  if (input === "\u0003" || (selectionState.kind !== "editing" && input.toLowerCase() === "q")) {
+  if (input === "\u0003" || (state.selectionState.kind !== "editing" && input.toLowerCase() === "q")) {
     quitSession();
     return false;
   }
 
-  if (input === "\u001b" && selectionState.kind === "idle" && onReturnToPreviousSession) {
+  if (input === "\u001b" && state.selectionState.kind === "idle" && state.onReturnToPreviousSession) {
     returnToPreviousSession();
     return false;
   }
 
-  if (selectionState.kind !== "idle") {
+  if (state.selectionState.kind !== "idle") {
     return handleSelectionInput(input);
   }
 
   if (input.toLowerCase() === "e") {
-    selectionState = { kind: "selecting", selectedIndex: 0 };
+    state.selectionState = { kind: "selecting", selectedIndex: 0 };
     renderSession();
     return true;
   }
 
-  const binding = normalizeBindingInput(input);
+  const binding = normalizeSettingBinding(input);
 
   if (matchesBinding(binding, "previous")) {
     movePage(-1);
   } else if (matchesBinding(binding, "next")) {
     movePage(1);
   } else if (matchesBinding(binding, "switchDisplayMode")) {
-    displayMode = displayMode === "both" ? "english" : displayMode === "english" ? "chinese" : "both";
+    state.displayMode = state.displayMode === "both" ? "english" : state.displayMode === "english" ? "chinese" : "both";
     renderSession();
   }
 
@@ -117,15 +115,15 @@ function handleInput(input: string): boolean {
 }
 
 function handleSelectionInput(input: string): boolean {
-  if (selectionState.kind === "editing") {
+  if (state.selectionState.kind === "editing") {
     return handleNoteEditing(input);
   }
 
-  if (selectionState.kind !== "selecting") {
+  if (state.selectionState.kind !== "selecting") {
     return true;
   }
 
-  const selectingState = selectionState;
+  const selectingState = state.selectionState;
 
   if (input === "\u001b" || input.toLowerCase() === "e") {
     leaveSelectionMode();
@@ -153,8 +151,8 @@ function handleSelectionInput(input: string): boolean {
 
   if (input === "\r" || input === "\n") {
     const entry = getCurrentPageEntries()[selectingState.selectedIndex];
-    if (entry && noteMode === "editable") {
-      selectionState = {
+    if (entry && state.noteMode === "editable") {
+      state.selectionState = {
         kind: "editing",
         selectedIndex: selectingState.selectedIndex,
         input: entry.word.note ?? "",
@@ -167,14 +165,14 @@ function handleSelectionInput(input: string): boolean {
 }
 
 function handleNoteEditing(input: string): boolean {
-  if (selectionState.kind !== "editing") {
+  if (state.selectionState.kind !== "editing") {
     return true;
   }
 
-  const editingState = selectionState;
+  const editingState = state.selectionState;
 
   if (input === "\u001b") {
-    selectionState = { kind: "selecting", selectedIndex: editingState.selectedIndex };
+    state.selectionState = { kind: "selecting", selectedIndex: editingState.selectedIndex };
     renderSession();
     return true;
   }
@@ -184,20 +182,20 @@ function handleNoteEditing(input: string): boolean {
     if (entry) {
       saveFavoriteWordNote(entry.word, editingState.input);
     }
-    selectionState = { kind: "selecting", selectedIndex: editingState.selectedIndex };
+    state.selectionState = { kind: "selecting", selectedIndex: editingState.selectedIndex };
     refreshEntriesPreservingOrder();
     renderSession();
     return true;
   }
 
   if (input === "\b" || input === "\u007f") {
-    selectionState = { ...editingState, input: editingState.input.slice(0, -1) };
+    state.selectionState = { ...editingState, input: editingState.input.slice(0, -1) };
     renderSession();
     return true;
   }
 
   if (input.length > 0 && !/[\u0000-\u001f\u007f]/.test(input)) {
-    selectionState = { ...editingState, input: `${editingState.input}${input}` };
+    state.selectionState = { ...editingState, input: `${editingState.input}${input}` };
     renderSession();
   }
 
@@ -206,28 +204,28 @@ function handleNoteEditing(input: string): boolean {
 
 function leaveSelectionMode() {
   refreshEntriesPreservingOrder();
-  currentIndex = Math.min(currentIndex, Math.max(0, getLastPageStart()));
-  selectionState = { kind: "idle" };
+  state.currentIndex = Math.min(state.currentIndex, Math.max(0, getLastPageStart()));
+  state.selectionState = { kind: "idle" };
   renderSession();
 }
 
 function refreshEntriesPreservingOrder() {
-  const previousWords = order.map((index) => entries[index]?.word.english).filter((word): word is string => word !== undefined);
-  entries = loadFavoriteEntries();
-  const indexByEnglish = new Map(entries.map((entry, index) => [entry.word.english, index]));
-  order = previousWords
+  const previousWords = state.order.map((index) => state.entries[index]?.word.english).filter((word): word is string => word !== undefined);
+  state.entries = loadFavoriteEntries();
+  const indexByEnglish = new Map(state.entries.map((entry, index) => [entry.word.english, index]));
+  state.order = previousWords
     .map((english) => indexByEnglish.get(english))
     .filter((index): index is number => index !== undefined);
 
-  entries.forEach((entry, index) => {
-    if (!order.includes(index)) {
-      order.push(index);
+  state.entries.forEach((entry, index) => {
+    if (!state.order.includes(index)) {
+      state.order.push(index);
     }
   });
 }
 
 function moveSelection(direction: -1 | 1) {
-  if (selectionState.kind !== "selecting") {
+  if (state.selectionState.kind !== "selecting") {
     return;
   }
 
@@ -236,34 +234,34 @@ function moveSelection(direction: -1 | 1) {
     return;
   }
 
-  if (direction === -1 && selectionState.selectedIndex === 0) {
-    const before = currentIndex;
+  if (direction === -1 && state.selectionState.selectedIndex === 0) {
+    const before = state.currentIndex;
     movePage(-1);
-    selectionState = { kind: "selecting", selectedIndex: currentIndex !== before ? getCurrentPageEntries().length - 1 : 0 };
-  } else if (direction === 1 && selectionState.selectedIndex === count - 1) {
-    const before = currentIndex;
+    state.selectionState = { kind: "selecting", selectedIndex: state.currentIndex !== before ? getCurrentPageEntries().length - 1 : 0 };
+  } else if (direction === 1 && state.selectionState.selectedIndex === count - 1) {
+    const before = state.currentIndex;
     movePage(1);
-    selectionState = { kind: "selecting", selectedIndex: currentIndex !== before ? 0 : count - 1 };
+    state.selectionState = { kind: "selecting", selectedIndex: state.currentIndex !== before ? 0 : count - 1 };
   } else {
-    selectionState = { kind: "selecting", selectedIndex: selectionState.selectedIndex + direction };
+    state.selectionState = { kind: "selecting", selectedIndex: state.selectionState.selectedIndex + direction };
   }
   renderSession();
 }
 
 function movePage(direction: -1 | 1) {
-  currentIndex = Math.min(Math.max(currentIndex + direction * settings.workspaceSize, 0), getLastPageStart());
+  state.currentIndex = Math.min(Math.max(state.currentIndex + direction * state.settings.workspaceSize, 0), getLastPageStart());
   renderSession();
 }
 
 function getCurrentPageEntries() {
-  return order.slice(currentIndex, currentIndex + settings.workspaceSize).map((index) => entries[index]!);
+  return state.order.slice(state.currentIndex, state.currentIndex + state.settings.workspaceSize).map((index) => state.entries[index]!);
 }
 
 function getLastPageStart() {
-  return Math.max(0, Math.floor(Math.max(entries.length - 1, 0) / settings.workspaceSize) * settings.workspaceSize);
+  return Math.max(0, Math.floor(Math.max(state.entries.length - 1, 0) / state.settings.workspaceSize) * state.settings.workspaceSize);
 }
 
-function getOrder() {
+function buildOrder(settings: Settings, entries: FavoriteEntry[]): number[] {
   if (settings.studyOrder === "reverse") {
     return entries.map((_, index) => index).reverse();
   }
@@ -277,34 +275,34 @@ function getOrder() {
 
 function renderSession() {
   const pageEntries = getCurrentPageEntries();
-  const selectedIndex = selectionState.kind === "idle" ? undefined : selectionState.selectedIndex;
+  const selectedIndex = state.selectionState.kind === "idle" ? undefined : state.selectionState.selectedIndex;
 
   renderWordSession({
     words: pageEntries.map((entry) => entry.word),
-    current: currentIndex + 1,
-    total: entries.length,
-    workspaceSize: settings.workspaceSize,
+    current: state.currentIndex + 1,
+    total: state.entries.length,
+    workspaceSize: state.settings.workspaceSize,
     studyGroupStart: 1,
-    studyGroupEnd: entries.length,
+    studyGroupEnd: state.entries.length,
     studyGroupCurrent: 1,
     studyGroupTotal: 1,
     studyGroupEnabled: false,
     navigationLoop: false,
-    studyOrder: settings.studyOrder,
-    theme: settings.theme,
-    keyBindings: settings.keyBindings,
-    displayMode,
-    noteMode,
-    noteSelectionIndex: selectionState.kind === "editing" ? selectedIndex : undefined,
+    studyOrder: state.settings.studyOrder,
+    theme: state.settings.theme,
+    keyBindings: state.settings.keyBindings,
+    displayMode: state.displayMode,
+    noteMode: state.noteMode,
+    noteSelectionIndex: state.selectionState.kind === "editing" ? selectedIndex : undefined,
     selectionIndex: selectedIndex,
-    noteInput: selectionState.kind === "editing" ? selectionState.input : undefined,
-    interfaceLanguage: settings.interfaceLanguage,
+    noteInput: state.selectionState.kind === "editing" ? state.selectionState.input : undefined,
+    interfaceLanguage: state.settings.interfaceLanguage,
     showHelp: false,
   });
 }
 
 function quitSession() {
-  renderQuitMessage(settings.theme);
+  renderQuitMessage(state.settings.theme);
 
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(false);
@@ -313,30 +311,13 @@ function quitSession() {
   process.exit(0);
 }
 
-function normalizeBindingInput(input: string): string | undefined {
-  const specialBindings: Record<string, string> = {
-    "\u001b[A": "arrow-up",
-    "\u001b[B": "arrow-down",
-    "\u001b[C": "arrow-right",
-    "\u001b[D": "arrow-left",
-    "\t": "tab",
-    " ": "space",
-  };
-
-  if (specialBindings[input]) {
-    return specialBindings[input];
-  }
-
-  return /^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined;
-}
-
 function matchesBinding(binding: string | undefined, action: keyof Settings["keyBindings"]): boolean {
-  return binding !== undefined && settings.keyBindings[action].includes(binding);
+  return binding !== undefined && state.settings.keyBindings[action].includes(binding);
 }
 
 function returnToPreviousSession() {
-  const onReturn = onReturnToPreviousSession;
-  onReturnToPreviousSession = undefined;
+  const onReturn = state.onReturnToPreviousSession;
+  state.onReturnToPreviousSession = undefined;
   process.stdin.off("data", handleKeyPress);
   onReturn?.();
 }
