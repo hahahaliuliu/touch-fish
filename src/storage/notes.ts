@@ -1,6 +1,10 @@
-import fs from "node:fs";
-import path from "node:path";
 import { resolveAssetPath } from "../config/paths.js";
+import {
+  isRecord,
+  readJsonFile,
+  resolveBookJsonPath,
+  writeJsonFile,
+} from "./jsonFile.js";
 
 interface NoteEntry {
   english: string;
@@ -46,40 +50,15 @@ export function saveWordNote(bookId: string, wordIndex: number, english: string,
 }
 
 function readNoteFile(bookId: string): NoteFile {
-  const notePath = getNotePath(bookId);
-
-  if (!fs.existsSync(notePath)) {
-    return { version: 1, notes: {} };
-  }
-
-  try {
-    return parseNoteFile(JSON.parse(fs.readFileSync(notePath, "utf-8")) as unknown);
-  } catch {
-    return { version: 1, notes: {} };
-  }
+  return parseNoteFile(readJsonFile(getNotePath(bookId)));
 }
 
 function writeNoteFile(bookId: string, noteFile: NoteFile) {
-  const notePath = getNotePath(bookId);
-  const directory = path.dirname(notePath);
-  const temporaryPath = `${notePath}.tmp`;
-
-  if (!fs.existsSync(directory)) {
-    fs.mkdirSync(directory, { recursive: true });
-  }
-
-  try {
-    fs.writeFileSync(temporaryPath, `${JSON.stringify(noteFile, null, 2)}\n`, "utf-8");
-    fs.renameSync(temporaryPath, notePath);
-  } finally {
-    if (fs.existsSync(temporaryPath)) {
-      fs.unlinkSync(temporaryPath);
-    }
-  }
+  writeJsonFile(getNotePath(bookId), noteFile);
 }
 
 function getNotePath(bookId: string): string {
-  return path.join(notesDirectory, `${encodeURIComponent(bookId)}.json`);
+  return resolveBookJsonPath(notesDirectory, bookId);
 }
 
 function parseNoteFile(value: unknown): NoteFile {
@@ -96,8 +75,4 @@ function parseNoteFile(value: unknown): NoteFile {
   });
 
   return { version: 1, notes };
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

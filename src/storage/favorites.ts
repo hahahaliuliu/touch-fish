@@ -1,6 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
 import { resolveAssetPath } from "../config/paths.js";
+import { isRecord, readJsonFile, writeJsonFile } from "./jsonFile.js";
 
 interface FavoriteFile {
   version: 1;
@@ -10,16 +9,7 @@ interface FavoriteFile {
 const favoritePath = resolveAssetPath("favorites.json");
 
 export function loadFavorites(): Set<string> {
-  if (!fs.existsSync(favoritePath)) {
-    return new Set();
-  }
-
-  try {
-    const value = JSON.parse(fs.readFileSync(favoritePath, "utf-8")) as unknown;
-    return new Set(parseFavoriteFile(value));
-  } catch {
-    return new Set();
-  }
+  return new Set(parseFavoriteFile(readJsonFile(favoritePath)));
 }
 
 export function isFavorite(english: string): boolean {
@@ -45,21 +35,7 @@ export function toggleFavorite(english: string): boolean {
 }
 
 function writeFavorites(value: FavoriteFile) {
-  const directory = path.dirname(favoritePath);
-  const temporaryPath = `${favoritePath}.tmp`;
-
-  if (!fs.existsSync(directory)) {
-    fs.mkdirSync(directory, { recursive: true });
-  }
-
-  try {
-    fs.writeFileSync(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, "utf-8");
-    fs.renameSync(temporaryPath, favoritePath);
-  } finally {
-    if (fs.existsSync(temporaryPath)) {
-      fs.unlinkSync(temporaryPath);
-    }
-  }
+  writeJsonFile(favoritePath, value);
 }
 
 function parseFavoriteFile(value: unknown): string[] {
@@ -68,8 +44,4 @@ function parseFavoriteFile(value: unknown): string[] {
   }
 
   return value.words.filter((word): word is string => typeof word === "string" && word.trim() !== "");
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
