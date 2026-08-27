@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { resolveAssetPath } from "../config/paths.js";
 import { isRecord, readJsonFile, writeJsonFile } from "./jsonFile.js";
 
@@ -8,8 +9,21 @@ interface FavoriteFile {
 
 const favoritePath = resolveAssetPath("favorites.json");
 
+// Favorites are read for every rendered word, so cache the parsed set and only
+// re-read the file when its modification time changes (or after a local write).
+let cachedFavorites: Set<string> | undefined;
+let cachedMtimeMs: number | undefined;
+
 export function loadFavorites(): Set<string> {
-  return new Set(parseFavoriteFile(readJsonFile(favoritePath)));
+  const currentMtimeMs = readFavoritesMtimeMs();
+
+  if (cachedFavorites !== undefined && cachedMtimeMs === currentMtimeMs) {
+    return cachedFavorites;
+  }
+
+  cachedFavorites = new Set(parseFavoriteFile(readJsonFile(favoritePath)));
+  cachedMtimeMs = currentMtimeMs;
+  return cachedFavorites;
 }
 
 export function isFavorite(english: string): boolean {
@@ -26,6 +40,8 @@ export function setFavorite(english: string, favorite: boolean) {
   }
 
   writeFavorites({ version: 1, words: [...favorites].sort((left, right) => left.localeCompare(right)) });
+  cachedFavorites = favorites;
+  cachedMtimeMs = readFavoritesMtimeMs();
 }
 
 export function toggleFavorite(english: string): boolean {
@@ -36,6 +52,14 @@ export function toggleFavorite(english: string): boolean {
 
 function writeFavorites(value: FavoriteFile) {
   writeJsonFile(favoritePath, value);
+}
+
+function readFavoritesMtimeMs(): number | undefined {
+  try {
+    return fs.statSync(favoritePath).mtimeMs;
+  } catch {
+    return undefined;
+  }
 }
 
 function parseFavoriteFile(value: unknown): string[] {
