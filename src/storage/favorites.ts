@@ -10,19 +10,32 @@ interface FavoriteFile {
 const favoritePath = resolveAssetPath("favorites.json");
 
 // Favorites are read for every rendered word, so cache the parsed set and only
-// re-read the file when its modification time changes (or after a local write).
+// re-read the file when its signature changes (or after a local write). The
+// signature combines the modification time with the file size because some
+// filesystems report a coarse mtime that is identical for writes made within
+// the same time window.
 let cachedFavorites: Set<string> | undefined;
-let cachedMtimeMs: number | undefined;
+let cachedSignature: FileSignature | undefined;
+
+interface FileSignature {
+  mtimeMs: number;
+  size: number;
+}
 
 export function loadFavorites(): Set<string> {
-  const currentMtimeMs = readFavoritesMtimeMs();
+  const currentSignature = readFavoritesSignature();
 
-  if (cachedFavorites !== undefined && cachedMtimeMs === currentMtimeMs) {
+  if (
+    cachedFavorites !== undefined
+    && cachedSignature !== undefined
+    && cachedSignature.mtimeMs === currentSignature?.mtimeMs
+    && cachedSignature.size === currentSignature?.size
+  ) {
     return cachedFavorites;
   }
 
   cachedFavorites = new Set(parseFavoriteFile(readJsonFile(favoritePath)));
-  cachedMtimeMs = currentMtimeMs;
+  cachedSignature = currentSignature;
   return cachedFavorites;
 }
 
@@ -41,7 +54,7 @@ export function setFavorite(english: string, favorite: boolean) {
 
   writeFavorites({ version: 1, words: [...favorites].sort((left, right) => left.localeCompare(right)) });
   cachedFavorites = favorites;
-  cachedMtimeMs = readFavoritesMtimeMs();
+  cachedSignature = readFavoritesSignature();
 }
 
 export function toggleFavorite(english: string): boolean {
@@ -54,9 +67,10 @@ function writeFavorites(value: FavoriteFile) {
   writeJsonFile(favoritePath, value);
 }
 
-function readFavoritesMtimeMs(): number | undefined {
+function readFavoritesSignature(): FileSignature | undefined {
   try {
-    return fs.statSync(favoritePath).mtimeMs;
+    const stat = fs.statSync(favoritePath);
+    return { mtimeMs: stat.mtimeMs, size: stat.size };
   } catch {
     return undefined;
   }

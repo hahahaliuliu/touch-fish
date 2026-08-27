@@ -5,6 +5,12 @@ import { listVocabularyBooks } from "../services/vocabularyLoader.js";
 import { renderSettingSession } from "../ui/settingsRenderer.js";
 import { clearTerminalForExit } from "../ui/terminalScreen.js";
 import { startVocabularyDownloadSession } from "./vocabularyDownloadSession.js";
+import {
+  getNextValue,
+  isBackspace,
+  normalizeSettingBinding,
+  parseTerminalInputs,
+} from "./settingFormInput.js";
 
 const RETURN_TO_WORD_KEY = "\u000f";
 const WORKSPACE_SIZES = [1, 3, 5];
@@ -83,7 +89,7 @@ export function startSettingSession(options: StartSettingSessionOptions = {}) {
 }
 
 function handleKeyPress(key: string) {
-  for (const input of parseInputs(key.toString())) {
+  for (const input of parseTerminalInputs(key.toString())) {
     if (!handleInput(input)) {
       return;
     }
@@ -92,36 +98,6 @@ function handleKeyPress(key: string) {
 
 function handleTerminalResize() {
   render();
-}
-
-function parseInputs(input: string): string[] {
-  const inputs: string[] = [];
-  let index = 0;
-
-  while (index < input.length) {
-    const current = input[index];
-    const next = input[index + 1];
-    const third = input[index + 2];
-
-    if (current === "\r" && next === "\n") {
-      inputs.push("\r");
-      index += 2;
-      continue;
-    }
-
-    if (current === "\u001b" && next === "[" && third) {
-      inputs.push(`${current}${next}${third}`);
-      index += 3;
-      continue;
-    }
-
-    if (current) {
-      inputs.push(current);
-    }
-    index += 1;
-  }
-
-  return inputs;
 }
 
 function handleInput(input: string): boolean {
@@ -363,7 +339,7 @@ function captureBinding(input: string) {
     return;
   }
 
-  const binding = normalizeBinding(input);
+  const binding = normalizeSettingBinding(input);
 
   if (!binding) {
     editError = "Use one English key, symbol, Space, Tab, or an arrow key";
@@ -396,24 +372,6 @@ function saveBinding(binding: string) {
   isEditing = false;
   resetEditState();
   render();
-}
-
-function normalizeBinding(input: string): string | undefined {
-  const specialBindings: Record<string, string> = {
-    "\u001b[A": "arrow-up",
-    "\u001b[B": "arrow-down",
-    "\u001b[C": "arrow-right",
-    "\u001b[D": "arrow-left",
-    "\t": "tab",
-    " ": "space",
-    "？": "?",
-  };
-
-  if (specialBindings[input]) {
-    return specialBindings[input];
-  }
-
-  return /^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined;
 }
 
 function appendNumericInput(input: string) {
@@ -474,10 +432,6 @@ function updateNumericOption(key: keyof Settings, option: NumericOption) {
   }
 }
 
-function isBackspace(input: string): boolean {
-  return input === "\b" || input === "\u007f";
-}
-
 function isBindingItem(item: SettingItem): item is BindingItem {
   return item.kind === "binding";
 }
@@ -508,12 +462,6 @@ function getNumericSettingValue(settingsValue: Settings, key: keyof Settings): n
 
 function getNumericPresets(key: keyof Settings): readonly number[] {
   return key === "workspaceSize" ? WORKSPACE_SIZES : STUDY_GROUP_SIZES;
-}
-
-function getNextValue<T>(currentValue: T, options: readonly T[], direction: -1 | 1): T {
-  const currentIndex = options.indexOf(currentValue);
-  const nextIndex = (currentIndex + direction + options.length) % options.length;
-  return options[nextIndex] ?? options[0]!;
 }
 
 function getNextNumericOption(currentOption: NumericOption, presets: readonly number[], direction: -1 | 1): NumericOption {

@@ -8,6 +8,7 @@ import { renderReadSettings } from "../ui/readSettingsRenderer.js";
 import { clearTerminalForExit } from "../ui/terminalScreen.js";
 import { startReadSession } from "./readSession.js";
 import { startReadingImportSession } from "./readingImportSession.js";
+import { getNextValue, isBackspace, normalizeSettingBinding } from "./settingFormInput.js";
 
 const WIDTH_OPTIONS: Array<number | "custom"> = [0, 30, 50, "custom"];
 const LINE_OPTIONS: Array<number | "custom"> = [5, 10, 15, "custom"];
@@ -558,23 +559,7 @@ function cloneKeyBindings(value: ReadKeyBindings): ReadKeyBindings {
 }
 
 function normalizeBindingInput(input: string): string | undefined {
-  const specialBindings: Record<string, string> = {
-    "\u001b[A": "arrow-up",
-    "\u001b[B": "arrow-down",
-    "\u001b[C": "arrow-right",
-    "\u001b[D": "arrow-left",
-    "\t": "tab",
-    " ": "space",
-    "？": "?",
-  };
-
-  return getReadMouseBinding(input)
-    ?? specialBindings[input]
-    ?? (/^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined);
-}
-
-function isBackspace(input: string): boolean {
-  return input === "\b" || input === "\u007f";
+  return getReadMouseBinding(input) ?? normalizeSettingBinding(input);
 }
 
 function isBindingItemSelected(): boolean {
@@ -629,12 +614,6 @@ function toggleMiniWindowMode() {
   }
 
   onOpenMiniMode?.(selectedBookId);
-}
-
-function getNextValue<T>(currentValue: T, options: readonly T[], direction: -1 | 1): T {
-  const currentIndex = options.indexOf(currentValue);
-  const nextIndex = (currentIndex + direction + options.length) % options.length;
-  return options[nextIndex] ?? options[0]!;
 }
 
 function localize(english: string, chinese: string): string {
