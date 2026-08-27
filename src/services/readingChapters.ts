@@ -1,4 +1,5 @@
 import type { ReadingChapter } from "../models/reading.js";
+import { findLastIndexAtOrBelow } from "./offsetIndex.js";
 
 const CHINESE_CHAPTER_PATTERN = /^第[〇零一二三四五六七八九十百千万\d]+[章节回卷](?:\s|[：:、—-]|$).*$/;
 const ENGLISH_CHAPTER_PATTERN = /^chapter\s+\d+\b.*$/i;
@@ -23,20 +24,7 @@ export function detectReadingChapters(content: string): ReadingChapter[] {
 }
 
 export function findReadingChapterIndex(chapters: ReadingChapter[], characterOffset: number): number {
-  if (chapters.length === 0) {
-    return 0;
-  }
-
-  const normalizedOffset = Math.max(0, Math.floor(characterOffset));
-  let chapterIndex = 0;
-
-  chapters.forEach((chapter, index) => {
-    if (chapter.startOffset <= normalizedOffset) {
-      chapterIndex = index;
-    }
-  });
-
-  return chapterIndex;
+  return findLastIndexAtOrBelow(chapters, characterOffset);
 }
 
 export function getNextReadingChapterIndex(chapters: ReadingChapter[], currentIndex: number): number {
