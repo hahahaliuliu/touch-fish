@@ -16,16 +16,9 @@ const DEFAULT_KEY_BINDINGS: ReadKeyBindings = {
 };
 
 function getDefaultReadSettings(): ReadSettings {
-  let interfaceLanguage: InterfaceLanguage = "english";
-  let theme: ThemeName = "build-log";
-
-  try {
-    const sharedSettings = loadSettings();
-    interfaceLanguage = sharedSettings.interfaceLanguage;
-    theme = isReadTheme(sharedSettings.theme) ? sharedSettings.theme : "build-log";
-  } catch {
-    // A damaged shared settings file must not prevent Read settings from opening.
-  }
+  const sharedSettings = loadSettings();
+  const interfaceLanguage = sharedSettings.interfaceLanguage;
+  const theme = isReadTheme(sharedSettings.theme) ? sharedSettings.theme : "build-log";
 
   return {
     contentWidth: 0,
