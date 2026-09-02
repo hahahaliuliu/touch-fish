@@ -10,28 +10,43 @@ interface StartGroupQuizSessionOptions {
   onReturn: () => void;
 }
 
-let onReturnToWord: (() => void) | undefined;
-let words: Word[] = [];
-let questionDirections: QuizDirection[] = [];
-let interfaceLanguage: InterfaceLanguage = "english";
-let questionIndex = 0;
-let direction: QuizDirection = "english-to-chinese";
-let answer = "";
-let isShowingResult = false;
-let lastAnswerCorrect: boolean | undefined;
-let wrongAnswers: QuizWrongAnswer[] = [];
+interface GroupQuizState {
+  onReturnToWord: (() => void) | undefined;
+  words: Word[];
+  questionDirections: QuizDirection[];
+  interfaceLanguage: InterfaceLanguage;
+  questionIndex: number;
+  direction: QuizDirection;
+  answer: string;
+  isShowingResult: boolean;
+  lastAnswerCorrect: boolean | undefined;
+  wrongAnswers: QuizWrongAnswer[];
+}
+
+function createGroupQuizState(options: StartGroupQuizSessionOptions): GroupQuizState {
+  const words = createRandomOrder(options.words.length).map((index) => options.words[index]!);
+  return {
+    onReturnToWord: options.onReturn,
+    words,
+    questionDirections: words.map(() => "english-to-chinese"),
+    interfaceLanguage: options.interfaceLanguage,
+    questionIndex: 0,
+    direction: "english-to-chinese",
+    answer: "",
+    isShowingResult: false,
+    lastAnswerCorrect: undefined,
+    wrongAnswers: [],
+  };
+}
+
+let state: GroupQuizState = createGroupQuizState({
+  words: [],
+  interfaceLanguage: "english",
+  onReturn: () => {},
+});
 
 export function startGroupQuizSession(options: StartGroupQuizSessionOptions) {
-  onReturnToWord = options.onReturn;
-  words = createRandomOrder(options.words.length).map((index) => options.words[index]!);
-  questionDirections = words.map(() => "english-to-chinese");
-  interfaceLanguage = options.interfaceLanguage;
-  questionIndex = 0;
-  direction = "english-to-chinese";
-  answer = "";
-  isShowingResult = false;
-  lastAnswerCorrect = undefined;
-  wrongAnswers = [];
+  state = createGroupQuizState(options);
   render();
 
   if (process.stdin.isTTY) {
@@ -85,7 +100,7 @@ function handleInput(input: string): boolean {
   }
 
   if (isComplete()) {
-    if ((input === "r" || input === "R") && wrongAnswers.length > 0) {
+    if ((input === "r" || input === "R") && state.wrongAnswers.length > 0) {
       retryWrongAnswers();
       return true;
     }
@@ -97,7 +112,7 @@ function handleInput(input: string): boolean {
     return true;
   }
 
-  if (isShowingResult) {
+  if (state.isShowingResult) {
     if (input === "\r" || input === "\n") {
       moveToNextQuestion();
     }
@@ -105,9 +120,9 @@ function handleInput(input: string): boolean {
   }
 
   if (input === "\t") {
-    direction = direction === "english-to-chinese" ? "chinese-to-english" : "english-to-chinese";
-    questionDirections[questionIndex] = direction;
-    answer = "";
+    state.direction = state.direction === "english-to-chinese" ? "chinese-to-english" : "english-to-chinese";
+    state.questionDirections[state.questionIndex] = state.direction;
+    state.answer = "";
     render();
     return true;
   }
@@ -118,13 +133,13 @@ function handleInput(input: string): boolean {
   }
 
   if (input === "\b" || input === "\u007f") {
-    answer = answer.slice(0, -1);
+    state.answer = state.answer.slice(0, -1);
     render();
     return true;
   }
 
   if (/^[^\u0000-\u001f\u007f]+$/.test(input)) {
-    answer += input;
+    state.answer += input;
     render();
   }
 
@@ -132,63 +147,63 @@ function handleInput(input: string): boolean {
 }
 
 function submitAnswer() {
-  const word = words[questionIndex];
+  const word = state.words[state.questionIndex];
 
   if (!word) {
     return;
   }
 
-  lastAnswerCorrect = isGroupQuizAnswerCorrect(word, direction, answer);
+  state.lastAnswerCorrect = isGroupQuizAnswerCorrect(word, state.direction, state.answer);
 
-  if (!lastAnswerCorrect) {
-    wrongAnswers.push({ word, answer, direction });
+  if (!state.lastAnswerCorrect) {
+    state.wrongAnswers.push({ word, answer: state.answer, direction: state.direction });
   }
 
-  isShowingResult = true;
+  state.isShowingResult = true;
   render();
 }
 
 function retryWrongAnswers() {
-  words = wrongAnswers.map(({ word }) => word);
-  questionDirections = wrongAnswers.map(({ direction }) => direction);
-  questionIndex = 0;
-  direction = questionDirections[0] ?? "english-to-chinese";
-  answer = "";
-  isShowingResult = false;
-  lastAnswerCorrect = undefined;
-  wrongAnswers = [];
+  state.words = state.wrongAnswers.map(({ word }) => word);
+  state.questionDirections = state.wrongAnswers.map(({ direction: wrongDirection }) => wrongDirection);
+  state.questionIndex = 0;
+  state.direction = state.questionDirections[0] ?? "english-to-chinese";
+  state.answer = "";
+  state.isShowingResult = false;
+  state.lastAnswerCorrect = undefined;
+  state.wrongAnswers = [];
   render();
 }
 
 function moveToNextQuestion() {
-  questionIndex += 1;
-  direction = questionDirections[questionIndex] ?? "english-to-chinese";
-  answer = "";
-  isShowingResult = false;
-  lastAnswerCorrect = undefined;
+  state.questionIndex += 1;
+  state.direction = state.questionDirections[state.questionIndex] ?? "english-to-chinese";
+  state.answer = "";
+  state.isShowingResult = false;
+  state.lastAnswerCorrect = undefined;
   render();
 }
 
 function isComplete(): boolean {
-  return questionIndex >= words.length;
+  return state.questionIndex >= state.words.length;
 }
 
 function render() {
   renderGroupQuiz({
-    words,
-    questionIndex,
-    direction,
-    answer,
-    isShowingResult,
-    lastAnswerCorrect,
-    wrongAnswers,
-    interfaceLanguage,
+    words: state.words,
+    questionIndex: state.questionIndex,
+    direction: state.direction,
+    answer: state.answer,
+    isShowingResult: state.isShowingResult,
+    lastAnswerCorrect: state.lastAnswerCorrect,
+    wrongAnswers: state.wrongAnswers,
+    interfaceLanguage: state.interfaceLanguage,
   });
 }
 
 function returnToWord() {
-  const onReturn = onReturnToWord;
-  onReturnToWord = undefined;
+  const onReturn = state.onReturnToWord;
+  state.onReturnToWord = undefined;
   process.stdin.off("data", handleKeyPress);
   onReturn?.();
 }

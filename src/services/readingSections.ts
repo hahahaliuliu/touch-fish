@@ -1,4 +1,5 @@
 import type { ReadingChapter, ReadingSection } from "../models/reading.js";
+import { findLastIndexAtOrBelow } from "./offsetIndex.js";
 
 export function createReadingSections(
   content: string,
@@ -41,20 +42,7 @@ export function createReadingSections(
 }
 
 export function findReadingSectionIndex(sections: ReadingSection[], characterOffset: number): number {
-  if (sections.length === 0) {
-    return 0;
-  }
-
-  const normalizedOffset = Math.max(0, Math.floor(characterOffset));
-  let sectionIndex = 0;
-
-  sections.forEach((section, index) => {
-    if (section.startOffset <= normalizedOffset) {
-      sectionIndex = index;
-    }
-  });
-
-  return sectionIndex;
+  return findLastIndexAtOrBelow(sections, characterOffset);
 }
 
 export function getNextReadingSectionIndex(sections: ReadingSection[], currentIndex: number): number {

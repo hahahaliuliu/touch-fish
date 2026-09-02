@@ -14,15 +14,23 @@ import type {
 } from "../models/settings.js";
 
 const settingsPath = resolveAssetPath("settings.json");
+let warnedAboutDamagedSettings = false;
 
 export function loadSettings(): Settings {
-  if (!fs.existsSync(settingsPath)) {
+  try {
+    if (!fs.existsSync(settingsPath)) {
+      return cloneSettings(DEFAULT_SETTINGS);
+    }
+
+    const fileContent = fs.readFileSync(settingsPath, "utf-8");
+    const parsedSettings = JSON.parse(fileContent) as unknown;
+    return parseSettings(parsedSettings);
+  } catch {
+    // A damaged or invalid settings file must not prevent Word, Read or the
+    // settings screens from opening. Fall back to safe defaults and warn once.
+    warnAboutDamagedSettings();
     return cloneSettings(DEFAULT_SETTINGS);
   }
-
-  const fileContent = fs.readFileSync(settingsPath, "utf-8");
-  const parsedSettings = JSON.parse(fileContent) as unknown;
-  return parseSettings(parsedSettings);
 }
 
 export function parseSettings(value: unknown): Settings {
@@ -69,6 +77,17 @@ function cloneSettings(settings: Settings): Settings {
       ...settings.keyBindings,
     },
   };
+}
+
+function warnAboutDamagedSettings() {
+  if (warnedAboutDamagedSettings) {
+    return;
+  }
+
+  warnedAboutDamagedSettings = true;
+  console.warn(
+    `[warn] ${settingsPath} could not be read or is invalid; falling back to default settings`
+  );
 }
 
 function mergeWithDefaultSettings(value: unknown): unknown {

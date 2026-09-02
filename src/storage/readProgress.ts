@@ -2,6 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { resolveAssetPath } from "../config/paths.js";
 import type { ReadProgress, ReadState } from "../models/reading.js";
+import {
+  isRecord,
+  readJsonFile,
+  resolveBookJsonPath,
+  writeJsonFile,
+} from "./jsonFile.js";
 
 const progressDirectory = resolveAssetPath("read-progress");
 const statePath = path.join(progressDirectory, "state.json");
@@ -10,12 +16,15 @@ export function loadReadProgress(bookId: string, characterCount?: number): ReadP
   const data = readJsonFile(getProgressPath(bookId));
 
   return {
-    characterOffset: readCharacterOffset(data?.characterOffset, characterCount),
+    characterOffset: readCharacterOffset(
+      isRecord(data) ? data.characterOffset : undefined,
+      characterCount
+    ),
   };
 }
 
 export function saveReadProgress(bookId: string, progress: ReadProgress) {
-  writeJsonAtomically(getProgressPath(bookId), {
+  writeJsonFile(getProgressPath(bookId), {
     ...progress,
     updatedAt: new Date().toISOString(),
   });
@@ -32,52 +41,20 @@ export function deleteReadProgress(bookId: string) {
 export function loadReadState(): ReadState {
   const data = readJsonFile(statePath);
 
-  return data?.activeBookId && typeof data.activeBookId === "string"
+  return isRecord(data) && typeof data.activeBookId === "string"
     ? { activeBookId: data.activeBookId }
     : {};
 }
 
 export function saveReadState(state: ReadState) {
-  writeJsonAtomically(statePath, {
+  writeJsonFile(statePath, {
     ...state,
     updatedAt: new Date().toISOString(),
   });
 }
 
 function getProgressPath(bookId: string): string {
-  return path.join(progressDirectory, `${encodeURIComponent(bookId)}.json`);
-}
-
-function readJsonFile(filePath: string): Record<string, unknown> | undefined {
-  if (!fs.existsSync(filePath)) {
-    return undefined;
-  }
-
-  try {
-    const parsed = JSON.parse(fs.readFileSync(filePath, "utf-8")) as unknown;
-    return isRecord(parsed) ? parsed : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-function writeJsonAtomically(filePath: string, data: Record<string, unknown>) {
-  const directory = path.dirname(filePath);
-
-  if (!fs.existsSync(directory)) {
-    fs.mkdirSync(directory, { recursive: true });
-  }
-
-  const temporaryPath = `${filePath}.tmp`;
-
-  try {
-    fs.writeFileSync(temporaryPath, JSON.stringify(data, null, 2), "utf-8");
-    fs.renameSync(temporaryPath, filePath);
-  } finally {
-    if (fs.existsSync(temporaryPath)) {
-      fs.unlinkSync(temporaryPath);
-    }
-  }
+  return resolveBookJsonPath(progressDirectory, bookId);
 }
 
 function readCharacterOffset(value: unknown, characterCount?: number): number {
@@ -88,8 +65,4 @@ function readCharacterOffset(value: unknown, characterCount?: number): number {
   return characterCount === undefined
     ? value
     : Math.min(value, Math.max(characterCount, 0));
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

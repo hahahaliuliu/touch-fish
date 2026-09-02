@@ -2,6 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { resolveAssetPath } from "../config/paths.js";
 import type { DisplayMode } from "../models/settings.js";
+import {
+  isRecord,
+  readJsonFile,
+  resolveBookJsonPath,
+  writeJsonFile,
+} from "./jsonFile.js";
 
 const progressDirectory = resolveAssetPath("progress");
 const legacyProgressPath = resolveAssetPath("progress", "word-progress.json");
@@ -21,22 +27,9 @@ export function loadWordProgress(bookId: string, wordCount?: number): WordProgre
     migrateLegacyProgress(progressPath);
   }
 
-  if (!fs.existsSync(progressPath)) {
-    return createEmptyProgress();
-  }
+  const data = readJsonFile(progressPath);
 
-  let data: Record<string, unknown>;
-
-  try {
-    const content = fs.readFileSync(progressPath, "utf-8");
-    const parsed = JSON.parse(content) as unknown;
-
-    if (!isRecord(parsed)) {
-      return createEmptyProgress();
-    }
-
-    data = parsed;
-  } catch {
+  if (!isRecord(data)) {
     return createEmptyProgress();
   }
 
@@ -53,34 +46,10 @@ export function loadWordProgress(bookId: string, wordCount?: number): WordProgre
 }
 
 export function saveWordProgress(bookId: string, progress: WordProgress) {
-  const progressPath = getProgressPath(bookId);
-  const dir = path.dirname(progressPath);
-
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-
-  const temporaryPath = `${progressPath}.tmp`;
-
-  try {
-    fs.writeFileSync(
-      temporaryPath,
-      JSON.stringify(
-        {
-          ...progress,
-          updatedAt: new Date().toISOString(),
-        },
-        null,
-        2
-      ),
-      "utf-8"
-    );
-    fs.renameSync(temporaryPath, progressPath);
-  } finally {
-    if (fs.existsSync(temporaryPath)) {
-      fs.unlinkSync(temporaryPath);
-    }
-  }
+  writeJsonFile(getProgressPath(bookId), {
+    ...progress,
+    updatedAt: new Date().toISOString(),
+  });
 }
 
 export function deleteWordProgress(bookId: string) {
@@ -92,7 +61,7 @@ export function deleteWordProgress(bookId: string) {
 }
 
 function getProgressPath(bookId: string): string {
-  return path.join(progressDirectory, `${encodeURIComponent(bookId)}.json`);
+  return resolveBookJsonPath(progressDirectory, bookId);
 }
 
 function migrateLegacyProgress(progressPath: string) {
@@ -149,8 +118,4 @@ function readDisplayMode(value: unknown): DisplayMode | undefined {
   return value === "both" || value === "english" || value === "chinese"
     ? value
     : undefined;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

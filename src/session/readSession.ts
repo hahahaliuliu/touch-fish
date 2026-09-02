@@ -1,4 +1,4 @@
-import type { ReadingBook, ReadingPage, ReadingSection, ReadMouseWheelMode } from "../models/reading.js";
+import { BLANK_READING_BOOK, type ReadingBook, type ReadingPage, type ReadingSection, type ReadMouseWheelMode } from "../models/reading.js";
 import { loadReadingBook } from "../services/readingLoader.js";
 import {
   findReadingChapterIndex,
@@ -41,35 +41,103 @@ import {
 } from "../ui/readMiniRenderer.js";
 import { startReadSettingSession } from "./readSettingSession.js";
 import { startReadMiniHostSession } from "./readMiniHostSession.js";
+import { normalizeSettingBinding } from "./settingFormInput.js";
 
-let book: ReadingBook;
-let pages = paginateReadingText("", 20, 1);
-let scrollLines = paginateReadingText("", 20, 1);
-let sections: ReadingSection[] = [];
-let currentPageIndex = 0;
-let currentScrollLineIndex = 0;
-let scrollResumeLineIndex: number | undefined;
-let scrollResumeDistance: { direction: "above" | "below"; lineCount: number } | undefined;
-const scrollResumeHistory = new Map<number, number | null>();
+interface ReadSessionState {
+  book: ReadingBook;
+  pages: ReadingPage[];
+  scrollLines: ReadingPage[];
+  sections: ReadingSection[];
+  currentPageIndex: number;
+  currentScrollLineIndex: number;
+  scrollResumeLineIndex: number | undefined;
+  scrollResumeDistance: { direction: "above" | "below"; lineCount: number } | undefined;
+  scrollResumeHistory: Map<number, number | null>;
+  scrollGestureDirection: -1 | 1 | undefined;
+  scrollGestureAnchor: number | null | undefined;
+  restoringScrollHistory: boolean;
+  lastScrollTime: number;
+  scrollResumeClearTimer: NodeJS.Timeout | undefined;
+  theme: ThemeName;
+  interfaceLanguage: InterfaceLanguage;
+  showHelp: boolean;
+  keyBindings: ReadKeyBindings;
+  sectionNavigationEnabled: boolean;
+  pageLineCount: number;
+  mouseWheelMode: ReadMouseWheelMode;
+  mouseScrollStep: number;
+  lastNavigation: LastNavigation;
+  sessionMode: "disguised" | "mini";
+  onSessionQuit: (() => void) | undefined;
+}
+
+function createReadState(nextBook: ReadingBook, options: StartReadSessionOptions = {}): ReadSessionState {
+  const readSettings = loadReadSettings();
+  const mode = options.mode ?? "disguised";
+  const resolvedPageLineCount = mode === "mini"
+    ? getReadMiniPageLineCount(readSettings.miniWindowRows)
+    : getReadPageLineCount(readSettings.pageLineCount);
+  const sectionNavigationEnabled = readSettings.chapterSectionCount > 0;
+  const sections = createReadingSections(
+    nextBook.content,
+    nextBook.chapters,
+    sectionNavigationEnabled ? readSettings.chapterSectionCount : 1
+  );
+  const pages = paginateReadingText(
+    nextBook.content,
+    mode === "mini"
+      ? getReadMiniContentWidth(readSettings.contentWidth)
+      : getReadContentWidth(readSettings.theme, readSettings.contentWidth),
+    resolvedPageLineCount,
+    sections.map((section) => section.startOffset)
+  );
+  const progress = loadReadProgress(nextBook.id, nextBook.characterCount);
+  const scrollLines = mode === "mini"
+    ? paginateReadingText(
+        nextBook.content,
+        getReadMiniContentWidth(readSettings.contentWidth),
+        1,
+        sections.map((section) => section.startOffset)
+      )
+    : [];
+  const currentScrollLineIndex = mode === "mini"
+    ? findReadingPageIndex(scrollLines, progress.characterOffset)
+    : 0;
+
+  return {
+    book: nextBook,
+    pages,
+    scrollLines,
+    sections,
+    currentPageIndex: findReadingPageIndex(pages, progress.characterOffset),
+    currentScrollLineIndex,
+    scrollResumeLineIndex: undefined,
+    scrollResumeDistance: undefined,
+    scrollResumeHistory: new Map<number, number | null>(),
+    scrollGestureDirection: undefined,
+    scrollGestureAnchor: undefined,
+    restoringScrollHistory: false,
+    lastScrollTime: 0,
+    scrollResumeClearTimer: undefined,
+    theme: readSettings.theme,
+    interfaceLanguage: readSettings.interfaceLanguage,
+    showHelp: false,
+    keyBindings: readSettings.keyBindings,
+    sectionNavigationEnabled,
+    pageLineCount: resolvedPageLineCount,
+    mouseWheelMode: readSettings.miniWindowMouseMode,
+    mouseScrollStep: readSettings.miniWindowScrollStep,
+    lastNavigation: "next-page",
+    sessionMode: mode,
+    onSessionQuit: options.onQuit,
+  };
+}
+
+let state: ReadSessionState = createReadState(BLANK_READING_BOOK, {});
+
 const CONTINUOUS_SCROLL_DELAY = 500;
 const SCROLL_RESUME_CLEAR_DELAY = 2000;
-let scrollGestureDirection: -1 | 1 | undefined;
-let scrollGestureAnchor: number | null | undefined;
-let restoringScrollHistory = false;
-let lastScrollTime = 0;
-let scrollResumeClearTimer: NodeJS.Timeout | undefined;
-let theme: ThemeName = "build-log";
-let interfaceLanguage: InterfaceLanguage = "english";
-let showHelp = false;
-let keyBindings: ReadKeyBindings;
-let sectionNavigationEnabled = false;
-let pageLineCount = 10;
-let mouseWheelMode: ReadMouseWheelMode = "page";
-let mouseScrollStep = 1;
 type LastNavigation = "previous-page" | "next-page" | "previous-chapter" | "next-chapter";
-let lastNavigation: LastNavigation = "next-page";
-let sessionMode: "disguised" | "mini" = "disguised";
-let onSessionQuit: (() => void) | undefined;
 const inputParser = new ReadInputParser();
 
 interface StartReadSessionOptions {
@@ -78,40 +146,7 @@ interface StartReadSessionOptions {
 }
 
 export function startReadSession(nextBook: ReadingBook, options: StartReadSessionOptions = {}) {
-  book = nextBook;
-  sessionMode = options.mode ?? "disguised";
-  onSessionQuit = options.onQuit;
-  const readSettings = loadReadSettings();
-  theme = readSettings.theme;
-  interfaceLanguage = readSettings.interfaceLanguage;
-  keyBindings = readSettings.keyBindings;
-  mouseWheelMode = readSettings.miniWindowMouseMode;
-  mouseScrollStep = readSettings.miniWindowScrollStep;
-  pageLineCount = sessionMode === "mini"
-    ? getReadMiniPageLineCount(readSettings.miniWindowRows)
-    : getReadPageLineCount(readSettings.pageLineCount);
-  sectionNavigationEnabled = readSettings.chapterSectionCount > 0;
-  showHelp = false;
-  sections = createReadingSections(
-    book.content,
-    book.chapters,
-    sectionNavigationEnabled ? readSettings.chapterSectionCount : 1
-  );
-  pages = paginateReadingText(
-    book.content,
-    sessionMode === "mini"
-      ? getReadMiniContentWidth(readSettings.contentWidth)
-      : getReadContentWidth(theme, readSettings.contentWidth),
-    pageLineCount,
-    sections.map((section) => section.startOffset)
-  );
-  const progress = loadReadProgress(book.id, book.characterCount);
-  currentPageIndex = findReadingPageIndex(pages, progress.characterOffset);
-  rebuildScrollLines(
-    sessionMode === "mini" ? getReadMiniContentWidth(readSettings.contentWidth) : 20,
-    progress.characterOffset
-  );
-  lastNavigation = "next-page";
+  state = createReadState(nextBook, options);
   inputParser.reset();
   renderSession();
 
@@ -144,8 +179,8 @@ function handleInput(input: string): boolean {
   }
 
   if (input === "\u001b") {
-    if (showHelp) {
-      showHelp = false;
+    if (state.showHelp) {
+      state.showHelp = false;
       renderSession();
       return true;
     }
@@ -157,7 +192,7 @@ function handleInput(input: string): boolean {
   const binding = normalizeBindingInput(input);
 
   if (matchesBinding(binding, "toggleMiniWindow")) {
-    if (sessionMode === "mini") {
+    if (state.sessionMode === "mini") {
       quitReadSession();
     } else {
       openMiniWindow();
@@ -166,26 +201,26 @@ function handleInput(input: string): boolean {
   }
 
   if (matchesBinding(binding, "toggleHelp")) {
-    showHelp = !showHelp;
+    state.showHelp = !state.showHelp;
     renderSession();
     return true;
   }
 
   if (input === "\u000f") {
-    if (sessionMode === "mini") {
+    if (state.sessionMode === "mini") {
       return true;
     }
     openReadSettings();
     return false;
   }
 
-  if (showHelp) {
+  if (state.showHelp) {
     return true;
   }
 
   const wheelDirection = getReadMouseWheelDirection(input);
-  if (sessionMode === "mini" && wheelDirection !== undefined) {
-    if (mouseWheelMode === "scroll") {
+  if (state.sessionMode === "mini" && wheelDirection !== undefined) {
+    if (state.mouseWheelMode === "scroll") {
       moveScrollLine(wheelDirection);
     } else {
       movePage(wheelDirection);
@@ -222,74 +257,64 @@ function handleInput(input: string): boolean {
 }
 
 function normalizeBindingInput(input: string): string | undefined {
-  const specialBindings: Record<string, string> = {
-    "\u001b[A": "arrow-up",
-    "\u001b[B": "arrow-down",
-    "\u001b[C": "arrow-right",
-    "\u001b[D": "arrow-left",
-    " ": "space",
-  };
-
-  return getReadMouseBinding(input)
-    ?? specialBindings[input]
-    ?? (/^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined);
+  return getReadMouseBinding(input) ?? normalizeSettingBinding(input);
 }
 
 function matchesBinding(binding: string | undefined, action: keyof ReadKeyBindings): boolean {
-  return binding !== undefined && keyBindings[action].includes(binding);
+  return binding !== undefined && state.keyBindings[action].includes(binding);
 }
 
 function movePage(direction: -1 | 1) {
-  currentPageIndex = direction === 1
-    ? getNextReadingPageIndex(pages, currentPageIndex)
-    : getPreviousReadingPageIndex(pages, currentPageIndex);
-  lastNavigation = direction === 1 ? "next-page" : "previous-page";
-  syncScrollLineToOffset(pages[currentPageIndex]?.startOffset ?? 0);
+  state.currentPageIndex = direction === 1
+    ? getNextReadingPageIndex(state.pages, state.currentPageIndex)
+    : getPreviousReadingPageIndex(state.pages, state.currentPageIndex);
+  state.lastNavigation = direction === 1 ? "next-page" : "previous-page";
+  syncScrollLineToOffset(state.pages[state.currentPageIndex]?.startOffset ?? 0);
   saveAndRender();
 }
 
 function moveScrollLine(direction: -1 | 1) {
-  const previousIndex = currentScrollLineIndex;
+  const previousIndex = state.currentScrollLineIndex;
   const nextIndex = Math.min(
-    Math.max(currentScrollLineIndex + direction * mouseScrollStep, 0),
-    Math.max(0, scrollLines.length - pageLineCount)
+    Math.max(state.currentScrollLineIndex + direction * state.mouseScrollStep, 0),
+    Math.max(0, state.scrollLines.length - state.pageLineCount)
   );
-  if (nextIndex === currentScrollLineIndex) {
+  if (nextIndex === state.currentScrollLineIndex) {
     return;
   }
 
   const now = Date.now();
-  const isContinuousScroll = scrollGestureDirection === direction
-    && now - lastScrollTime <= CONTINUOUS_SCROLL_DELAY
-    && scrollGestureAnchor !== undefined;
+  const isContinuousScroll = state.scrollGestureDirection === direction
+    && now - state.lastScrollTime <= CONTINUOUS_SCROLL_DELAY
+    && state.scrollGestureAnchor !== undefined;
   let resumeAnchor: number | null;
-  const directionChanged = scrollGestureDirection !== undefined
-    && scrollGestureDirection !== direction;
-  if (directionChanged || restoringScrollHistory) {
-    resumeAnchor = scrollResumeHistory.has(nextIndex)
-      ? scrollResumeHistory.get(nextIndex) ?? null
-      : scrollGestureAnchor ?? (direction === 1
-        ? Math.min(scrollLines.length - 1, previousIndex + pageLineCount)
+  const directionChanged = state.scrollGestureDirection !== undefined
+    && state.scrollGestureDirection !== direction;
+  if (directionChanged || state.restoringScrollHistory) {
+    resumeAnchor = state.scrollResumeHistory.has(nextIndex)
+      ? state.scrollResumeHistory.get(nextIndex) ?? null
+      : state.scrollGestureAnchor ?? (direction === 1
+        ? Math.min(state.scrollLines.length - 1, previousIndex + state.pageLineCount)
         : previousIndex);
-    restoringScrollHistory = true;
+    state.restoringScrollHistory = true;
   } else if (isContinuousScroll) {
-    resumeAnchor = scrollGestureAnchor ?? null;
+    resumeAnchor = state.scrollGestureAnchor ?? null;
   } else {
     resumeAnchor = direction === 1
-      ? Math.min(scrollLines.length - 1, previousIndex + pageLineCount)
+      ? Math.min(state.scrollLines.length - 1, previousIndex + state.pageLineCount)
       : previousIndex;
-    restoringScrollHistory = false;
+    state.restoringScrollHistory = false;
   }
 
-  currentScrollLineIndex = nextIndex;
-  scrollResumeHistory.set(nextIndex, resumeAnchor);
-  scrollGestureDirection = direction;
-  scrollGestureAnchor = resumeAnchor;
-  lastScrollTime = now;
+  state.currentScrollLineIndex = nextIndex;
+  state.scrollResumeHistory.set(nextIndex, resumeAnchor);
+  state.scrollGestureDirection = direction;
+  state.scrollGestureAnchor = resumeAnchor;
+  state.lastScrollTime = now;
   updateScrollResumeMarker(resumeAnchor);
   scheduleScrollResumeClear();
-  const offset = scrollLines[currentScrollLineIndex]?.startOffset ?? 0;
-  currentPageIndex = findReadingPageIndex(pages, offset);
+  const offset = state.scrollLines[state.currentScrollLineIndex]?.startOffset ?? 0;
+  state.currentPageIndex = findReadingPageIndex(state.pages, offset);
   saveAndRender();
 }
 
@@ -300,46 +325,46 @@ function moveChapter(direction: -1 | 1) {
     return;
   }
 
-  if (sectionNavigationEnabled) {
-    const currentSectionIndex = findReadingSectionIndex(sections, currentPage.startOffset);
+  if (state.sectionNavigationEnabled) {
+    const currentSectionIndex = findReadingSectionIndex(state.sections, currentPage.startOffset);
     const nextSectionIndex = direction === 1
-      ? getNextReadingSectionIndex(sections, currentSectionIndex)
-      : getPreviousReadingSectionIndex(sections, currentSectionIndex);
-    const nextSection = sections[nextSectionIndex];
+      ? getNextReadingSectionIndex(state.sections, currentSectionIndex)
+      : getPreviousReadingSectionIndex(state.sections, currentSectionIndex);
+    const nextSection = state.sections[nextSectionIndex];
 
     if (!nextSection) {
       return;
     }
 
-    currentPageIndex = findReadingPageIndex(pages, nextSection.startOffset);
+    state.currentPageIndex = findReadingPageIndex(state.pages, nextSection.startOffset);
     syncScrollLineToOffset(nextSection.startOffset);
-    lastNavigation = direction === 1 ? "next-chapter" : "previous-chapter";
+    state.lastNavigation = direction === 1 ? "next-chapter" : "previous-chapter";
     saveAndRender();
     return;
   }
 
-  const currentChapterIndex = findReadingChapterIndex(book.chapters, currentPage.startOffset);
+  const currentChapterIndex = findReadingChapterIndex(state.book.chapters, currentPage.startOffset);
   const nextChapterIndex = direction === 1
-    ? getNextReadingChapterIndex(book.chapters, currentChapterIndex)
-    : getPreviousReadingChapterIndex(book.chapters, currentChapterIndex);
-  const nextChapter = book.chapters[nextChapterIndex];
+    ? getNextReadingChapterIndex(state.book.chapters, currentChapterIndex)
+    : getPreviousReadingChapterIndex(state.book.chapters, currentChapterIndex);
+  const nextChapter = state.book.chapters[nextChapterIndex];
 
   if (!nextChapter) {
     return;
   }
 
-  currentPageIndex = findReadingPageIndex(pages, nextChapter.startOffset);
+  state.currentPageIndex = findReadingPageIndex(state.pages, nextChapter.startOffset);
   syncScrollLineToOffset(nextChapter.startOffset);
-  lastNavigation = direction === 1 ? "next-chapter" : "previous-chapter";
+  state.lastNavigation = direction === 1 ? "next-chapter" : "previous-chapter";
   saveAndRender();
 }
 
 function repeatLastNavigation() {
-  if (lastNavigation === "next-page") {
+  if (state.lastNavigation === "next-page") {
     movePage(1);
-  } else if (lastNavigation === "previous-page") {
+  } else if (state.lastNavigation === "previous-page") {
     movePage(-1);
-  } else if (lastNavigation === "next-chapter") {
+  } else if (state.lastNavigation === "next-chapter") {
     moveChapter(1);
   } else {
     moveChapter(-1);
@@ -355,25 +380,25 @@ function saveCurrentProgress() {
   const page = getCurrentReadingPage();
 
   if (page) {
-    saveReadProgress(book.id, { characterOffset: page.startOffset });
+    saveReadProgress(state.book.id, { characterOffset: page.startOffset });
   }
 }
 
 function resizeReadSession() {
-  if (sessionMode !== "mini") {
+  if (state.sessionMode !== "mini") {
     return;
   }
 
   const currentOffset = getCurrentReadingPage()?.startOffset ?? 0;
   const readSettings = loadReadSettings();
-  pages = paginateReadingText(
-    book.content,
+  state.pages = paginateReadingText(
+    state.book.content,
     getReadMiniContentWidth(readSettings.contentWidth),
     getReadMiniPageLineCount(readSettings.miniWindowRows),
-    sections.map((section) => section.startOffset)
+    state.sections.map((section) => section.startOffset)
   );
-  currentPageIndex = findReadingPageIndex(pages, currentOffset);
-  pageLineCount = getReadMiniPageLineCount(readSettings.miniWindowRows);
+  state.currentPageIndex = findReadingPageIndex(state.pages, currentOffset);
+  state.pageLineCount = getReadMiniPageLineCount(readSettings.miniWindowRows);
   rebuildScrollLines(getReadMiniContentWidth(readSettings.contentWidth), currentOffset);
   renderSession();
 }
@@ -385,33 +410,33 @@ function renderSession() {
     return;
   }
 
-  const currentSection = sectionNavigationEnabled
-    ? sections[findReadingSectionIndex(sections, page.startOffset)]
+  const currentSection = state.sectionNavigationEnabled
+    ? state.sections[findReadingSectionIndex(state.sections, page.startOffset)]
     : undefined;
 
   const renderOptions = {
-    book,
+    book: state.book,
     page,
-    pageIndex: currentPageIndex,
-    pageTotal: pages.length,
-    chapterIndex: findReadingChapterIndex(book.chapters, page.startOffset),
+    pageIndex: state.currentPageIndex,
+    pageTotal: state.pages.length,
+    chapterIndex: findReadingChapterIndex(state.book.chapters, page.startOffset),
     sectionIndex: currentSection?.indexInChapter,
     sectionTotal: currentSection?.countInChapter,
-    sectionNavigationEnabled,
-    theme,
-    interfaceLanguage,
-    keyBindings,
-    mouseWheelMode,
-    mouseScrollStep,
-    scrollResumeLineIndex,
-    scrollResumeDistance,
-    showHelp,
+    sectionNavigationEnabled: state.sectionNavigationEnabled,
+    theme: state.theme,
+    interfaceLanguage: state.interfaceLanguage,
+    keyBindings: state.keyBindings,
+    mouseWheelMode: state.mouseWheelMode,
+    mouseScrollStep: state.mouseScrollStep,
+    scrollResumeLineIndex: state.scrollResumeLineIndex,
+    scrollResumeDistance: state.scrollResumeDistance,
+    showHelp: state.showHelp,
   };
 
-  if (sessionMode === "mini") {
+  if (state.sessionMode === "mini") {
     renderReadMiniSession(renderOptions);
   } else {
-    renderReadSession({ ...renderOptions, theme });
+    renderReadSession({ ...renderOptions, theme: state.theme });
   }
 }
 
@@ -420,97 +445,97 @@ function quitReadSession() {
   saveCurrentProgress();
   process.stdin.off("data", handleKeyPress);
   setReadMouseTracking(false);
-  if (sessionMode === "mini") {
+  if (state.sessionMode === "mini") {
     renderReadMiniQuitMessage();
   } else {
-    renderReadQuitMessage(theme);
+    renderReadQuitMessage(state.theme);
   }
 
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(false);
   }
   process.stdin.pause();
-  onSessionQuit?.();
+  state.onSessionQuit?.();
   process.exit(0);
 }
 
 function rebuildScrollLines(contentWidth: number, offset: number) {
-  if (sessionMode !== "mini") {
-    scrollLines = [];
-    currentScrollLineIndex = 0;
+  if (state.sessionMode !== "mini") {
+    state.scrollLines = [];
+    state.currentScrollLineIndex = 0;
     return;
   }
-  scrollLines = paginateReadingText(
-    book.content,
+  state.scrollLines = paginateReadingText(
+    state.book.content,
     contentWidth,
     1,
-    sections.map((section) => section.startOffset)
+    state.sections.map((section) => section.startOffset)
   );
-  currentScrollLineIndex = findReadingPageIndex(scrollLines, offset);
+  state.currentScrollLineIndex = findReadingPageIndex(state.scrollLines, offset);
   resetScrollResumeState();
 }
 
 function syncScrollLineToOffset(offset: number) {
-  if (scrollLines.length > 0) {
-    currentScrollLineIndex = findReadingPageIndex(scrollLines, offset);
+  if (state.scrollLines.length > 0) {
+    state.currentScrollLineIndex = findReadingPageIndex(state.scrollLines, offset);
   }
   resetScrollResumeState();
 }
 
 function resetScrollResumeState() {
   clearScrollResumeTimer();
-  scrollResumeLineIndex = undefined;
-  scrollResumeDistance = undefined;
-  scrollResumeHistory.clear();
-  scrollGestureDirection = undefined;
-  scrollGestureAnchor = undefined;
-  restoringScrollHistory = false;
-  lastScrollTime = 0;
+  state.scrollResumeLineIndex = undefined;
+  state.scrollResumeDistance = undefined;
+  state.scrollResumeHistory.clear();
+  state.scrollGestureDirection = undefined;
+  state.scrollGestureAnchor = undefined;
+  state.restoringScrollHistory = false;
+  state.lastScrollTime = 0;
 }
 
 function scheduleScrollResumeClear() {
   clearScrollResumeTimer();
-  scrollResumeClearTimer = setTimeout(() => {
-    scrollResumeClearTimer = undefined;
+  state.scrollResumeClearTimer = setTimeout(() => {
+    state.scrollResumeClearTimer = undefined;
     resetScrollResumeState();
     renderSession();
   }, SCROLL_RESUME_CLEAR_DELAY);
 }
 
 function clearScrollResumeTimer() {
-  if (scrollResumeClearTimer) {
-    clearTimeout(scrollResumeClearTimer);
-    scrollResumeClearTimer = undefined;
+  if (state.scrollResumeClearTimer) {
+    clearTimeout(state.scrollResumeClearTimer);
+    state.scrollResumeClearTimer = undefined;
   }
 }
 
 function updateScrollResumeMarker(resumeAnchor: number | null) {
-  scrollResumeLineIndex = undefined;
-  scrollResumeDistance = undefined;
+  state.scrollResumeLineIndex = undefined;
+  state.scrollResumeDistance = undefined;
   if (resumeAnchor === null) {
     return;
   }
 
-  const relativeIndex = resumeAnchor - currentScrollLineIndex;
-  const visibleLineCount = Math.min(pageLineCount, scrollLines.length - currentScrollLineIndex);
+  const relativeIndex = resumeAnchor - state.currentScrollLineIndex;
+  const visibleLineCount = Math.min(state.pageLineCount, state.scrollLines.length - state.currentScrollLineIndex);
   if (relativeIndex < 0) {
-    scrollResumeDistance = { direction: "above", lineCount: -relativeIndex };
+    state.scrollResumeDistance = { direction: "above", lineCount: -relativeIndex };
   } else if (relativeIndex >= visibleLineCount) {
-    scrollResumeDistance = {
+    state.scrollResumeDistance = {
       direction: "below",
       lineCount: relativeIndex - visibleLineCount + 1,
     };
   } else {
-    scrollResumeLineIndex = relativeIndex;
+    state.scrollResumeLineIndex = relativeIndex;
   }
 }
 
 function getCurrentReadingPage(): ReadingPage | undefined {
-  if (sessionMode !== "mini" || mouseWheelMode !== "scroll") {
-    return pages[currentPageIndex];
+  if (state.sessionMode !== "mini" || state.mouseWheelMode !== "scroll") {
+    return state.pages[state.currentPageIndex];
   }
 
-  const visibleLines = scrollLines.slice(currentScrollLineIndex, currentScrollLineIndex + pageLineCount);
+  const visibleLines = state.scrollLines.slice(state.currentScrollLineIndex, state.currentScrollLineIndex + state.pageLineCount);
   const first = visibleLines[0];
   const last = visibleLines[visibleLines.length - 1];
   if (!first || !last) {
@@ -529,7 +554,7 @@ function openMiniWindow() {
   saveCurrentProgress();
   process.stdin.off("data", handleKeyPress);
   setReadMouseTracking(false);
-  startReadMiniHostSession(book, true);
+  startReadMiniHostSession(state.book, true);
 }
 
 function openReadSettings() {

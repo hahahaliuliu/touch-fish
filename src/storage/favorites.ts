@@ -1,6 +1,6 @@
 import fs from "node:fs";
-import path from "node:path";
 import { resolveAssetPath } from "../config/paths.js";
+import { isRecord, readJsonFile, writeJsonFile } from "./jsonFile.js";
 
 interface FavoriteFile {
   version: 1;
@@ -9,17 +9,34 @@ interface FavoriteFile {
 
 const favoritePath = resolveAssetPath("favorites.json");
 
+// Favorites are read for every rendered word, so cache the parsed set and only
+// re-read the file when its signature changes (or after a local write). The
+// signature combines the modification time with the file size because some
+// filesystems report a coarse mtime that is identical for writes made within
+// the same time window.
+let cachedFavorites: Set<string> | undefined;
+let cachedSignature: FileSignature | undefined;
+
+interface FileSignature {
+  mtimeMs: number;
+  size: number;
+}
+
 export function loadFavorites(): Set<string> {
-  if (!fs.existsSync(favoritePath)) {
-    return new Set();
+  const currentSignature = readFavoritesSignature();
+
+  if (
+    cachedFavorites !== undefined
+    && cachedSignature !== undefined
+    && cachedSignature.mtimeMs === currentSignature?.mtimeMs
+    && cachedSignature.size === currentSignature?.size
+  ) {
+    return cachedFavorites;
   }
 
-  try {
-    const value = JSON.parse(fs.readFileSync(favoritePath, "utf-8")) as unknown;
-    return new Set(parseFavoriteFile(value));
-  } catch {
-    return new Set();
-  }
+  cachedFavorites = new Set(parseFavoriteFile(readJsonFile(favoritePath)));
+  cachedSignature = currentSignature;
+  return cachedFavorites;
 }
 
 export function isFavorite(english: string): boolean {
@@ -36,6 +53,8 @@ export function setFavorite(english: string, favorite: boolean) {
   }
 
   writeFavorites({ version: 1, words: [...favorites].sort((left, right) => left.localeCompare(right)) });
+  cachedFavorites = favorites;
+  cachedSignature = readFavoritesSignature();
 }
 
 export function toggleFavorite(english: string): boolean {
@@ -45,20 +64,15 @@ export function toggleFavorite(english: string): boolean {
 }
 
 function writeFavorites(value: FavoriteFile) {
-  const directory = path.dirname(favoritePath);
-  const temporaryPath = `${favoritePath}.tmp`;
+  writeJsonFile(favoritePath, value);
+}
 
-  if (!fs.existsSync(directory)) {
-    fs.mkdirSync(directory, { recursive: true });
-  }
-
+function readFavoritesSignature(): FileSignature | undefined {
   try {
-    fs.writeFileSync(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, "utf-8");
-    fs.renameSync(temporaryPath, favoritePath);
-  } finally {
-    if (fs.existsSync(temporaryPath)) {
-      fs.unlinkSync(temporaryPath);
-    }
+    const stat = fs.statSync(favoritePath);
+    return { mtimeMs: stat.mtimeMs, size: stat.size };
+  } catch {
+    return undefined;
   }
 }
 
@@ -68,8 +82,4 @@ function parseFavoriteFile(value: unknown): string[] {
   }
 
   return value.words.filter((word): word is string => typeof word === "string" && word.trim() !== "");
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

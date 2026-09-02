@@ -20,9 +20,10 @@ import {
   toggleCurrentWordFavorite,
 } from "../services/wordService.js";
 import { loadSettings } from "../services/settingsLoader.js";
-import type { NoteMode } from "../models/settings.js";
+import type { InterfaceLanguage, KeyBindings, NoteMode } from "../models/settings.js";
 import { startSettingSession } from "./settingSession.js";
 import { startGroupQuizSession } from "./groupQuizSession.js";
+import { isNoteTextInput, normalizeSettingBinding, parseTerminalInputs } from "./settingFormInput.js";
 
 type LastNavigation = "next" | "previous";
 type NoteState =
@@ -31,13 +32,31 @@ type NoteState =
   | { kind: "editing"; selectedIndex: number; input: string };
 
 const OPEN_SETTINGS_KEY = "\u000f";
-let displayMode: DisplayMode = getSavedDisplayMode();
-let keyBindings = loadSettings().keyBindings;
-let noteMode: NoteMode = loadSettings().noteMode;
-let interfaceLanguage = loadSettings().interfaceLanguage;
-let lastNavigation: LastNavigation = "next";
-let showHelp = false;
-let noteState: NoteState = { kind: "idle" };
+
+interface WordSessionState {
+  displayMode: DisplayMode;
+  keyBindings: KeyBindings;
+  noteMode: NoteMode;
+  interfaceLanguage: InterfaceLanguage;
+  lastNavigation: LastNavigation;
+  showHelp: boolean;
+  noteState: NoteState;
+}
+
+function createWordSessionState(): WordSessionState {
+  const settings = loadSettings();
+  return {
+    displayMode: getSavedDisplayMode(),
+    keyBindings: settings.keyBindings,
+    noteMode: settings.noteMode,
+    interfaceLanguage: settings.interfaceLanguage,
+    lastNavigation: "next",
+    showHelp: false,
+    noteState: { kind: "idle" },
+  };
+}
+
+let state = createWordSessionState();
 
 export function startWordSession() {
   renderSession();
@@ -52,7 +71,7 @@ export function startWordSession() {
 }
 
 function handleKeyPress(key: string) {
-  for (const input of parseInputs(key.toString())) {
+  for (const input of parseTerminalInputs(key.toString())) {
     const shouldContinue = handleInput(input);
 
     if (!shouldContinue) {
@@ -61,54 +80,23 @@ function handleKeyPress(key: string) {
   }
 }
 
-function parseInputs(input: string): string[] {
-  const inputs: string[] = [];
-  let index = 0;
-
-  while (index < input.length) {
-    const current = input[index];
-    const next = input[index + 1];
-    const third = input[index + 2];
-
-    if (current === "\u001b" && next === "[" && third) {
-      inputs.push(`${current}${next}${third}`);
-      index += 3;
-      continue;
-    }
-
-    if (current === "\r" && next === "\n") {
-      inputs.push("\r");
-      index += 2;
-      continue;
-    }
-
-    if (current) {
-      inputs.push(current);
-    }
-
-    index += 1;
-  }
-
-  return inputs;
-}
-
 function handleInput(input: string): boolean {
   if (input === "\u0003") {
     quitWordSession();
     return false;
   }
 
-  if (noteState.kind !== "editing" && input.toLowerCase() === "q") {
+  if (state.noteState.kind !== "editing" && input.toLowerCase() === "q") {
     quitWordSession();
     return false;
   }
 
-  if (noteState.kind !== "idle") {
+  if (state.noteState.kind !== "idle") {
     return handleNoteInput(input);
   }
 
-  if (input === "\u001b" && showHelp) {
-    showHelp = false;
+  if (input === "\u001b" && state.showHelp) {
+    state.showHelp = false;
     renderSession();
     return true;
   }
@@ -118,7 +106,7 @@ function handleInput(input: string): boolean {
     return false;
   }
 
-  const binding = normalizeBindingInput(input);
+  const binding = normalizeSettingBinding(input);
 
   if (matchesBinding(binding, "previous")) {
     previousWord();
@@ -161,7 +149,7 @@ function handleInput(input: string): boolean {
   }
 
   if (matchesBinding(binding, "toggleHelp")) {
-    showHelp = !showHelp;
+    state.showHelp = !state.showHelp;
     renderSession();
     return true;
   }
@@ -171,13 +159,13 @@ function handleInput(input: string): boolean {
 
 function nextWord() {
   moveToNextWordGroup();
-  lastNavigation = "next";
+  state.lastNavigation = "next";
   renderSession();
 }
 
 function previousWord() {
   moveToPreviousWordGroup();
-  lastNavigation = "previous";
+  state.lastNavigation = "previous";
   renderSession();
 }
 
@@ -192,7 +180,7 @@ function previousStudyGroup() {
 }
 
 function repeatLastNavigation() {
-  if (lastNavigation === "next") {
+  if (state.lastNavigation === "next") {
     nextWord();
   } else {
     previousWord();
@@ -200,15 +188,15 @@ function repeatLastNavigation() {
 }
 
 function switchDisplayMode() {
-  if (displayMode === "both") {
-    displayMode = "english";
-  } else if (displayMode === "english") {
-    displayMode = "chinese";
+  if (state.displayMode === "both") {
+    state.displayMode = "english";
+  } else if (state.displayMode === "english") {
+    state.displayMode = "chinese";
   } else {
-    displayMode = "both";
+    state.displayMode = "both";
   }
 
-  saveDisplayMode(displayMode);
+  saveDisplayMode(state.displayMode);
   renderSession();
 }
 
@@ -219,28 +207,28 @@ function startNoteSelection() {
     return;
   }
 
-  noteState = { kind: "selecting", selectedIndex: 0 };
+  state.noteState = { kind: "selecting", selectedIndex: 0 };
   renderSession();
 }
 
 function handleNoteInput(input: string): boolean {
   if (input === "\u001b") {
-    noteState = noteState.kind === "editing"
-      ? { kind: "selecting", selectedIndex: noteState.selectedIndex }
+    state.noteState = state.noteState.kind === "editing"
+      ? { kind: "selecting", selectedIndex: state.noteState.selectedIndex }
       : { kind: "idle" };
     renderSession();
     return true;
   }
 
-  if (noteState.kind === "selecting") {
+  if (state.noteState.kind === "selecting") {
     if (input.toLowerCase() === "e") {
-      noteState = { kind: "idle" };
+      state.noteState = { kind: "idle" };
       renderSession();
       return true;
     }
 
     if (input.toLowerCase() === "f") {
-      toggleCurrentWordFavorite(noteState.selectedIndex);
+      toggleCurrentWordFavorite(state.noteState.selectedIndex);
       renderSession();
       return true;
     }
@@ -255,11 +243,11 @@ function handleNoteInput(input: string): boolean {
       return true;
     }
 
-    if ((input === "\r" || input === "\n") && noteMode === "editable") {
-      const word = getCurrentWords()[noteState.selectedIndex];
-      noteState = {
+    if ((input === "\r" || input === "\n") && state.noteMode === "editable") {
+      const word = getCurrentWords()[state.noteState.selectedIndex];
+      state.noteState = {
         kind: "editing",
-        selectedIndex: noteState.selectedIndex,
+        selectedIndex: state.noteState.selectedIndex,
         input: word?.note ?? "",
       };
       renderSession();
@@ -268,27 +256,27 @@ function handleNoteInput(input: string): boolean {
     return true;
   }
 
-  if (noteState.kind !== "editing") {
+  if (state.noteState.kind !== "editing") {
     return true;
   }
 
-  const editingState = noteState;
+  const editingState = state.noteState;
 
   if (input === "\r" || input === "\n") {
     saveCurrentWordNote(editingState.selectedIndex, editingState.input);
-    noteState = { kind: "selecting", selectedIndex: editingState.selectedIndex };
+    state.noteState = { kind: "selecting", selectedIndex: editingState.selectedIndex };
     renderSession();
     return true;
   }
 
   if (input === "\b" || input === "\u007f") {
-    noteState = { ...editingState, input: editingState.input.slice(0, -1) };
+    state.noteState = { ...editingState, input: editingState.input.slice(0, -1) };
     renderSession();
     return true;
   }
 
   if (isNoteTextInput(input)) {
-    noteState = { ...editingState, input: `${editingState.input}${input}` };
+    state.noteState = { ...editingState, input: `${editingState.input}${input}` };
     renderSession();
   }
 
@@ -296,7 +284,7 @@ function handleNoteInput(input: string): boolean {
 }
 
 function moveNoteSelection(direction: -1 | 1) {
-  if (noteState.kind !== "selecting") {
+  if (state.noteState.kind !== "selecting") {
     return;
   }
 
@@ -307,24 +295,20 @@ function moveNoteSelection(direction: -1 | 1) {
     return;
   }
 
-  if (direction === -1 && noteState.selectedIndex === 0) {
+  if (direction === -1 && state.noteState.selectedIndex === 0) {
     const before = getWordProgress().current;
     previousWord();
     const moved = getWordProgress().current !== before;
-    noteState = { kind: "selecting", selectedIndex: moved ? getCurrentWords().length - 1 : 0 };
-  } else if (direction === 1 && noteState.selectedIndex === wordCount - 1) {
+    state.noteState = { kind: "selecting", selectedIndex: moved ? getCurrentWords().length - 1 : 0 };
+  } else if (direction === 1 && state.noteState.selectedIndex === wordCount - 1) {
     const before = getWordProgress().current;
     nextWord();
     const moved = getWordProgress().current !== before;
-    noteState = { kind: "selecting", selectedIndex: moved ? 0 : wordCount - 1 };
+    state.noteState = { kind: "selecting", selectedIndex: moved ? 0 : wordCount - 1 };
   } else {
-    noteState = { kind: "selecting", selectedIndex: noteState.selectedIndex + direction };
+    state.noteState = { kind: "selecting", selectedIndex: state.noteState.selectedIndex + direction };
   }
   renderSession();
-}
-
-function isNoteTextInput(input: string): boolean {
-  return input.length > 0 && !/[\u0000-\u001f\u007f]/.test(input);
 }
 
 function renderSession() {
@@ -344,13 +328,13 @@ function renderSession() {
     navigationLoop: progress.navigationLoop,
     studyOrder: progress.studyOrder,
     theme: progress.theme,
-    keyBindings,
-    displayMode,
-    noteMode,
-    noteSelectionIndex: noteState.kind === "idle" ? undefined : noteState.selectedIndex,
-    noteInput: noteState.kind === "editing" ? noteState.input : undefined,
-    interfaceLanguage,
-    showHelp,
+    keyBindings: state.keyBindings,
+    displayMode: state.displayMode,
+    noteMode: state.noteMode,
+    noteSelectionIndex: state.noteState.kind === "idle" ? undefined : state.noteState.selectedIndex,
+    noteInput: state.noteState.kind === "editing" ? state.noteState.input : undefined,
+    interfaceLanguage: state.interfaceLanguage,
+    showHelp: state.showHelp,
   });
 }
 
@@ -360,11 +344,11 @@ function openSettingSession() {
   startSettingSession({
     onReturn: () => {
       reloadWordSettings();
-      keyBindings = loadSettings().keyBindings;
-      noteMode = loadSettings().noteMode;
-      interfaceLanguage = loadSettings().interfaceLanguage;
-      displayMode = getSavedDisplayMode();
-      noteState = { kind: "idle" };
+      state.keyBindings = loadSettings().keyBindings;
+      state.noteMode = loadSettings().noteMode;
+      state.interfaceLanguage = loadSettings().interfaceLanguage;
+      state.displayMode = getSavedDisplayMode();
+      state.noteState = { kind: "idle" };
       startWordSession();
     },
   });
@@ -376,33 +360,15 @@ function openGroupQuiz() {
   process.stdin.off("data", handleKeyPress);
   startGroupQuizSession({
     words: groupWords,
-    interfaceLanguage,
+    interfaceLanguage: state.interfaceLanguage,
     onReturn: () => {
       startWordSession();
     },
   });
 }
 
-function normalizeBindingInput(input: string): string | undefined {
-  const specialBindings: Record<string, string> = {
-    "\u001b[A": "arrow-up",
-    "\u001b[B": "arrow-down",
-    "\u001b[C": "arrow-right",
-    "\u001b[D": "arrow-left",
-    "\t": "tab",
-    " ": "space",
-    "？": "?",
-  };
-
-  if (specialBindings[input]) {
-    return specialBindings[input];
-  }
-
-  return /^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined;
-}
-
-function matchesBinding(binding: string | undefined, action: keyof typeof keyBindings): boolean {
-  return binding !== undefined && keyBindings[action].includes(binding);
+function matchesBinding(binding: string | undefined, action: keyof typeof state.keyBindings): boolean {
+  return binding !== undefined && state.keyBindings[action].includes(binding);
 }
 
 function quitWordSession() {

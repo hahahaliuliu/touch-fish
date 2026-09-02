@@ -1,5 +1,6 @@
 import type { ReadingPage } from "../models/reading.js";
 import { getTerminalWidth } from "../ui/terminalText.js";
+import { findLastIndexAtOrBelow } from "./offsetIndex.js";
 
 interface ReadingLine {
   text: string;
@@ -44,20 +45,7 @@ export function paginateReadingText(
 }
 
 export function findReadingPageIndex(pages: ReadingPage[], characterOffset: number): number {
-  if (pages.length === 0) {
-    return 0;
-  }
-
-  const normalizedOffset = Math.max(0, Math.floor(characterOffset));
-  let pageIndex = 0;
-
-  pages.forEach((page, index) => {
-    if (page.startOffset <= normalizedOffset) {
-      pageIndex = index;
-    }
-  });
-
-  return pageIndex;
+  return findLastIndexAtOrBelow(pages, characterOffset);
 }
 
 export function getNextReadingPageIndex(pages: ReadingPage[], currentIndex: number): number {

@@ -1,9 +1,8 @@
-import fs from "node:fs";
-import path from "node:path";
 import { resolveAssetPath } from "../config/paths.js";
 import type { ReadBindingAction, ReadKeyBindings, ReadMouseWheelMode, ReadSettings } from "../models/reading.js";
 import type { InterfaceLanguage, ThemeName } from "../models/settings.js";
 import { loadSettings } from "../services/settingsLoader.js";
+import { isRecord, readJsonFile, writeJsonFile } from "./jsonFile.js";
 
 const settingsPath = resolveAssetPath("read-settings.json");
 const DEFAULT_KEY_BINDINGS: ReadKeyBindings = {
@@ -17,16 +16,9 @@ const DEFAULT_KEY_BINDINGS: ReadKeyBindings = {
 };
 
 function getDefaultReadSettings(): ReadSettings {
-  let interfaceLanguage: InterfaceLanguage = "english";
-  let theme: ThemeName = "build-log";
-
-  try {
-    const sharedSettings = loadSettings();
-    interfaceLanguage = sharedSettings.interfaceLanguage;
-    theme = isReadTheme(sharedSettings.theme) ? sharedSettings.theme : "build-log";
-  } catch {
-    // A damaged shared settings file must not prevent Read settings from opening.
-  }
+  const sharedSettings = loadSettings();
+  const interfaceLanguage = sharedSettings.interfaceLanguage;
+  const theme = isReadTheme(sharedSettings.theme) ? sharedSettings.theme : "build-log";
 
   return {
     contentWidth: 0,
@@ -45,29 +37,25 @@ function getDefaultReadSettings(): ReadSettings {
 
 export function loadReadSettings(): ReadSettings {
   const defaults = getDefaultReadSettings();
+  const value = readJsonFile(settingsPath);
 
-  if (!fs.existsSync(settingsPath)) {
+  if (!isRecord(value)) {
     return defaults;
   }
 
-  try {
-    const value = JSON.parse(fs.readFileSync(settingsPath, "utf-8")) as Partial<ReadSettings>;
-    return {
-      contentWidth: isValidWidth(value.contentWidth) ? value.contentWidth : defaults.contentWidth,
-      pageLineCount: isValidLineCount(value.pageLineCount) ? value.pageLineCount : defaults.pageLineCount,
-      chapterSectionCount: isValidSectionCount(value.chapterSectionCount) ? value.chapterSectionCount : defaults.chapterSectionCount,
-      miniWindowColumns: isValidMiniWindowColumns(value.miniWindowColumns) ? value.miniWindowColumns : defaults.miniWindowColumns,
-      miniWindowRows: isValidMiniWindowRows(value.miniWindowRows) ? value.miniWindowRows : defaults.miniWindowRows,
-      miniWindowFontSize: isValidMiniWindowFontSize(value.miniWindowFontSize) ? value.miniWindowFontSize : defaults.miniWindowFontSize,
-      miniWindowMouseMode: isReadMouseWheelMode(value.miniWindowMouseMode) ? value.miniWindowMouseMode : defaults.miniWindowMouseMode,
-      miniWindowScrollStep: isValidScrollStep(value.miniWindowScrollStep) ? value.miniWindowScrollStep : defaults.miniWindowScrollStep,
-      interfaceLanguage: isInterfaceLanguage(value.interfaceLanguage) ? value.interfaceLanguage : defaults.interfaceLanguage,
-      theme: isReadTheme(value.theme) ? value.theme : defaults.theme,
-      keyBindings: readKeyBindings(value.keyBindings),
-    };
-  } catch {
-    return defaults;
-  }
+  return {
+    contentWidth: isValidWidth(value.contentWidth) ? value.contentWidth : defaults.contentWidth,
+    pageLineCount: isValidLineCount(value.pageLineCount) ? value.pageLineCount : defaults.pageLineCount,
+    chapterSectionCount: isValidSectionCount(value.chapterSectionCount) ? value.chapterSectionCount : defaults.chapterSectionCount,
+    miniWindowColumns: isValidMiniWindowColumns(value.miniWindowColumns) ? value.miniWindowColumns : defaults.miniWindowColumns,
+    miniWindowRows: isValidMiniWindowRows(value.miniWindowRows) ? value.miniWindowRows : defaults.miniWindowRows,
+    miniWindowFontSize: isValidMiniWindowFontSize(value.miniWindowFontSize) ? value.miniWindowFontSize : defaults.miniWindowFontSize,
+    miniWindowMouseMode: isReadMouseWheelMode(value.miniWindowMouseMode) ? value.miniWindowMouseMode : defaults.miniWindowMouseMode,
+    miniWindowScrollStep: isValidScrollStep(value.miniWindowScrollStep) ? value.miniWindowScrollStep : defaults.miniWindowScrollStep,
+    interfaceLanguage: isInterfaceLanguage(value.interfaceLanguage) ? value.interfaceLanguage : defaults.interfaceLanguage,
+    theme: isReadTheme(value.theme) ? value.theme : defaults.theme,
+    keyBindings: readKeyBindings(value.keyBindings),
+  };
 }
 
 export function saveReadSettings(settings: ReadSettings) {
@@ -85,17 +73,7 @@ export function saveReadSettings(settings: ReadSettings) {
     theme: isReadTheme(settings.theme) ? settings.theme : defaults.theme,
     keyBindings: readKeyBindings(settings.keyBindings),
   };
-  const temporaryPath = `${settingsPath}.tmp`;
-
-  try {
-    fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
-    fs.writeFileSync(temporaryPath, `${JSON.stringify(safeSettings, null, 2)}\n`, "utf-8");
-    fs.renameSync(temporaryPath, settingsPath);
-  } finally {
-    if (fs.existsSync(temporaryPath)) {
-      fs.unlinkSync(temporaryPath);
-    }
-  }
+  writeJsonFile(settingsPath, safeSettings);
 }
 
 function isValidWidth(value: unknown): value is number {

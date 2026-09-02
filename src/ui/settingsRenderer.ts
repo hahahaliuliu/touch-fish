@@ -1,31 +1,10 @@
-import type { InterfaceLanguage, KeyBindings, Settings } from "../models/settings.js";
+import type { InterfaceLanguage, Settings } from "../models/settings.js";
+import type { ActionItem, BindingItem, ConfigItem, SettingItem } from "../session/settingItems.js";
 import {
   BINDING_SETTING_COLUMNS,
   formatSettingColumns,
   STANDARD_SETTING_COLUMNS,
 } from "./settingColumns.js";
-
-interface ConfigItem {
-  kind: "setting";
-  key: keyof Settings;
-  label: string;
-  options?: readonly unknown[];
-  acceptsNumber?: boolean;
-}
-
-interface BindingItem {
-  kind: "binding";
-  key: keyof KeyBindings;
-  label: string;
-}
-
-interface ActionItem {
-  kind: "action";
-  id: "download-vocabulary" | "view-favorites";
-  label: string;
-}
-
-type SettingItem = ConfigItem | BindingItem | ActionItem;
 
 interface RenderSettingSessionOptions {
   settings: Settings;

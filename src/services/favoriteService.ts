@@ -3,7 +3,7 @@ import { loadWordNotes, saveWordNote } from "../storage/notes.js";
 import { isFavorite, loadFavorites, toggleFavorite } from "../storage/favorites.js";
 import { listVocabularyBooks, loadVocabularyBook } from "./vocabularyLoader.js";
 
-interface FavoriteEntry {
+export interface FavoriteEntry {
   word: Word;
   bookId: string;
   wordIndex: number;

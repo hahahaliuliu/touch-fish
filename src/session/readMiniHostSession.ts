@@ -1,4 +1,4 @@
-import type { ReadingBook } from "../models/reading.js";
+import { BLANK_READING_BOOK, type ReadingBook } from "../models/reading.js";
 import { loadReadingBook } from "../services/readingLoader.js";
 import { getReadMouseBinding, ReadInputParser, setReadMouseTracking } from "../services/readInput.js";
 import {
@@ -10,13 +10,41 @@ import { clearTerminalForExit } from "../ui/terminalScreen.js";
 import { renderReadMiniHost } from "../ui/readMiniHostRenderer.js";
 import { startReadSession } from "./readSession.js";
 import { startReadSettingSession } from "./readSettingSession.js";
+import { normalizeSettingBinding } from "./settingFormInput.js";
 
-let book: ReadingBook;
-let controller: ReadMiniWindowController;
-let state: ReadMiniWindowState = { status: "closed" };
-let showHelp = false;
-let removeStateListener: (() => void) | undefined;
-let hostActive = false;
+interface ReadMiniHostSessionState {
+  book: ReadingBook;
+  controller: ReadMiniWindowController;
+  state: ReadMiniWindowState;
+  showHelp: boolean;
+  removeStateListener: (() => void) | undefined;
+  hostActive: boolean;
+}
+
+function createReadMiniHostSessionState(
+  nextBook: ReadingBook,
+  existingController?: ReadMiniWindowController
+): ReadMiniHostSessionState {
+  const controller = existingController ?? new ReadMiniWindowController();
+  return {
+    book: nextBook,
+    controller,
+    state: controller.getState(),
+    showHelp: false,
+    removeStateListener: undefined,
+    hostActive: true,
+  };
+}
+
+let session: ReadMiniHostSessionState = {
+  book: BLANK_READING_BOOK,
+  controller: new ReadMiniWindowController(),
+  state: { status: "closed" },
+  showHelp: false,
+  removeStateListener: undefined,
+  hostActive: false,
+};
+
 const inputParser = new ReadInputParser();
 
 export function startReadMiniHostSession(
@@ -24,16 +52,12 @@ export function startReadMiniHostSession(
   openWindow: boolean,
   existingController?: ReadMiniWindowController
 ) {
-  book = nextBook;
-  controller = existingController ?? new ReadMiniWindowController();
-  state = controller.getState();
-  showHelp = false;
-  hostActive = true;
+  session.removeStateListener?.();
+  session = createReadMiniHostSessionState(nextBook, existingController);
   inputParser.reset();
-  removeStateListener?.();
-  removeStateListener = controller.onStateChange((nextState) => {
-    state = nextState;
-    if (hostActive) {
+  session.removeStateListener = session.controller.onStateChange((nextState) => {
+    session.state = nextState;
+    if (session.hostActive) {
       render();
     }
   });
@@ -41,7 +65,7 @@ export function startReadMiniHostSession(
   render();
   if (openWindow) {
     const settings = loadReadSettings();
-    void controller.open(book.id, {
+    void session.controller.open(session.book.id, {
       columns: settings.miniWindowColumns,
       rows: settings.miniWindowRows,
       fontSize: settings.miniWindowFontSize,
@@ -65,8 +89,8 @@ function handleKeyPress(key: string) {
     }
 
     if (input === "\u001b") {
-      if (showHelp) {
-        showHelp = false;
+      if (session.showHelp) {
+        session.showHelp = false;
         render();
       } else {
         quit();
@@ -82,7 +106,7 @@ function handleKeyPress(key: string) {
     }
     const helpBindings = settings.keyBindings.toggleHelp;
     if (binding && helpBindings.includes(binding)) {
-      showHelp = !showHelp;
+      session.showHelp = !session.showHelp;
       render();
       continue;
     }
@@ -95,13 +119,13 @@ function handleKeyPress(key: string) {
 }
 
 function toggleMiniWindow() {
-  if (state.status === "open" || state.status === "opening") {
-    controller.closeMode();
+  if (session.state.status === "open" || session.state.status === "opening") {
+    session.controller.closeMode();
     return;
   }
 
   const settings = loadReadSettings();
-  void controller.open(book.id, {
+  void session.controller.open(session.book.id, {
     columns: settings.miniWindowColumns,
     rows: settings.miniWindowRows,
     fontSize: settings.miniWindowFontSize,
@@ -115,25 +139,25 @@ function render() {
     settings.interfaceLanguage,
     settings.keyBindings.toggleHelp,
     settings.keyBindings.toggleMiniWindow,
-    showHelp,
-    state
+    session.showHelp,
+    session.state
   );
 }
 
 function openSettings() {
   stopInput();
-  hostActive = false;
+  session.hostActive = false;
   startReadSettingSession({
     miniModeActive: true,
     onReturn: (bookId) => startReadMiniHostSession(
       loadReadingBook(bookId),
       false,
-      controller
+      session.controller
     ),
     onToggleMiniWindow: toggleMiniWindow,
     onCloseMiniMode: (bookId) => {
-      controller.closeMode();
-      removeStateListener?.();
+      session.controller.closeMode();
+      session.removeStateListener?.();
       startReadSession(loadReadingBook(bookId));
     },
   });
@@ -141,9 +165,9 @@ function openSettings() {
 
 function quit() {
   stopInput();
-  hostActive = false;
-  controller.closeMode();
-  removeStateListener?.();
+  session.hostActive = false;
+  session.controller.closeMode();
+  session.removeStateListener?.();
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(false);
   }
@@ -157,16 +181,7 @@ function stopInput() {
   setReadMouseTracking(false);
 }
 
-function normalizeBindingInput(input: string) {
-  const specialBindings: Record<string, string> = {
-    "\u001b[A": "arrow-up",
-    "\u001b[B": "arrow-down",
-    "\u001b[C": "arrow-right",
-    "\u001b[D": "arrow-left",
-    " ": "space",
-    "？": "?",
-  };
-  return getReadMouseBinding(input)
-    ?? specialBindings[input]
-    ?? (/^[\x21-\x7e]$/.test(input) ? input.toLowerCase() : undefined);
+function normalizeBindingInput(input: string): string | undefined {
+  return getReadMouseBinding(input) ?? normalizeSettingBinding(input);
 }
+
