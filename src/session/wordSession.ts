@@ -23,7 +23,7 @@ import { loadSettings } from "../services/settingsLoader.js";
 import type { InterfaceLanguage, KeyBindings, NoteMode } from "../models/settings.js";
 import { startSettingSession } from "./settingSession.js";
 import { startGroupQuizSession } from "./groupQuizSession.js";
-import { normalizeSettingBinding, parseTerminalInputs } from "./settingFormInput.js";
+import { isNoteTextInput, normalizeSettingBinding, parseTerminalInputs } from "./settingFormInput.js";
 
 type LastNavigation = "next" | "previous";
 type NoteState =
@@ -309,10 +309,6 @@ function moveNoteSelection(direction: -1 | 1) {
     state.noteState = { kind: "selecting", selectedIndex: state.noteState.selectedIndex + direction };
   }
   renderSession();
-}
-
-function isNoteTextInput(input: string): boolean {
-  return input.length > 0 && !/[\u0000-\u001f\u007f]/.test(input);
 }
 
 function renderSession() {

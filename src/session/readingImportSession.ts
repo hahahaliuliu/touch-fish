@@ -14,6 +14,7 @@ import {
 } from "../ui/readingImportRenderer.js";
 import { clearTerminalForExit } from "../ui/terminalScreen.js";
 import { parseTerminalInputs } from "./settingFormInput.js";
+import { formatWarning, localize as sharedLocalize } from "./sessionText.js";
 
 interface StartReadingImportSessionOptions {
   interfaceLanguage: InterfaceLanguage;
@@ -359,10 +360,10 @@ function render() {
 
 function formatError(error: unknown): string {
   const value = error instanceof Error ? error.message : String(error);
-  return `${localize("[WARN] ", "[警告] ")}${value}`;
+  return formatWarning(state.interfaceLanguage, value);
 }
 
 function localize(english: string, chinese: string): string {
-  return state.interfaceLanguage === "chinese" ? chinese : english;
+  return sharedLocalize(state.interfaceLanguage, english, chinese);
 }
 

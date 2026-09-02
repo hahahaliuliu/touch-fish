@@ -9,6 +9,16 @@ export interface ReadingBook {
   chapters: ReadingChapter[];
 }
 
+/** Placeholder used before a real book is loaded; never rendered to the user. */
+export const BLANK_READING_BOOK: ReadingBook = {
+  id: "",
+  title: "",
+  sourcePath: "",
+  content: "",
+  characterCount: 0,
+  chapters: [],
+};
+
 export interface ReadingBookSummary {
   id: string;
   title: string;

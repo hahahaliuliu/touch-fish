@@ -54,6 +54,11 @@ export function isBackspace(input: string): boolean {
   return input === "\b" || input === "\u007f";
 }
 
+/** True when the key press is plain text that can be appended to a note. */
+export function isNoteTextInput(input: string): boolean {
+  return input.length > 0 && !/\u0000-\u001f\u007f/.test(input);
+}
+
 /**
  * Normalize a key press to a stable binding name. Mouse bindings are resolved
  * separately by the Read module before this shared helper is consulted.

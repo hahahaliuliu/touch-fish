@@ -1,4 +1,4 @@
-import type { ReadingBook, ReadingPage, ReadingSection, ReadMouseWheelMode } from "../models/reading.js";
+import { BLANK_READING_BOOK, type ReadingBook, type ReadingPage, type ReadingSection, type ReadMouseWheelMode } from "../models/reading.js";
 import { loadReadingBook } from "../services/readingLoader.js";
 import {
   findReadingChapterIndex,
@@ -132,15 +132,6 @@ function createReadState(nextBook: ReadingBook, options: StartReadSessionOptions
     onSessionQuit: options.onQuit,
   };
 }
-
-const BLANK_READING_BOOK: ReadingBook = {
-  id: "",
-  title: "",
-  sourcePath: "",
-  content: "",
-  characterCount: 0,
-  chapters: [],
-};
 
 let state: ReadSessionState = createReadState(BLANK_READING_BOOK, {});
 

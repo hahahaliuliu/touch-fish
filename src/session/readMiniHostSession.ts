@@ -1,4 +1,4 @@
-import type { ReadingBook } from "../models/reading.js";
+import { BLANK_READING_BOOK, type ReadingBook } from "../models/reading.js";
 import { loadReadingBook } from "../services/readingLoader.js";
 import { getReadMouseBinding, ReadInputParser, setReadMouseTracking } from "../services/readInput.js";
 import {
@@ -35,15 +35,6 @@ function createReadMiniHostSessionState(
     hostActive: true,
   };
 }
-
-const BLANK_READING_BOOK: ReadingBook = {
-  id: "",
-  title: "",
-  sourcePath: "",
-  content: "",
-  characterCount: 0,
-  chapters: [],
-};
 
 let session: ReadMiniHostSessionState = {
   book: BLANK_READING_BOOK,

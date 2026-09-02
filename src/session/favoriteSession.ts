@@ -12,7 +12,7 @@ import {
   type DisplayMode,
 } from "../ui/wordRenderer.js";
 import { createRandomOrder } from "../services/randomOrder.js";
-import { normalizeSettingBinding, parseTerminalInputs } from "./settingFormInput.js";
+import { isNoteTextInput, normalizeSettingBinding, parseTerminalInputs } from "./settingFormInput.js";
 
 type SelectionState =
   | { kind: "idle" }
@@ -194,7 +194,7 @@ function handleNoteEditing(input: string): boolean {
     return true;
   }
 
-  if (input.length > 0 && !/[\u0000-\u001f\u007f]/.test(input)) {
+  if (isNoteTextInput(input)) {
     state.selectionState = { ...editingState, input: `${editingState.input}${input}` };
     renderSession();
   }

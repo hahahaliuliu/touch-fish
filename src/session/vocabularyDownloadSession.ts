@@ -14,6 +14,7 @@ import { listVocabularyBooks } from "../services/vocabularyLoader.js";
 import { renderVocabularyDownloadSession } from "../ui/vocabularyDownloadRenderer.js";
 import { clearTerminalForExit } from "../ui/terminalScreen.js";
 import { parseTerminalInputs } from "./settingFormInput.js";
+import { formatWarning } from "./sessionText.js";
 
 interface StartVocabularyDownloadSessionOptions {
   onReturn: () => void;
@@ -345,7 +346,7 @@ function quit() {
 
 function formatError(error: unknown): string {
   const errorMessage = error instanceof Error ? error.message : String(error);
-  return `${getSessionText().warningPrefix}${errorMessage}`;
+  return formatWarning(state.interfaceLanguage, errorMessage);
 }
 
 function getSessionText() {
@@ -358,7 +359,6 @@ function getSessionText() {
       imported: (name: string) => `[INFO] 已导入 ${name}`,
       uninstalled: (name: string) => `[INFO] 已卸载 ${name}，学习进度已删除`,
       sessionClosed: "[INFO] 词书管理已关闭",
-      warningPrefix: "[警告] ",
     };
   }
 
@@ -370,6 +370,5 @@ function getSessionText() {
     imported: (name: string) => `[INFO] imported ${name}`,
     uninstalled: (name: string) => `[INFO] uninstalled ${name}; progress was removed`,
     sessionClosed: "[INFO] vocabulary download session closed",
-    warningPrefix: "[WARN] ",
   };
 }

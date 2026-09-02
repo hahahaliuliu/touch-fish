@@ -8,6 +8,7 @@ import { clearTerminalForExit } from "../ui/terminalScreen.js";
 import { startReadSession } from "./readSession.js";
 import { startReadingImportSession } from "./readingImportSession.js";
 import { getNextValue, isBackspace, normalizeSettingBinding } from "./settingFormInput.js";
+import { localize as sharedLocalize } from "./sessionText.js";
 import {
   BINDING_ACTIONS,
   CURRENT_BOOK_ITEM_INDEX,
@@ -647,7 +648,7 @@ function toggleMiniWindowMode() {
 }
 
 function localize(english: string, chinese: string): string {
-  return state.settings.interfaceLanguage === "chinese" ? chinese : english;
+  return sharedLocalize(state.settings.interfaceLanguage, english, chinese);
 }
 
 function quit() {
